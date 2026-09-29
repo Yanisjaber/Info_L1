@@ -8,5 +8,5 @@
 //  Laisse vide pour utiliser le site sans compte (progression sauvegardée
 //  uniquement dans ce navigateur).
 // ─────────────────────────────────────────────────────────────
-export const SUPABASE_URL = "";
-export const SUPABASE_ANON_KEY = "";
+export const SUPABASE_URL = "https://iprcdzdbnnkrctdislii.supabase.co";
+export const SUPABASE_ANON_KEY = "sb_publishable_sytgvbvwyXASGyEinHlyeQ_ZTKWQE43";
