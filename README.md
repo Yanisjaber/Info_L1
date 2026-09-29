@@ -3,7 +3,7 @@
 Site de révision (cours réécrits, QCM avec correction, éval blanche chronométrée, flashcards à répétition espacée,
 exercices corrigés, calendrier des CC, calculateur de notes, recherche). Statique : aucun serveur à gérer.
 
-- **6 matières** : Algorithmique 1, Bas, Devenir étudiant, Math1 Bases 2, Math1 Calc 1, Science du numérique
+- **6 matières** : Algorithmique 1, Bas, Devenir étudiant, Math1-bases2, Math1-calc1, Science du numérique
 - **35 séances** de cours · **390 QCM** · **412 flashcards** · **112 exercices** · **20 échéances** de CC
 - Progression sauvegardée dans le navigateur, et synchronisée entre appareils si tu actives Supabase (facultatif)
 
@@ -69,6 +69,6 @@ supabase/setup.sql    table + règles de sécurité
 
 ## Notes sur les données
 
-- Les deux dates de Bas (3/11 et 8/12) ne sont pas encore rattachées à un CCI précis ; la date de CC2 d'Algo (19/11) est annoncée mais non confirmée dans la fiche MCCC. Le site les marque « à confirmer / provisoire ».
+- Les dates de Bas (3/11 et 8/12) sont confirmées par l'EDT mais pas encore rattachées à un numéro de CCI ; Algo CC2 (19/11) est confirmé par l'EDT.
 - Science du numérique : un seul CM pour l'instant (CM 2 à 6 à venir).
 - Devenir étudiant : le TD 2 n'a pas de contenu exploitable.

@@ -36,7 +36,7 @@ export const CALC = {
     },
   },
   bases2: {
-    titre: "Math1 Bases 2",
+    titre: "Math1-bases2",
     formule: "Sans note 4 : (N1 + N2 + N3) / 3. Avec note 4 : (max(N1,N4) + max(N2,N4) + max(N3,N4)) / 3",
     champs: [["n1", "Note 1 (TD)"], ["n2", "Note 2 (TD)"], ["n3", "Note 3 (amphi)"], ["n4", "Note 4 — 2e chance (facultative)"]],
     calc(v) {
@@ -50,7 +50,7 @@ export const CALC = {
     },
   },
   calc1: {
-    titre: "Math1 Calc 1",
+    titre: "Math1-calc1",
     formule: "CC2 = moyenne des 2 interros. Note = 15 % × max(CC1, CC4) + 40 % × max(CC2, CC4) + 45 % × max(CC3, CC4)",
     champs: [["cc1", "CC1 — interro (15 %)"], ["cc21", "CC2.1 — interro (20 %)"], ["cc22", "CC2.2 — interro (20 %)"], ["cc3", "CC3 — devoir amphi (45 %)"], ["cc4", "CC4 — 2e chance"]],
     calc(v) {

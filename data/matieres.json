@@ -2,7 +2,7 @@
  {
   "id": "algo1",
   "nom": "Algorithmique 1",
-  "court": "Algo 1",
+  "court": "Algorithmique 1",
   "ue": "Info1.Algo1 · Python",
   "couleur": "#2E7D6B",
   "desc": "Python, boucles, fonctions, tableaux, complexité, tests.",
@@ -43,8 +43,8 @@
  },
  {
   "id": "bases2",
-  "nom": "Math1 Bases 2",
-  "court": "Maths Bases",
+  "nom": "Math1-bases2",
+  "court": "Math1-bases2",
   "ue": "Logique · Ensembles · Applications",
   "couleur": "#3457A6",
   "desc": "Logique, quantificateurs, raisonnements, ensembles, applications.",
@@ -57,8 +57,8 @@
  },
  {
   "id": "calc1",
-  "nom": "Math1 Calc 1",
-  "court": "Calc 1",
+  "nom": "Math1-calc1",
+  "court": "Math1-calc1",
   "ue": "Analyse · Calcul",
   "couleur": "#2F8FBF",
   "desc": "Fonctions, domaines, dérivées, images, calculs.",
@@ -72,7 +72,7 @@
  {
   "id": "sn",
   "nom": "Science du numérique",
-  "court": "Sc. du numérique",
+  "court": "Science du numérique",
   "ue": "CCI intégral · QCM",
   "couleur": "#C0507F",
   "desc": "Culture numérique, sécurité, réseaux, chiffrement.",
