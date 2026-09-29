@@ -2,7 +2,8 @@
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 const KEY = "l1s1_v1";
-const MAPS = ["read", "qcm", "cards", "exos", "notes", "evals", "activity"];
+const OWNER_KEY = "l1s1_owner";
+const MAPS = ["read", "qcm", "cards", "exos", "notes", "evals", "activity", "reponses", "elo"];
 const listeners = new Set();
 
 function blank() {
@@ -59,6 +60,20 @@ export function mergeInto(local, remote, isActivity) {
   }
 }
 
+// Si les données locales appartiennent à un autre compte que celui qui vient de se
+// connecter, on repart propre : sinon la progression (voire pire) d'un compte fuiterait
+// vers un autre en se connectant successivement à plusieurs comptes sur le même appareil.
+function resetIfDifferentOwner(uid) {
+  let owner = null;
+  try { owner = localStorage.getItem(OWNER_KEY); } catch (e) {}
+  if (owner && owner !== uid) {
+    const b = blank();
+    Object.keys(b).forEach((k) => (state[k] = b[k]));
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
+  }
+  try { localStorage.setItem(OWNER_KEY, uid); } catch (e) {}
+}
+
 // ── Supabase ──
 export async function initSync() {
   if (!sync.configured || !window.supabase) return;
@@ -71,11 +86,11 @@ export async function initSync() {
     sync.client.auth.onAuthStateChange((_e, session) => {
       const was = sync.user && sync.user.id;
       sync.user = session ? session.user : null;
-      if (sync.user && sync.user.id !== was) pull().then(push);
+      if (sync.user && sync.user.id !== was) { resetIfDifferentOwner(sync.user.id); pull().then(push); }
       if (!sync.user) sync.status = "off";
       emit();
     });
-    if (sync.user) { await pull(); await push(); }
+    if (sync.user) { resetIfDifferentOwner(sync.user.id); await pull(); await push(); }
   } catch (e) { sync.status = "error"; sync.error = String(e.message || e); }
   emit();
 }
