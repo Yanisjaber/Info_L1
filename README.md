@@ -47,7 +47,9 @@ puis ouvre http://localhost:8000
 
 ## 4. Mettre à jour le contenu
 
-Chaque matière est un fichier `data/content/<matiere>.json` (QCM, flashcards, exercices) + un dossier `data/content/<matiere>/` (une page HTML par séance). Les PDF sont dans `pdf/`. Le calendrier est `data/calendrier.json` (dates des CC) : modifie-le quand une date est confirmée (Bas, Devenir étudiant, Algo CC2).
+Chaque matière est un fichier `data/content/<matiere>.json` (QCM, flashcards, exercices) + un dossier `data/content/<matiere>/` (une page HTML par séance). Les PDF sont dans `pdf/`. Le calendrier est `data/calendrier.json` (dates des CC) : modifie-le quand une date est confirmée (Bas : numéro des CCI, Devenir étudiant).
+
+L'emploi du temps (page « Emploi du temps » + bloc « Aujourd'hui » de l'accueil) vient de `data/edt.json`, exporté depuis l'EDT UPS (Celcat). Il est figé à la date d'export : redemande un export à Claude quand l'EDT change (cours déplacés, salles).
 Pousse le changement sur GitHub : le site se met à jour tout seul.
 
 ## Structure
@@ -59,7 +61,7 @@ js/app.js             vues et logique (QCM, éval, cartes, calendrier…)
 js/store.js           progression locale + synchro Supabase
 js/grades.js          formules de calcul des notes de chaque UE
 js/config.js          URL + clé Supabase (à remplir, facultatif)
-data/                 matières, calendrier, contenu
+data/                 matières, calendrier, edt.json (emploi du temps), contenu
 pdf/                  fiches PDF originales
 vendor/               KaTeX (formules) et supabase-js (embarqués, pas de CDN)
 supabase/setup.sql    table + règles de sécurité

@@ -1,22 +1,22 @@
 {
  "evenements": [
   {
-   "id": "ev01",
-   "date": "2026-10-05",
-   "matiere": "sn",
-   "titre": "CC1 — QCM partie A",
-   "poids": "50 %",
-   "detail": "QCM de 60 questions · 45 min",
-   "type": "CC",
-   "statut": ""
-  },
-  {
    "id": "ev02",
    "date": "2026-10-08",
    "matiere": "algo1",
    "titre": "CC1 — QCM 1",
    "poids": "10 %",
    "detail": "QCM d'environ 15 min · début de séance de TP",
+   "type": "CC",
+   "statut": ""
+  },
+  {
+   "id": "ev01",
+   "date": "2026-10-12",
+   "matiere": "sn",
+   "titre": "CC1 — QCM partie A",
+   "poids": "50 %",
+   "detail": "QCM de 60 questions · 45 min · lundi 15h45, Amphi Frenet (EDT UPS ; le calendrier CC indiquait le 5/10)",
    "type": "CC",
    "statut": ""
   },
@@ -54,11 +54,11 @@
    "id": "ev06",
    "date": "2026-11-03",
    "matiere": "bas",
-   "titre": "CCI — à confirmer",
+   "titre": "CCI — n° à préciser",
    "poids": "à confirmer",
-   "detail": "Laquelle des CCI 1, 2 ou 3 ? (2 CCI en Systèmes, 1 en Architecture)",
+   "detail": "Mardi 15h45, amphis Borel / De Broglie (EDT UPS). Laquelle des CCI 1, 2 ou 3 ? (2 CCI en Systèmes, 1 en Architecture)",
    "type": "CC",
-   "statut": "a_confirmer"
+   "statut": ""
   },
   {
    "id": "ev07",
@@ -86,9 +86,9 @@
    "matiere": "algo1",
    "titre": "CC2 — Devoir papier",
    "poids": "30 %",
-   "detail": "Épreuve sur papier en amphi · date annoncée mais non confirmée",
+   "detail": "Épreuve sur papier en amphi · jeudi 18h–20h, amphis Borel / De Broglie (EDT UPS)",
    "type": "CC",
-   "statut": "provisoire"
+   "statut": ""
   },
   {
    "id": "ev10",
@@ -144,11 +144,11 @@
    "id": "ev15",
    "date": "2026-12-08",
    "matiere": "bas",
-   "titre": "CCI — à confirmer",
+   "titre": "CCI — n° à préciser",
    "poids": "à confirmer",
-   "detail": "Laquelle des CCI 1, 2 ou 3 ?",
+   "detail": "Mardi 15h45, amphis Borel / De Broglie (EDT UPS). Laquelle des CCI 1, 2 ou 3 ?",
    "type": "CC",
-   "statut": "a_confirmer"
+   "statut": ""
   },
   {
    "id": "ev16",
@@ -204,15 +204,11 @@
  "remarques": [
   {
    "matiere": "bas",
-   "texte": "Dates du 3/11 et du 8/12 connues mais pas encore rattachées à un CCI précis ; la date de CCI4 (2e chance, 50 %) n'est pas communiquée."
+   "texte": "Les dates du 3/11 et du 8/12 sont confirmées par l'EDT, mais pas encore rattachées à un CCI précis ; la date de CCI4 (2e chance, 50 %) n'est pas communiquée."
   },
   {
    "matiere": "devenir",
    "texte": "CC1 (poster + oral, 35 %) et CC2 (QCM + rapport d'étonnement, 15 %) : dates à annoncer. Pas de 2e chance."
-  },
-  {
-   "matiere": "algo1",
-   "texte": "CC2 (devoir papier) : la fiche MCCC dit « à annoncer », le calendrier général indique le 19/11 — à confirmer."
   }
  ]
 }

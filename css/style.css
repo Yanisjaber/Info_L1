@@ -181,3 +181,17 @@ details[open]{padding-bottom:12px}
   .rate{grid-template-columns:1fr}
 }
 @media print{#side,#topbar,#tabbar,.btn,.toc{display:none!important} #view{max-width:none;padding:0} body{background:#fff}}
+
+/* ── Emploi du temps ── */
+.edt{display:grid;grid-template-columns:repeat(var(--n,5),minmax(0,1fr));gap:10px}
+.edt-d{background:var(--surface2);border-radius:12px;padding:10px;min-width:0}
+.edt-d.today{outline:2px solid var(--navy);outline-offset:-2px}
+.edt-d h3{font-size:.92rem;margin:0 0 6px;text-transform:capitalize}
+.edt-ev{border:1px solid var(--line);border-left:4px solid var(--c);border-radius:10px;padding:8px 10px;margin-top:8px;background:var(--surface)}
+.edt-ev.cc{background:color-mix(in srgb,var(--c) 12%,var(--surface));border-color:var(--c)}
+.edt-ev.past,.edt-row.past{opacity:.5} .edt-ev.live{box-shadow:0 0 0 2px var(--c)}
+.edt-h{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:.84rem}
+.edt-t{font-weight:700;margin:2px 0}
+.edt-n{color:var(--amber);margin-top:2px}
+@media (max-width:1100px){.edt{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:640px){.edt{grid-template-columns:1fr}.edt-d.vide{padding:6px 10px}.edt-d.vide h3{margin:0}.edt-d.vide .tiny{display:none}}

@@ -2,7 +2,7 @@ import { $, $$, esc, icon, fmtDate, fmtLong, parseDay, startOfDay, daysUntil, pc
 import { state, commit, bump, setEntry, onChange, sync, initSync, pull, push, signIn, signUp, magicLink, signOut, exportJSON, importJSON, resetAll, todayKey } from "./store.js";
 import { CALC } from "./grades.js";
 
-const D = { matieres: [], cal: { evenements: [], remarques: [] }, content: {}, Q: [], F: [], E: [], frag: {}, idx: null };
+const D = { matieres: [], cal: { evenements: [], remarques: [] }, edt: { events: [] }, content: {}, Q: [], F: [], E: [], frag: {}, idx: null };
 const IDS = ["algo1", "bas", "devenir", "bases2", "calc1", "sn"];
 const TYPES = { CM: "Cours magistraux", TD: "Travaux dirigés", TP: "Travaux pratiques" };
 const view = () => $("#view");
@@ -22,6 +22,7 @@ async function j(u) { const r = await fetch(u); if (!r.ok) throw new Error(u + "
 async function loadData() {
   D.matieres = await j("data/matieres.json");
   D.cal = await j("data/calendrier.json");
+  try { D.edt = await j("data/edt.json"); } catch (e) { D.edt = { events: [] }; }
   const all = await Promise.all(IDS.map((id) => j(`data/content/${id}.json`)));
   IDS.forEach((id, i) => (D.content[id] = all[i]));
   IDS.forEach((id) => {
@@ -85,6 +86,7 @@ function shell() {
     <form class="sform" role="search"><input type="text" name="q" placeholder="Rechercher…" aria-label="Rechercher"></form>
     <nav class="nav" aria-label="Navigation">
       <a href="#/" data-nav="">${icon("home")}Accueil</a>
+      <a href="#/edt" data-nav="edt">${icon("grid")}Emploi du temps</a>
       <a href="#/cal" data-nav="cal">${icon("cal")}Calendrier</a>
       <a href="#/notes" data-nav="notes">${icon("chart")}Notes &amp; CC</a>
       <div class="sep">Matières</div>${navSubj}
@@ -106,6 +108,7 @@ function shell() {
     <a href="#/m" data-nav="m">${icon("book")}Matières</a>
     <a href="#/qcm" data-nav="qcm">${icon("check")}QCM</a>
     <a href="#/cards" data-nav="cards">${icon("cards")}Cartes</a>
+    <a href="#/edt" data-nav="edt">${icon("grid")}EDT</a>
     <a href="#/cal" data-nav="cal">${icon("cal")}Agenda</a>
   </nav>`;
   $$(".sform").forEach((f) => f.addEventListener("submit", (e) => { e.preventDefault(); const q = f.q.value.trim(); if (q) location.hash = "#/search?q=" + encodeURIComponent(q); }));
@@ -147,6 +150,7 @@ async function route() {
     else if (p[0] === "qcm") ({ html, after } = p[1] === "run" && Q ? quizView() : quizSetup(r.q));
     else if (p[0] === "eval") ({ html, after } = p[1] === "run" && Q ? quizView() : evalSetup(r.q));
     else if (p[0] === "cards") ({ html, after } = p[1] === "run" && FC ? cardsView() : cardsSetup(r.q));
+    else if (p[0] === "edt") ({ html, after } = edt());
     else if (p[0] === "cal") ({ html, after } = calendar(r.q));
     else if (p[0] === "notes") ({ html, after } = notes());
     else if (p[0] === "search") ({ html, after } = await search(r.q.q || ""));
@@ -185,6 +189,7 @@ function home() {
   const up = nextEvents(5).map((e) => `<a class="item" href="#/cal"><span class="badge" style="--acc:${M(e.matiere).couleur};background:color-mix(in srgb,${M(e.matiere).couleur} 15%,var(--surface));color:${M(e.matiere).couleur}">${fmtDate(e.date).split(" ").slice(1).join(" ")}</span><div class="sp"><b>${esc(M(e.matiere).court)}</b> — ${esc(e.titre)}<div class="tiny muted">${esc(e.poids)} · ${cd(e)}${e.statut && e.poids !== "à confirmer" ? " · <span class='chip wa'>date provisoire</span>" : ""}</div></div></a>`).join("");
   return {
     html: `${hero}
+    ${edtHome()}
     <div class="grid g4 keep2" style="margin:16px 0">
       <div class="card stat"><b>${t.read}<small class="muted">/${t.seances}</small></b><span>séances lues</span></div>
       <div class="card stat"><b>${pct(t.ok, t.n)}<small class="muted"> %</small></b><span>réussite aux QCM (${t.answered}/${t.nq} vus)</span></div>
@@ -512,6 +517,69 @@ function rate(r) {
   commit(); rerender();
 }
 
+// ───────────────────────── Emploi du temps ─────────────────────────
+const pd = (d, hm) => { const [y, m, dd] = d.split("-").map(Number), [h, mi] = (hm || "0:0").split(":").map(Number); return new Date(y, m - 1, dd, h, mi); };
+const edtOf = (iso) => D.edt.events.filter((e) => e.d === iso).sort((a, b) => (a.s || "").localeCompare(b.s || ""));
+const edtLabel = (e) => (e.t === "Férié" ? "Jour férié" : e.t === "Fermeture" ? "Université fermée" : e.t);
+const edtColor = (e) => (e.m && M(e.m) ? M(e.m).couleur : "var(--muted)");
+const edtName = (e) => (e.m && M(e.m) ? M(e.m).court : e.t);
+const edtMeta = (e) => [e.r, e.p, e.g].filter(Boolean).map(esc).join(" · ");
+const edtState = (e, now) => (e.e ? (pd(e.d, e.e) <= now ? "past" : pd(e.d, e.s) <= now ? "live" : "") : "");
+function edtCard(e, now) {
+  const st = edtState(e, now), cc = e.t === "CC";
+  return `<div class="edt-ev ${cc ? "cc " : ""}${st}" style="--c:${edtColor(e)}">
+    <div class="edt-h"><b>${e.s}–${e.e}</b><span class="chip ${cc ? "wa" : "gr"}">${esc(e.t)}</span>${st === "live" ? '<span class="chip ok">en cours</span>' : ""}</div>
+    <div class="edt-t">${esc(edtName(e))}</div>
+    ${edtMeta(e) ? `<div class="tiny muted">${edtMeta(e)}</div>` : ""}${e.n ? `<div class="tiny edt-n">${esc(e.n)}</div>` : ""}</div>`;
+}
+const edtRel = (iso) => { const d = daysUntil(iso); return d === 0 ? "aujourd'hui" : d === 1 ? "demain" : fmtLong(iso); };
+function edtRow(e, now, rel) {
+  const c = edtColor(e), st = edtState(e, now);
+  return `<a class="item edt-row ${st}" href="#/edt"><span class="badge" style="background:color-mix(in srgb,${c} 15%,var(--surface));color:${c}">${e.s}</span><div class="sp"><b>${esc(edtName(e))}</b> <span class="chip ${e.t === "CC" ? "wa" : "gr"}">${esc(e.t)}</span>${st === "live" ? ' <span class="chip ok">en cours</span>' : ""}<div class="tiny muted">${rel ? edtRel(e.d) + " · " : ""}${e.s}–${e.e}${edtMeta(e) ? " · " + edtMeta(e) : ""}</div></div></a>`;
+}
+function edtHome() {
+  if (!D.edt.events.length) return "";
+  const now = new Date(), iso = todayKey();
+  const day = edtOf(iso), timed = day.filter((e) => !e.allday), off = day.find((e) => e.allday);
+  const left = timed.some((e) => pd(e.d, e.e) > now);
+  const nx = left ? null : D.edt.events.find((e) => !e.allday && e.t !== "Réunion" && pd(e.d, e.e) > now);
+  const head = timed.length ? "" : `<div class="small muted" style="margin:4px 0 8px">${off ? esc(edtLabel(off)) + " aujourd'hui." : "Pas de cours aujourd'hui."}</div>`;
+  const doneMsg = timed.length && !left ? '<div class="small muted" style="margin:4px 0 8px">Journée terminée.</div>' : "";
+  return `<div class="card" style="margin-top:16px"><div class="row"><h3 style="margin:0">Aujourd'hui</h3><div class="sp"></div><a class="btn sm ghost" href="#/edt">${icon("grid")}Emploi du temps</a></div>
+    ${head}<div class="list">${timed.map((e) => edtRow(e, now)).join("")}</div>${doneMsg}
+    ${nx ? `<div class="tiny muted" style="margin:10px 0 2px;text-transform:uppercase;letter-spacing:.06em">Prochain cours</div><div class="list">${edtRow(nx, now, true)}</div>` : ""}</div>`;
+}
+let edtWeek = null;
+const mondayOf = (d) => { const x = startOfDay(d); x.setDate(x.getDate() - ((x.getDay() + 6) % 7)); return x; };
+function edt() {
+  if (!D.edt.events.length) return { html: `<h1>Emploi du temps</h1><div class="empty">Aucun emploi du temps chargé (data/edt.json).</div>` };
+  if (!edtWeek) edtWeek = mondayOf(new Date());
+  const now = new Date(), today = todayKey();
+  const days = [...Array(7)].map((_, i) => { const d = new Date(edtWeek); d.setDate(d.getDate() + i); return d; });
+  const shown = days.slice(5).some((d) => edtOf(todayKey(d)).length) ? days : days.slice(0, 5);
+  const fd = new Intl.DateTimeFormat("fr-FR", { weekday: "long", day: "numeric", month: "short" });
+  const fs = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short" });
+  const cols = shown.map((d) => {
+    const iso = todayKey(d), evs = edtOf(iso), all = evs.filter((e) => e.allday), tm = evs.filter((e) => !e.allday);
+    return `<section class="edt-d${iso === today ? " today" : ""}${evs.length ? "" : " vide"}"><h3>${fd.format(d)}</h3>${all.map((e) => `<span class="chip gr">${esc(edtLabel(e))}</span>`).join("")}${tm.map((e) => edtCard(e, now)).join("") || (all.length ? "" : '<div class="tiny muted">Rien de prévu</div>')}</section>`;
+  }).join("");
+  const wkEv = shown.flatMap((d) => edtOf(todayKey(d))).filter((e) => !e.allday);
+  const hrs = wkEv.reduce((a, e) => a + (pd(e.d, e.e) - pd(e.d, e.s)) / 36e5, 0);
+  return {
+    html: `<h1>Emploi du temps</h1>
+    <div class="row" style="margin:6px 0 14px"><button class="btn sm" data-a="edtprev" aria-label="Semaine précédente">${icon("back")}</button><b style="min-width:170px;text-align:center">${fs.format(shown[0])} – ${fs.format(shown[shown.length - 1])}</b><button class="btn sm" data-a="edtnext" aria-label="Semaine suivante">${icon("arrow")}</button><button class="btn sm ghost" data-a="edttoday">Cette semaine</button><div class="sp"></div><button class="btn sm" data-a="edtics">${icon("dl")}Export .ics</button></div>
+    <div class="tiny muted" style="margin:-6px 0 12px">${plural(wkEv.length, "créneau", "créneaux")} · ${String(Math.round(hrs * 10) / 10).replace(".", ",")} h dans la semaine · ${Object.entries(Object.fromEntries(D.matieres.map((m) => [m.id, m]))).filter(([id]) => wkEv.some((e) => e.m === id)).map(([, m]) => `<span class="chip" style="--acc:${m.couleur}"><i class="dot" style="--c:${m.couleur}"></i>${esc(m.court)}</span>`).join(" ")}</div>
+    <div class="edt" style="--n:${shown.length}">${cols}</div>
+    <p class="tiny muted" style="margin-top:14px">Source : emploi du temps UPS (${esc(D.edt.source || "")}). Les horaires peuvent changer : vérifie sur l'ENT en cas de doute.</p>`,
+  };
+}
+function edtIcs() {
+  const pad = (n) => String(n).padStart(2, "0"), f = (d, hm) => d.replace(/-/g, "") + "T" + hm.replace(":", "") + "00";
+  const esc2 = (s) => String(s || "").replace(/([,;\\])/g, "\\$1");
+  const ev = D.edt.events.filter((e) => !e.allday).map((e, i) => ["BEGIN:VEVENT", `UID:edt${i}-${e.d}-${e.s}@revisions-l1s1`, `DTSTAMP:${f(todayKey(), "0000")}Z`, `DTSTART;TZID=Europe/Paris:${f(e.d, e.s)}`, `DTEND;TZID=Europe/Paris:${f(e.d, e.e)}`, `SUMMARY:${esc2(edtName(e) + " — " + e.t)}`, `LOCATION:${esc2(e.r)}`, `DESCRIPTION:${esc2([e.p, e.g, e.n].filter(Boolean).join(" · "))}`, "END:VEVENT"].join("\r\n"));
+  download("emploi-du-temps-L1S1.ics", ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Revisions L1 S1//FR", "X-WR-TIMEZONE:Europe/Paris", ...ev, "END:VCALENDAR"].join("\r\n"), "text/calendar");
+}
+
 // ───────────────────────── Calendrier ─────────────────────────
 let calMonth = null, calFilter = new Set(IDS), calSeances = false;
 function calendar(q) {
@@ -651,6 +719,10 @@ document.addEventListener("click", async (e) => {
   else if (a === "calnext") { calMonth = new Date(calMonth.getFullYear(), calMonth.getMonth() + 1, 1); rerender(); }
   else if (a === "caltoday") { calMonth = null; rerender(); }
   else if (a === "ics") icsExport();
+  else if (a === "edtics") edtIcs();
+  else if (a === "edtprev") { edtWeek.setDate(edtWeek.getDate() - 7); rerender(); }
+  else if (a === "edtnext") { edtWeek.setDate(edtWeek.getDate() + 7); rerender(); }
+  else if (a === "edttoday") { edtWeek = null; rerender(); }
   else if (a === "evt") { const ev = D.cal.evenements.find((x) => x.id === t.dataset.id); $("#evd").innerHTML = `<div class="card" style="margin-top:12px;border-left:4px solid ${M(ev.matiere).couleur}"><b>${esc(M(ev.matiere).nom)} — ${esc(ev.titre)}</b><div class="muted small">${fmtLong(ev.date)} · poids ${esc(ev.poids)} · ${cd(ev)}</div><p class="small">${esc(ev.detail)}</p><div class="row"><a class="btn sm pri" href="#/eval?m=${ev.matiere}">Éval blanche</a><a class="btn sm" href="#/qcm?m=${ev.matiere}">QCM</a><a class="btn sm" href="#/m/${ev.matiere}/cc">Fiche CC</a></div></div>`; }
   else if (a === "login") { /* submit géré */ }
   else if (a === "signup") doAuth("signup", $("#lf"));
