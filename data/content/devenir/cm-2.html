@@ -1,0 +1,247 @@
+<p>Cours donné par Jean François Parmentier &amp; Mar Pérez-Sanagustín (Université Paul Sabatier, IRIT, ANITI), le 25/09. <b>Objectifs :</b> comprendre l'IA (concepts, définitions, origines) ; découvrir les grands modèles de langage (LLM) et leurs usages éducatifs ; apprendre à dialoguer avec l'IA (bonnes pratiques de <i>prompting</i>) ; identifier les risques (biais, dépendance, fiabilité, vie privée) ; développer un usage responsable et éthique à l'université.</p>
+<div class="note"><b>Structure du module —</b> 1 CM (2 h) + 1 TD pratique (2 h) + 1 TP noté à la maison (1 h). Dans le programme de l'UE, ce CM est le « CM3 » et donne lieu à une « grille IA ».</div>
+
+<h2>1. L'IA générative</h2>
+<h3>Qu'est-ce que l'IA ?</h3>
+<ul>
+<li><b>1956 :</b> naissance du terme « Intelligence Artificielle » : « domaine de recherche qui vise à développer des techniques permettant aux machines de simuler des fonctions cognitives humaines comme le raisonnement, la perception ou l'apprentissage ».</li>
+<li><b>1950, Alan Turing :</b> « Je propose de considérer la question : les machines peuvent-elles penser ? », article fondateur <i>Computing Machinery and Intelligence</i>, qui pose les bases philosophiques du domaine.</li>
+</ul>
+<p>L'IA générative s'inscrit dans une évolution technologique de plusieurs décennies, de l'IA « classique » (années 1950) jusqu'aux grands modèles de langage actuels. Chaque sous-domaine est <b>inclus</b> dans le précédent :</p>
+<table>
+<thead><tr><th>Niveau (du plus large au plus étroit)</th><th>Période</th></tr></thead>
+<tbody>
+<tr><td>Intelligence artificielle</td><td>1956</td></tr>
+<tr><td>&nbsp;&nbsp;&#8627; Apprentissage automatique (Machine Learning)</td><td>1959-1960s</td></tr>
+<tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&#8627; IA générative (Generative AI)</td><td>1980s-2010s</td></tr>
+<tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#8627; Grands modèles de langage (LLM)</td><td>2018</td></tr>
+</tbody></table>
+
+<h3>L'apprentissage automatique (Machine Learning)</h3>
+<div class="def"><b>Machine Learning —</b> apprendre à partir des données, <b>sans programmation explicite</b> des règles.<br>Données en entrée → Algorithme d'IA → Résultat en sortie.</div>
+<p><i>Exemple :</i> des milliers d'images de chats en entrée → l'algorithme apprend → il sait reconnaître un chat sur une nouvelle image.</p>
+<table>
+<thead><tr><th>Type d'apprentissage</th><th>Principe</th><th>Exemple</th></tr></thead>
+<tbody>
+<tr><td><b>Supervisé</b></td><td>Les données sont <b>étiquetées</b> à l'avance (« ceci est un spam », « ceci n'en est pas un »).</td><td>Détection de spam</td></tr>
+<tr><td><b>Non-supervisé</b></td><td><b>Pas besoin d'étiqueter</b> les données : l'algorithme trouve lui-même des regroupements.</td><td>Moteurs de recommandation</td></tr>
+<tr><td><b>Par renforcement</b></td><td>Le système apprend en tirant les leçons de ses propres décisions (récompense / pénalité).</td><td>Jeux vidéo, robotique</td></tr>
+</tbody></table>
+<div class="def"><b>Apprentissage profond (Deep Learning) —</b> type d'apprentissage non-supervisé fondé sur les <b>réseaux de neurones artificiels (RNA)</b>, inspirés (de loin) du neurone biologique. Un RNA apprend la <b>distribution de probabilité</b> sous-jacente à de très vastes volumes de données. C'est le socle sur lequel repose l'IA générative.</div>
+
+<h3>L'IA générative : un changement de paradigme</h3>
+<ul>
+<li>Plutôt que de simplement <b>classer ou traiter</b> des données existantes (comme le ML « classique »), l'IA générative <b>produit de nouveaux contenus</b> : texte, image, musique…</li>
+<li>Elle <b>génère de nouveaux échantillons de données</b> qui ressemblent étroitement aux modèles observés dans les données d'apprentissage.</li>
+</ul>
+<p>Schéma : Données d'entraînement → Réseau de neurones → Génération (texte, image, musique…).</p>
+<h4>Exemples du quotidien : IA « classique » vs IA générative</h4>
+<table>
+<thead><tr><th>Exemples</th><th>Type</th></tr></thead>
+<tbody>
+<tr><td>Recommandations d'achats Amazon, pages web proposées par Google, recommandations de séries Netflix, reconnaissance faciale sur smartphone</td><td><b>IA « classique »</b> (classification / recommandation)</td></tr>
+<tr><td>ChatGPT (générer un texte à partir d'un texte), DALL·E (générer une image à partir d'un texte)</td><td><b>IA générative</b> (création de contenu nouveau)</td></tr>
+</tbody></table>
+<div class="note"><b>En bref —</b> l'IA est une technologie qui cherche à créer des machines capables de « comprendre » et de réagir à leur environnement. L'IA générative peut créer de nouveaux contenus (textes, images, sons) et constitue la base des grands modèles de langage (LLM).</div>
+
+<h2>2. Les grands modèles de langage (LLM)</h2>
+<div class="def"><b>LLM (Large Language Model) —</b> type de modèle d'IA générative capable de <b>comprendre et de produire du texte en langage naturel</b> à partir de très grandes quantités de données.</div>
+<div class="def"><b>Chatbot (agent conversationnel) —</b> interface qui dialogue avec l'utilisateur, souvent grâce à un LLM. Question de l'utilisateur (langage naturel) → Chatbot (LLM) → Texte, images, musique…</div>
+
+<h3>Une architecture clé : le Transformer (2017)</h3>
+<ul>
+<li><b>2017 :</b> « Attention is all you need » (Vaswani et al., Google Brain / Google Research) introduit l'architecture <b>Transformer</b>, une nouvelle façon d'entraîner des modèles de langue fondée sur un <b>mécanisme d'attention</b> : le modèle apprend à pondérer l'importance des différents mots d'une phrase les uns par rapport aux autres, plutôt que de les lire strictement dans l'ordre.</li>
+<li>Cette architecture rend l'entraînement sur d'énormes corpus beaucoup plus efficace et ouvre la voie aux LLM modernes (GPT, Claude, Gemini, LLaMA…), dont les premiers arrivent à partir de <b>2018</b>.</li>
+</ul>
+<p>Entraînement : <b>MILLIARDS</b> de textes → réseau de neurones → sortie (nouveau texte, image, musique…).</p>
+
+<h3>Une grande variété de modèles, dans le monde entier</h3>
+<table>
+<thead><tr><th>États-Unis (Anthropic, OpenAI, Google, Meta, xAI)</th><th>Chine</th><th>Union européenne (France)</th></tr></thead>
+<tbody><tr><td>Claude, Gemini, GPT-4, LLaMA, Grok</td><td>DeepSeek R1</td><td>Mistral (Large, 7B)</td></tr></tbody></table>
+<p>D'autres modèles largement utilisés dans le monde : GPT-4o (OpenAI), LaMDA (Google AI), Bloom 2 (BigScience), PaLM 2 (Google AI), Cohere Command R+ (Cohere), ERNIE 4.0 (Baidu), Falcon (TII), Qwen (Alibaba), Jurassic-1 Jumbo (AI21 Labs), Megatron-Turing NLG (NVIDIA/Microsoft)…</p>
+
+<h3>Comment fonctionne un LLM ?</h3>
+<p>Quatre étapes : <b>① Entraînement → ② Architecture Transformer → ③ Prédiction → ④ Génération</b>.</p>
+<p><i>Exemple d'étape « Prédiction » :</i> à partir de « Paris… », le modèle prédit que le mot suivant le plus probable est « la France ».</p>
+<div class="def"><b>Un LLM = un prédicteur très sophistiqué de mots —</b> à chaque étape, il calcule (avec des calculs très complexes) le <b>token</b> le plus probable pour continuer le texte, un token après l'autre.</div>
+<div class="def"><b>Token —</b> la plus petite unité de texte qu'un modèle comprend : un mot entier (« étudiant »), une partie de mot (« intel » + « igence »), ou un signe de ponctuation (« . »).</div>
+<div class="ex"><b>Exemple —</b> « L'IA est utile. » est découpé en 5 tokens : <code>L'</code> | <code>IA</code> | <code>est</code> | <code>utile</code> | <code>.</code></div>
+<div class="warn"><b>Limite fondamentale à garder en tête —</b> les grands modèles de langage se limitent à prédire (avec des calculs compliqués) <b>uniquement le prochain token</b>. Un LLM ne « comprend » donc pas vraiment comme un humain, et peut <b>inventer des informations</b> : il n'a pas toutes les connaissances, et ne connaît pas toujours bien le contexte précis de la question posée.</div>
+
+<h2>3. Limites des LLM</h2>
+<p>Cinq limites majeures sont à connaître : l'absence de compréhension réelle, les biais, les hallucinations, la dépendance aux données, et l'impact environnemental.</p>
+<h3>(1) Pas de compréhension réelle</h3>
+<p>Un LLM prédit à partir des données sur lesquelles il a été entraîné. <b>Si le raisonnement demandé s'écarte de ce que le modèle a bien appris, ou si les données sont trompeuses, il peut se tromper</b>, y compris sur des sujets scientifiques classiques (ex. une explication physique mal reformulée), sans que cela soit toujours visible pour l'utilisateur non expert.</p>
+<h3>(2) Hallucinations</h3>
+<p>Un LLM <b>n'a pas toujours accès à des données fiables</b> et il complète parfois les manques en <b>inventant</b> des informations, présentées avec la même assurance que les vraies.</p>
+<div class="ex"><b>Exemple donné en cours —</b> à la demande « donne-moi trois citations que Shakespeare a écrites sur Beyoncé », un modèle plus ancien (GPT-3o) invente de fausses citations sans prévenir, alors qu'un modèle plus récent (GPT-5) identifie l'anachronisme (Shakespeare est mort en 1616, Beyoncé est née en 1981) et le signale avant de proposer, si besoin, des citations fictives clairement présentées comme telles. Les modèles progressent, mais <b>le risque d'hallucination ne disparaît jamais complètement</b>.</div>
+<h3>(3) Dépendance aux données</h3>
+<ul>
+<li>Les données d'entraînement sont en grande partie <b>étiquetées manuellement</b> par des personnes chargées de classer, corriger ou filtrer les contenus afin d'améliorer les réponses du modèle.</li>
+<li>La <b>performance</b> du modèle dépend directement de la <b>qualité des données d'entraînement</b>.</li>
+<li><b>Enjeu social et éthique :</b> des entreprises spécialisées emploient des travailleurs, souvent appelés « <b>travailleurs du clic</b> », pour réaliser ce travail d'étiquetage : un aspect peu visible mais essentiel de la chaîne de production des LLM.</li>
+</ul>
+<h3>(4) Biais</h3>
+<p>Les LLM apprennent à partir de données produites par des humains. <b>Ces données reflètent nos valeurs, nos cultures et nos stéréotypes</b> : les LLM sont, en ce sens, un reflet de l'humanité, biais compris.</p>
+<h3>(5) Impact environnemental</h3>
+<p>Calculer consomme de l'énergie : nous devons promouvoir une « <b>IA frugale</b> ». Comparaison de l'impact énergétique d'une seule discussion (source : DRANE Versailles) :</p>
+<table>
+<thead><tr><th>Impact d'une discussion</th><th>GPT-4o mini (OpenAI)</th><th>Llama 3.1 405B (Meta)</th></tr></thead>
+<tbody>
+<tr><td>Paramètres</td><td>35 milliards</td><td>405 milliards</td></tr>
+<tr><td>Taille du texte (discussion)</td><td>396 tokens</td><td>377 tokens</td></tr>
+<tr><td>Énergie consommée</td><td>1,83 Wh</td><td>55 Wh</td></tr>
+<tr><td>CO<sub>2</sub> émis</td><td>≈ 1,83 g</td><td>≈ 55 g</td></tr>
+<tr><td>Équivalent ampoule LED</td><td>≈ 35 min</td><td>≈ 17 h</td></tr>
+<tr><td>Équivalent vidéo en ligne</td><td>≈ 3 min</td><td>≈ 1 h</td></tr>
+</tbody></table>
+<p>Un modèle bien plus grand (405 Md de paramètres contre 35 Md) consomme, pour une discussion comparable, environ <b>30 fois plus d'énergie</b> (55 / 1,83 ≈ 30) : d'où l'intérêt de <b>choisir un modèle adapté à la tâche</b> plutôt que systématiquement le plus gros disponible.</p>
+<div class="note"><b>En bref —</b> les LLM n'ont pas de compréhension du monde réel ; ils dépendent des données et de leur étiquetage ; ils reproduisent les biais des données (reflet de l'humanité) ; ils peuvent « halluciner » (inventer des informations) ; ils consomment beaucoup d'énergie, d'où la nécessité d'une IA frugale.</div>
+
+<h2>4. Limites des LLM pour l'apprentissage</h2>
+<h3>Usages de l'IA dans l'enseignement supérieur</h3>
+<p>Source : Digital Education Council, <i>AI in Higher Education LATAM Survey 2026</i>.</p>
+<table>
+<thead><tr><th>Usage</th><th>Part des répondants</th></tr></thead>
+<tbody>
+<tr><td>Recherche d'informations</td><td>65 %</td></tr>
+<tr><td>Nouvelles idées / commencer un brouillon</td><td>61 %</td></tr>
+<tr><td>Aide à la rédaction</td><td>47 %</td></tr>
+<tr><td>Résumé de documents</td><td>42 %</td></tr>
+<tr><td>Partenaire d'apprentissage</td><td>31 %</td></tr>
+<tr><td>Traduction de langues</td><td>26 %</td></tr>
+<tr><td>Production de matériel multimédia</td><td>17 %</td></tr>
+</tbody></table>
+<p>Une étude Anthropic (2025, <i>Anthropic education report</i>) montre comment les étudiants utilisent Claude selon la <b>taxonomie de Bloom</b> (des compétences de bas niveau, mémoriser, aux compétences de haut niveau, créer) :</p>
+<table>
+<thead><tr><th>Niveau de Bloom</th><th>Part des usages</th></tr></thead>
+<tbody>
+<tr><td>Créer (Creating)</td><td>39,8 %</td></tr>
+<tr><td>Analyser (Analyzing)</td><td>30,2 %</td></tr>
+<tr><td>Appliquer (Applying)</td><td>10,9 %</td></tr>
+<tr><td>Comprendre (Understanding)</td><td>10,0 %</td></tr>
+<tr><td>Évaluer (Evaluating)</td><td>5,5 %</td></tr>
+<tr><td>Se souvenir (Remembering)</td><td>1,8 %</td></tr>
+</tbody></table>
+<p>Les usages se concentrent surtout sur des compétences de « haut niveau » (créer, analyser). Cela peut être positif (l'IA comme partenaire de réflexion), mais interroge aussi : ces usages remplacent-ils un travail de compréhension et de mémorisation qui reste, lui, nécessaire à un apprentissage solide ?</p>
+<h3>Collaboration ou dépendance ?</h3>
+<p>Deux compétences clés sont particulièrement mises à l'épreuve :</p>
+<ul>
+<li><b>Déficit de dialogue :</b> nous tendons à accepter ou rejeter les réponses initiales du LLM plutôt qu'à engager un véritable travail collaboratif avec lui (Gomez et al., 2025).</li>
+<li><b>Illusion d'apprentissage :</b> les apprenants ont tendance à utiliser les LLM comme de simples sources d'information, au lieu de co-construire des connaissances avec l'IA (Fan et al., 2024).</li>
+</ul>
+<div class="warn"><b>La « paresse métacognitive » (Fan et al., 2025, <i>British Journal of Educational Technology</i>) —</b> une étude menée sur <b>117 étudiants</b> a comparé plusieurs types de soutien (ChatGPT, expert humain, outils d'analyse d'écriture, aucun outil) sur une tâche de rédaction. Le groupe ChatGPT a obtenu de meilleurs scores sur l'essai produit, <b>mais sans gain ni transfert de connaissances significativement supérieur</b>. Conclusion des auteurs : la dépendance aux outils d'IA générative peut déclencher une « paresse métacognitive » : le résultat s'améliore, mais l'apprentissage réel ne suit pas forcément.</div>
+<div class="note"><b>En bref —</b> en tant qu'étudiants, nous devons essayer de ne pas devenir dépendants de l'IA, et chercher la manière dont elle peut nous aider et nous rendre plus intelligents, et non plus dépendants.</div>
+
+<h2>5. Communiquer avec un LLM : l'art du prompt</h2>
+<p>Les agents conversationnels (chatbots) sont des systèmes d'IA capables de dialoguer en langage naturel, souvent grâce aux LLM. Il est essentiel de <b>choisir le bon chatbot au bon moment</b>, et de <b>croiser les outils d'IA générative</b> pour obtenir des résultats plus fiables et nuancés.</p>
+<h3>Outils d'IA générative par type de production</h3>
+<ul>
+<li><b>Texte :</b> ChatGPT, Le Chat (Mistral), Gemini, Claude.</li>
+<li><b>Image :</b> DALL·E, Deep Dream Generator, Lasco.ai, Midjourney.</li>
+<li><b>Musique :</b> MuseNet, Soundful, Soundraw, Loudly AI Studio.</li>
+<li><b>Vidéo :</b> Gen-2 (Runway), Sora (OpenAI), AI Video Maker, vidyo.ai, elai.</li>
+<li><b>Assistants spécialisés :</b> Perplexity (moteur de recherche basé sur des LLM), Copilot (assistant de programmation).</li>
+</ul>
+<h3>Technique 1 : spécifier le contexte et le résultat final</h3>
+<ul>
+<li><b>La forme générale :</b> nombre de paragraphes, avec ou sans équations, tableau, liste à puces, document Word…</li>
+<li><b>Le public visé / le contexte :</b> document scientifique, de vulgarisation…</li>
+<li><b>Le style :</b> académique, parodique, informel…</li>
+<li><b>D'autres éléments :</b> en faisant appel à des documents spécifiques (URL, source à citer)…</li>
+</ul>
+<div class="ex"><b>Exemple : prompt vague vs prompt précis —</b>
+<p><b>Prompt vague :</b> « Explique-moi la loi de Newton » → réponse correcte mais générique, non adaptée à un public particulier.</p>
+<p><b>Prompt précis :</b> « Explique-moi les lois du mouvement de Newton en un paragraphe d'environ 150 mots, dans un style simple, amusant et accessible à des enfants de 12 ans. Utilise des exemples concrets du quotidien (comme le vélo, une balle ou une voiture). Inspire-toi des informations présentes sur cette page Wikipédia : […] » → réponse bien plus courte, imagée (ballon, skateboard, vélo vs camion) et adaptée au public demandé.</p></div>
+<h3>Technique 2 : extraction de connaissances</h3>
+<ul>
+<li>On définit les <b>caractéristiques d'une bonne réponse</b>.</li>
+<li>On demande au LLM de donner <b>une réponse respectant ces caractéristiques</b>.</li>
+</ul>
+<div class="ex"><b>Exemple —</b> « Je dois rédiger un courriel pour demander un entretien. Le message doit respecter les caractéristiques suivantes : un paragraphe d'introduction présentant mon identité et l'objectif de l'entretien ; un langage formel ; un courriel court, ne dépassant pas quatre paragraphes ; inclure les caractéristiques de l'entretien ; proposer ou demander des dates pour sa réalisation. » → le LLM produit un courriel structuré (objet, formule d'appel, contexte, objectif et durée de l'entretien, demande de disponibilités, formule de politesse) respectant chacune des consignes.</div>
+<h3>Technique 3 : la critique et l'auto-critique</h3>
+<p>Demander au LLM de <b>critiquer sa propre réponse</b> : en mettant en valeur les points forts et faibles, en proposant des suggestions d'amélioration, puis en prenant en compte ces suggestions pour produire une nouvelle réponse améliorée.</p>
+<div class="ex"><b>Exemple —</b> « Écris un résumé en un paragraphe du film Aladdin de Disney (1992). Critique ce résumé en indiquant les points forts et les points faibles, propose des suggestions d'amélioration, puis écris une nouvelle version qui prend en compte ces suggestions. » → le modèle identifie lui-même que son résumé est clair mais trop neutre (pas assez de magie, d'univers d'Agrabah, d'émotions des personnages), et produit une version enrichie en conséquence.</div>
+
+<h3>Quand le prompt ne suffit pas : le RAG</h3>
+<div class="def"><b>RAG (Retrieval-Augmented Generation, génération augmentée par récupération) —</b> combine deux étapes :
+<ul>
+<li><b>Retrieval (recherche) :</b> le LLM cherche dans une base de données ou des documents externes ;</li>
+<li><b>Augmented Generation (génération augmentée) :</b> le modèle utilise ces informations pour produire une réponse plus précise, fondée sur des sources vérifiables.</li>
+</ul>
+Schéma : Question → Retrieval (Modèle + Base de connaissances) → Réponse.</div>
+<p>Le RAG permet de <b>réduire les erreurs (« hallucinations »)</b>, d'<b>actualiser les connaissances</b> du modèle (au-delà de sa date d'entraînement), et d'<b>expliquer les réponses avec des références fiables</b>.</p>
+<h3>Et aujourd'hui : l'IA agentique</h3>
+<div class="def"><b>IA agentique —</b> passage d'une IA qui <b>répond</b> à une IA qui <b>agit</b> : des systèmes d'IA conçus pour <b>poursuivre des objectifs de manière autonome</b>, en planifiant et en exécutant plusieurs étapes <b>sans intervention humaine constante</b>, par opposition aux chatbots conversationnels classiques, qui répondent de façon réactive à chaque requête.</div>
+<div class="note"><b>En bref —</b> les agents conversationnels sont des interfaces basées sur des modèles de langage, conçues pour interagir avec les humains selon différents besoins. Ils sont, en somme, « la voix des modèles de langage ».</div>
+
+<h2>6. Usages éthiques à l'université</h2>
+<h3>Puis-je utiliser un LLM à l'université ?</h3>
+<p>Oui, mais dans un cadre précis. L'Université Toulouse III – Paul Sabatier a adopté une <b>Charte du bon usage des intelligences artificielles génératives</b> (Conseil d'administration du 2 juin 2025, délibération 2025/06/CA-054), qui repose sur <b>six principes</b> :</p>
+<table>
+<thead><tr><th>Principe</th><th>Contenu</th></tr></thead>
+<tbody>
+<tr><td><b>Transparence</b></td><td>Déclaration d'usage dans les travaux.</td></tr>
+<tr><td><b>Équité et non-discrimination</b></td><td>Éviter de reproduire des biais.</td></tr>
+<tr><td><b>Responsabilité</b></td><td>Utilisation comme un assistant, pas comme un auteur.</td></tr>
+<tr><td><b>Intégrité académique</b></td><td>Ne pas compromettre l'authenticité du travail académique.</td></tr>
+<tr><td><b>Protection des données</b></td><td>Les informations personnelles doivent être protégées.</td></tr>
+<tr><td><b>Développement de compétences</b></td><td>Ne pas remplacer l'apprentissage humain.</td></tr>
+</tbody></table>
+<div class="warn"><b>Sur le développement des compétences —</b> l'IA générative doit compléter, non remplacer, l'apprentissage humain. Les outils d'IA générative doivent être vus comme des assistants dans les activités universitaires, et non comme des substituts au travail et à l'implication de chacun. Ils ne doivent pas être un frein à la formation de l'esprit d'analyse, de synthèse et de critique. <b>Il faut d'abord apprendre à penser sans les machines.</b></div>
+<h3>Recommandations pour les étudiants</h3>
+<ul>
+<li><b>Utilisations dans les travaux académiques :</b> utile comme soutien, pas comme substitut à l'effort ; <b>déclaration obligatoire</b> de l'usage dans le travail rendu.</li>
+<li><b>Développement de compétences :</b> pour améliorer votre compréhension, pas pour contourner l'apprentissage ; développez votre esprit critique.</li>
+<li><b>Collaboration et partage :</b> partagez vos expériences d'usage avec pairs et enseignants ; respectez les directives spécifiques de chaque cours concernant l'utilisation de l'IA générative ; l'IA générative <b>n'est pas autorisée à reproduire, sans son consentement, la voix ou l'image d'une personne existante</b>.</li>
+</ul>
+<div class="warn"><b>L'apprentissage repose sur l'effort personnel —</b> on ne peut pas utiliser l'IA générative comme substitut au travail individuel.</div>
+
+<h3>Les quatre étapes pour un usage éthique de l'IA générative</h3>
+<table>
+<thead><tr><th>Étape</th><th>Signification</th></tr></thead>
+<tbody>
+<tr><td><b>Déléguer</b></td><td>Identifier les tâches d'apprentissage et décider lesquelles peuvent être confiées à l'IA.</td></tr>
+<tr><td><b>Décrire</b></td><td>Choisir l'outil adapté et formuler un prompt clair et précis pour obtenir une aide pertinente.</td></tr>
+<tr><td><b>Discerner</b></td><td>Vérifier les résultats, réfléchir avec esprit critique et distinguer le vrai du faux.</td></tr>
+<tr><td><b>Diligence</b></td><td>Utiliser l'IA comme guide, non comme remplaçant : décider avec soin ce que l'on intègre à son travail et la manière de le faire.</td></tr>
+</tbody></table>
+<div class="def"><b>Modèle de phrase de déclaration d'usage (à adapter dans tous vos travaux) —</b> « J'ai utilisé [nom des outils d'IA générative] pour [nom des tâches réalisées]. J'ai ensuite [relu / corrigé / reformulé] les résultats finaux afin de [objectif pédagogique, ex. améliorer la clarté / vérifier l'exactitude]. Cet usage a été réalisé conformément au cadre institutionnel et dans le respect des principes d'éthique académique. »</div>
+
+<h3>Exemples d'usage à risque faible et à risque fort</h3>
+<p>Le niveau de risque dépend surtout d'une question : <b>suis-je moi-même à la source de l'information, et puis-je vérifier facilement ce que produit le LLM ?</b></p>
+<table>
+<thead><tr><th>#</th><th>Situation</th><th>Risque</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>Rédiger un email professionnel en connaissant déjà le sujet et les détails nécessaires : le LLM aide à structurer et reformuler.</td><td><b>Faible</b></td></tr>
+<tr><td>2</td><td>Interroger un LLM sur un sujet pointu (ex. les dernières avancées en physique quantique) sans en être soi-même expert : réponse difficilement vérifiable.</td><td><b>Fort</b></td></tr>
+<tr><td>3</td><td>Interroger un LLM sur un fait précis et vérifiable que l'on connaît déjà (ex. la date de la Révolution française).</td><td><b>Faible</b></td></tr>
+<tr><td>4</td><td>Utiliser un LLM pour résumer un long rapport que l'on a déjà lu, et dont on connaît déjà les points clés.</td><td><b>Faible</b></td></tr>
+<tr><td>5</td><td>Demander à un chatbot un avis ou une évaluation sur la pertinence d'un candidat à une offre d'emploi : c'est un jugement évaluatif.</td><td><b>Fort</b></td></tr>
+<tr><td>7</td><td>Demander à un chatbot quelle position adopter sur un sujet d'actualité ou politique (ex. un plan de paix international) avant d'avoir analysé le sujet soi-même.</td><td><b>Fort</b></td></tr>
+</tbody></table>
+<div class="note"><b>Numérotation —</b> la fiche source passe directement de la situation 5 à la situation 7 (pas de situation 6).</div>
+<p><b>Risque faible :</b> lorsque vous êtes à la source de l'information, lorsque vous connaissez bien le sujet, ou en utilisant le LLM comme une boîte à idées. <b>Risque fort :</b> lorsque vous ne connaissez pas la réponse (ou qu'elle est difficilement vérifiable), pour des jugements évaluatifs, ou lorsque vous avez oublié de réfléchir par vous-même avant de demander. Il faut toujours adapter l'usage au contexte.</p>
+
+<h3>Ressources complémentaires citées en cours</h3>
+<ul>
+<li>Chris Manning : conférence sur l'histoire de l'IA (YouTube).</li>
+<li>Rapport « IA et enseignement supérieur » (enseignementsup-recherche.gouv.fr).</li>
+<li>Cadre d'usage de l'IA en éducation (education.gouv.fr).</li>
+<li>IA générative : l'art du prompt (DRANE Versailles, région académique IDF).</li>
+<li>Mallette IA et fiches IA, documents d'information et d'acculturation (DRANE Versailles).</li>
+<li>Charte du bon usage des IA génératives (Université Toulouse III, univ-tlse3.fr).</li>
+</ul>
+
+<div class="retenir"><b>À retenir —</b>
+<ul>
+<li>IA ⊃ Machine Learning ⊃ IA générative ⊃ LLM. L'IA générative <b>crée</b> de nouveaux contenus ; l'IA « classique » classe ou recommande.</li>
+<li>Un LLM <b>prédit le token suivant</b> (Transformer, mécanisme d'attention, 2017) : il ne « comprend » pas comme un humain et peut <b>halluciner</b>.</li>
+<li>Cinq limites : pas de compréhension réelle, hallucinations, dépendance aux données (étiquetage humain), biais, impact environnemental (IA frugale, modèle adapté à la tâche).</li>
+<li>Risque pour l'apprentissage : dépendance, illusion d'apprentissage, « paresse métacognitive » ; il faut d'abord apprendre à penser sans les machines.</li>
+<li>Prompt : préciser <b>forme, public, style, sources</b> ; définir les caractéristiques d'une bonne réponse ; demander critique puis nouvelle version. Le <b>RAG</b> réduit les hallucinations grâce à des sources externes ; l'IA <b>agentique</b> agit de façon autonome.</li>
+<li>Charte UPS (6 principes) : transparence, équité et non-discrimination, responsabilité, intégrité académique, protection des données, développement de compétences. <b>Déclarer</b> son usage dans chaque travail.</li>
+<li>4 étapes : <b>Déléguer, Décrire, Discerner, Diligence</b>.</li>
+<li><b>Risque faible</b> : je suis à la source / je connais le sujet / boîte à idées. <b>Risque fort</b> : réponse inconnue ou peu vérifiable, jugement évaluatif, pas de réflexion préalable.</li>
+</ul></div>

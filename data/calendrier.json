@@ -1,0 +1,218 @@
+{
+ "evenements": [
+  {
+   "id": "ev01",
+   "date": "2026-10-05",
+   "matiere": "sn",
+   "titre": "CC1 — QCM partie A",
+   "poids": "50 %",
+   "detail": "QCM de 60 questions · 45 min",
+   "type": "CC",
+   "statut": ""
+  },
+  {
+   "id": "ev02",
+   "date": "2026-10-08",
+   "matiere": "algo1",
+   "titre": "CC1 — QCM 1",
+   "poids": "10 %",
+   "detail": "QCM d'environ 15 min · début de séance de TP",
+   "type": "CC",
+   "statut": ""
+  },
+  {
+   "id": "ev03",
+   "date": "2026-10-12",
+   "matiere": "calc1",
+   "titre": "CC1 — Interro TD",
+   "poids": "15 %",
+   "detail": "Interro de 20 min en TD",
+   "type": "CC",
+   "statut": ""
+  },
+  {
+   "id": "ev04",
+   "date": "2026-10-21",
+   "matiere": "bases2",
+   "titre": "Note 1 — TD",
+   "poids": "1/3",
+   "detail": "20 min · passée en TD",
+   "type": "CC",
+   "statut": ""
+  },
+  {
+   "id": "ev05",
+   "date": "2026-11-02",
+   "matiere": "sn",
+   "titre": "CC2 — QCM partie B",
+   "poids": "50 %",
+   "detail": "QCM de 60 questions · 45 min",
+   "type": "CC",
+   "statut": ""
+  },
+  {
+   "id": "ev06",
+   "date": "2026-11-03",
+   "matiere": "bas",
+   "titre": "CCI — à confirmer",
+   "poids": "à confirmer",
+   "detail": "Laquelle des CCI 1, 2 ou 3 ? (2 CCI en Systèmes, 1 en Architecture)",
+   "type": "CC",
+   "statut": "a_confirmer"
+  },
+  {
+   "id": "ev07",
+   "date": "2026-11-12",
+   "matiere": "algo1",
+   "titre": "CC1 — QCM 2",
+   "poids": "15 %",
+   "detail": "QCM d'environ 15 min · début de séance de TP",
+   "type": "CC",
+   "statut": ""
+  },
+  {
+   "id": "ev08",
+   "date": "2026-11-16",
+   "matiere": "calc1",
+   "titre": "CC2.1 — Interro TD",
+   "poids": "20 %",
+   "detail": "Interro de 30 min en TD",
+   "type": "CC",
+   "statut": ""
+  },
+  {
+   "id": "ev09",
+   "date": "2026-11-19",
+   "matiere": "algo1",
+   "titre": "CC2 — Devoir papier",
+   "poids": "30 %",
+   "detail": "Épreuve sur papier en amphi · date annoncée mais non confirmée",
+   "type": "CC",
+   "statut": "provisoire"
+  },
+  {
+   "id": "ev10",
+   "date": "2026-11-23",
+   "matiere": "sn",
+   "titre": "CC3 — Seconde chance",
+   "poids": "0 %",
+   "detail": "QCM de 120 questions · 90 min · remplace CC1 ou CC2 si meilleure",
+   "type": "2e",
+   "statut": ""
+  },
+  {
+   "id": "ev11",
+   "date": "2026-11-25",
+   "matiere": "bases2",
+   "titre": "Note 2 — TD",
+   "poids": "1/3",
+   "detail": "30 min · passée en TD",
+   "type": "CC",
+   "statut": ""
+  },
+  {
+   "id": "ev12",
+   "date": "2026-11-26",
+   "matiere": "algo1",
+   "titre": "CC3 — Programmes",
+   "poids": "35 %",
+   "detail": "Programmes à écrire · TP dédié",
+   "type": "CC",
+   "statut": ""
+  },
+  {
+   "id": "ev13",
+   "date": "2026-11-30",
+   "matiere": "calc1",
+   "titre": "CC2.2 — Interro TD",
+   "poids": "20 %",
+   "detail": "Interro de 30 min en TD",
+   "type": "CC",
+   "statut": ""
+  },
+  {
+   "id": "ev14",
+   "date": "2026-12-07",
+   "matiere": "calc1",
+   "titre": "CC3 — Devoir amphi",
+   "poids": "45 %",
+   "detail": "Devoir de 1h30 en conditions d'examen",
+   "type": "CC",
+   "statut": ""
+  },
+  {
+   "id": "ev15",
+   "date": "2026-12-08",
+   "matiere": "bas",
+   "titre": "CCI — à confirmer",
+   "poids": "à confirmer",
+   "detail": "Laquelle des CCI 1, 2 ou 3 ?",
+   "type": "CC",
+   "statut": "a_confirmer"
+  },
+  {
+   "id": "ev16",
+   "date": "2026-12-16",
+   "matiere": "bases2",
+   "titre": "Note 3 — Amphi",
+   "poids": "1/3",
+   "detail": "1h30 · 3e créneau de chaque section",
+   "type": "CC",
+   "statut": ""
+  },
+  {
+   "id": "ev17",
+   "date": "2026-12-17",
+   "matiere": "algo1",
+   "titre": "CC4 — Seconde chance",
+   "poids": "10 %",
+   "detail": "QCM + programmes · remplace la note la plus faible",
+   "type": "2e",
+   "statut": ""
+  },
+  {
+   "id": "ev18",
+   "date": "2026-12-22",
+   "matiere": "devenir",
+   "titre": "CC3 — Rapport individuel",
+   "poids": "50 %",
+   "detail": "À rendre sur Moodle · fond /30 + forme LaTeX /10",
+   "type": "CC",
+   "statut": ""
+  },
+  {
+   "id": "ev19",
+   "date": "2027-01-04",
+   "matiere": "calc1",
+   "titre": "CC4 — Seconde chance",
+   "poids": "0 %",
+   "detail": "Devoir de 1h30 · remplace toute note inférieure",
+   "type": "2e",
+   "statut": ""
+  },
+  {
+   "id": "ev20",
+   "date": "2027-01-11",
+   "matiere": "bases2",
+   "titre": "Note 4 — Seconde chance",
+   "poids": "facultative",
+   "detail": "1h30 · remplace chaque note inférieure",
+   "type": "2e",
+   "statut": ""
+  }
+ ],
+ "remarques": [
+  {
+   "matiere": "bas",
+   "texte": "Dates du 3/11 et du 8/12 connues mais pas encore rattachées à un CCI précis ; la date de CCI4 (2e chance, 50 %) n'est pas communiquée."
+  },
+  {
+   "matiere": "devenir",
+   "texte": "CC1 (poster + oral, 35 %) et CC2 (QCM + rapport d'étonnement, 15 %) : dates à annoncer. Pas de 2e chance."
+  },
+  {
+   "matiere": "algo1",
+   "texte": "CC2 (devoir papier) : la fiche MCCC dit « à annoncer », le calendrier général indique le 19/11 — à confirmer."
+  }
+ ]
+}

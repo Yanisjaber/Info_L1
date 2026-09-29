@@ -1,0 +1,137 @@
+<p>Deux idées dans ce cours : (1) un <b>tableau</b> ou une <b>matrice</b> est un type abstrait qui ne s'utilise qu'avec quelques opérations (créer, longueur, lire, écrire) ; (2) la <b>complexité</b> mesure le coût d'un algorithme en fonction de la taille de son entrée, et permet de choisir entre plusieurs algorithmes qui résolvent le même problème.</p>
+
+<h2>Partie 1 — Le type abstrait Tableau et Matrice</h2>
+<div class="def"><b>Type abstrait —</b> décrit ce qu'on peut faire avec une donnée (ses <b>opérations autorisées</b>), sans dire comment c'est fait en mémoire. Il sépare le <b>client</b> (le code qui utilise le type, qui ne connaît que les opérations) du <b>prestataire</b> (le code qui l'implémente). Une <b>structure de données</b> définit en plus son implémentation, c'est-à-dire sa mise en œuvre matérielle (comment elle est représentée en mémoire).</div>
+<p><b>Pourquoi ne pas utiliser directement les <code>list</code> de Python ?</b> Parce que le but de l'UE est d'apprendre des notions d'algorithmique <b>indépendantes du langage</b>. Si on utilisait toutes les possibilités des listes Python (<code>append</code>, <code>insert</code>, <code>pop</code>…), le raisonnement ne se transposerait plus en C, Java, etc. On se restreint donc à un socle minimal d'opérations, disponible dans (presque) tous les langages.</p>
+<div class="ex"><b>Exemples de types —</b> le type <code>int</code> de Python a pour espace de valeurs l'ensemble des entiers relatifs (ℤ) et pour opérations autorisées <code>+</code>, <code>-</code>, <code>%</code>, etc. Le type <code>bool</code> a pour espace de valeurs {False, True} et pour opérations <code>not</code>, <code>and</code>, <code>or</code>, <code>==</code>. Chaque opération se spécifie comme une fonction : ses paramètres sont les opérandes, sa valeur de retour est le résultat, et sa pré-condition / post-condition précisent dans quel cas elle s'applique et ce qu'elle garantit.</div>
+
+<h3>Le type abstrait Tableau</h3>
+<p>Un tableau mémorise une séquence d'éléments avec 3 règles : le <b>nombre d'éléments est fixe</b>, tous les éléments ont le <b>même type</b>, et chaque élément est repéré par sa <b>position (indice)</b>.</p>
+<table><thead><tr><th>Opération</th><th>Ce qu'elle fait</th><th>En Python (restreint)</th></tr></thead><tbody>
+<tr><td>Créer</td><td>fixe la longueur et la valeur par défaut</td><td><code>tableau = creer_tableau(longueur, defaut)</code></td></tr>
+<tr><td>Longueur</td><td>donne le nombre d'éléments</td><td><code>len(tableau)</code></td></tr>
+<tr><td>Lire</td><td>lit l'élément à l'indice i (0 &lt;= i &lt; len)</td><td><code>valeur = tableau[i]</code></td></tr>
+<tr><td>Écrire</td><td>remplace l'élément à l'indice i</td><td><code>tableau[i] = valeur</code></td></tr>
+</tbody></table>
+<div class="warn"><b>Interdits —</b> pas d'<code>append</code>, <code>insert</code> ou <code>pop</code> : ces méthodes changent la longueur de la liste, ce qui casserait la règle « taille fixe » du tableau.</div><pre><code>def creer_tableau(longueur, defaut):
+    assert longueur &gt;= 0, 'Pre-condition'
+    return [defaut] * longueur
+
+tableau = creer_tableau(20, 0)   # tableau de 20 entiers, tous à 0
+tableau[0] = int(input())        # écriture
+tableau[1] = 2 * tableau[0]      # lecture puis écriture</code></pre><h3>Pourquoi ces 4 opérations et pas d'autres ?</h3>
+<p>Elles collent à ce qu'une <b>zone contiguë de mémoire</b> permet de faire efficacement : chaque case occupe une taille fixe, et l'adresse de l'élément i se calcule directement par <code>adresse(tableau[0]) + i × taille_case</code>. C'est pourquoi en C un tableau a une taille fixée une fois pour toutes à sa création :</p><pre><code>int tableau[20] = {0};        // 20 cases, valable uniquement pour 0
+scanf("%d", &amp;tableau[0]);     // écriture
+tableau[1] = 2 * tableau[0];  // lecture puis écriture</code></pre><h3>Exercice corrigé — la fonction <code>deplacer</code></h3><pre><code>def deplacer(tableau, i_source, i_destination):
+    valeur = tableau.pop(i_source)
+    tableau.insert(i_destination, valeur)</code></pre><p><b>1) Ce qu'elle fait :</b> elle retire l'élément situé à l'indice <code>i_source</code> puis le réinsère à l'indice <code>i_destination</code> : elle déplace un élément dans la liste, en décalant tous les éléments entre les deux positions.</p>
+<p><b>2) Pourquoi ça viole le type Tableau :</b> <code>pop</code> et <code>insert</code> sont des opérations interdites, car elles changent la longueur de la liste (même temporairement, le temps d'un appel). Un tableau n'autorise que lire/écrire à un indice existant.</p>
+<p><b>3) Correction :</b> on ne peut utiliser que lire et écrire ; on recopie « à la main » les éléments un par un, en décalant dans le bon sens :</p><pre><code>def deplacer(tableau, i_source, i_destination):
+    assert 0 &lt;= i_source &lt; len(tableau), 'Pre-condition'
+    assert 0 &lt;= i_destination &lt; len(tableau), 'Pre-condition'
+    valeur = tableau[i_source]
+    if i_source &lt; i_destination:
+        for i in range(i_source, i_destination):
+            tableau[i] = tableau[i + 1]
+    else:
+        for i in range(i_source, i_destination, -1):
+            tableau[i] = tableau[i - 1]
+    tableau[i_destination] = valeur</code></pre><p><b>4) Contrainte à garantir :</b> tous les éléments doivent être conservés, seulement réordonnés — ni perdu, ni dupliqué. La version corrigée le garantit naturellement : elle ne fait que des décalages internes au tableau, dont la longueur ne change jamais.</p>
+<div class="ex"><b>Exemple —</b> <code>t = [10, 20, 30, 40, 50]</code> ; après <code>deplacer(t, 1, 3)</code>, <code>t</code> vaut <code>[10, 30, 40, 20, 50]</code> (l'élément 20 est passé de l'indice 1 à l'indice 3, 30 et 40 ont reculé d'une case).</div>
+
+<h3>Le type abstrait Matrice</h3>
+<p>Une matrice est un tableau à <b>deux dimensions</b> (lignes × colonnes), utile pour représenter des données 2D (images, grilles, transformations géométriques…). En Python restreint : une liste non vide de listes non vides, toutes de même longueur.</p><pre><code>def creer_matrice(nb_lignes, nb_colonnes, defaut):
+    assert nb_lignes &gt; 0 and nb_colonnes &gt; 0, 'Pre-condition'
+    matrice = [None] * nb_lignes
+    for i in range(nb_lignes):
+        matrice[i] = [defaut] * nb_colonnes
+    return matrice
+
+matrice = creer_matrice(19, 13, 0)   # 19 lignes, 13 colonnes
+nb_lignes  = len(matrice)
+nb_colonnes = len(matrice[0])
+matrice[3][4] = int(input())          # écriture à la ligne 3, colonne 4</code></pre><p>Même logique que pour le tableau : dimensions et type fixés à la création ; aucune méthode qui changerait la longueur d'une des listes n'est autorisée.</p>
+<div class="warn"><b>Piège classique —</b> <code>[[0] * 13] * 19</code> crée 19 fois <i>la même</i> ligne (alias) : modifier une case modifie toute la colonne. C'est pourquoi <code>creer_matrice</code> crée une nouvelle liste <code>[defaut] * nb_colonnes</code> pour chaque ligne.</div><p><b>Deux motivations :</b> représenter des données en 2D (une image en niveaux de gris est une matrice de pixels, un écran une matrice de couleurs), et représenter la notion mathématique de matrice (transformations du plan ou de l'espace). Une rotation 3D peut s'écrire comme une matrice 3×3 :</p><pre><code>rot = [
+    [ 0, 1, 0],
+    [-1, 0, 0],
+    [ 0, 0, 1]
+]</code></pre>
+<h2>Partie 2 — Complexité</h2>
+<div class="def"><b>Complexité —</b> quantité de ressources (temps, mémoire) qu'un algorithme consomme, exprimée <b>en fonction de la taille de son entrée</b> (longueur d'un tableau, valeur d'un entier…). Plusieurs algorithmes peuvent résoudre le même problème : la complexité permet de choisir le plus adapté, en particulier pour de grandes entrées.</div>
+<div class="note"><b>Rappels de vocabulaire —</b>
+<ul><li><b>Problème :</b> caractérisé par sa spécification, c'est-à-dire une pré-condition (ce qu'on suppose sur l'entrée) et une post-condition (ce que doit garantir la sortie).</li>
+<li><b>Implémentation :</b> une fonction concrète qui respecte cette spécification.</li>
+<li><b>Algorithme :</b> l'ensemble des opérations qui permettent de respecter la spécification, indépendamment du langage de programmation utilisé.</li></ul></div>
+<h3>Mesurer expérimentalement : l'exemple somme_entiers</h3><pre><code>def somme_entiers_1(n):
+    somme = 0
+    for i in range(1, n + 1):
+        somme = somme + i
+    return somme</code></pre><table><thead><tr><th>n</th><th>Temps mesuré</th><th>Facteur vs ligne précédente</th></tr></thead><tbody>
+<tr><td>10<sup>5</sup></td><td>0,005 s</td><td>—</td></tr>
+<tr><td>10<sup>6</sup></td><td>0,047 s</td><td>× 9,4</td></tr>
+<tr><td>10<sup>7</sup></td><td>0,428 s</td><td>× 9,1</td></tr>
+<tr><td>10<sup>8</sup></td><td>4,37 s</td><td>× 10,2</td></tr>
+<tr><td>10<sup>9</sup></td><td>42,5 s</td><td>× 9,7</td></tr>
+<tr><td>10<sup>10</sup></td><td>457 s</td><td>× 10,7</td></tr>
+</tbody></table>
+<p><b>Interprétation (question 4) :</b> à chaque fois que n est multiplié par 10, le temps l'est aussi (facteur proche de 10 sur toute la table). C'est la signature d'une complexité <b>linéaire</b>, notée <b>O(n)</b> : la fonction fait une boucle de n itérations, donc son temps est proportionnel à n.</p>
+<p><b>Estimation pour n = 10<sup>50</sup> (question 5) :</b> le temps est proportionnel à n. Comme 10<sup>10</sup> prend 457 s et que 10<sup>50</sup> est 10<sup>40</sup> fois plus grand, il faudrait environ 457 × 10<sup>40</sup> secondes, soit de l'ordre de 10<sup>35</sup> années — bien plus que l'âge de l'univers. Un algorithme en O(n) tout à fait correct, mais totalement impraticable pour de très grandes entrées.</p>
+<p>D'où l'intérêt de <code>somme_entiers_2</code>, qui utilise la formule \(\frac{n(n+1)}{2}\) : un seul calcul, quelle que soit la taille de n. Sa complexité est <b>constante</b>, <b>O(1)</b> : sur la même machine, l'appel avec n = 10<sup>50</sup> prend environ 1,9 × 10<sup>-6</sup> s, comme pour n'importe quel n.</p><pre><code>def somme_entiers_2(n):
+    return n * (n + 1) // 2</code></pre><h3>Application : la racine carrée entière</h3>
+<p><b>Problème :</b> étant donné un entier positif n, déterminer la partie entière de sa racine carrée.</p>
+<div class="def"><b>Spécification —</b> type du paramètre : n entier ; type du retour : a entier. Pré-condition : <code>n &gt;= 0</code>. Post-condition : <code>a &gt;= 0 and a**2 &lt;= n &lt; (a+1)**2</code>.</div>
+<p><b>Algorithme 1 — par balayage :</b> on part de a = 0 et on incrémente jusqu'à trouver la solution.</p><pre><code>def racine_entiere_1(n):
+    assert n &gt;= 0, 'Pre-condition'
+    a = 0
+    while (a + 1)**2 &lt;= n:
+        a += 1
+    assert a &gt;= 0 and a**2 &lt;= n &lt; (a + 1)**2, 'Post-condition'
+    return a</code></pre><p><b>Algorithme 2 — par dichotomie :</b> on établit une zone de recherche <code>[a, b)</code> contenant la solution. On calcule le carré du milieu <code>m = (a+b)//2</code> : si <code>m**2 &lt;= n</code>, la solution est dans la moitié droite, sinon dans la moitié gauche. On répète en coupant l'intervalle en deux jusqu'à ce qu'il soit de longueur 1. À l'initialisation, <code>a = 0</code> et <code>b = n+1</code>.</p>
+<div class="note"><b>Invariant —</b> tout au long de la boucle : <code>a**2 &lt;= n &lt; b**2</code>. Quand <code>b - a == 1</code>, on a <code>a**2 &lt;= n &lt; (a+1)**2</code> : c'est exactement la post-condition. (Le support formule la règle « inférieur à n » ; le code utilise bien <code>&lt;=</code>.)</div>
+<table><thead><tr><th>Algorithme</th><th>Nombre d'itérations</th><th>Complexité</th></tr></thead><tbody>
+<tr><td>Balayage</td><td>de l'ordre de \(\sqrt{n}\)</td><td>O(\(\sqrt{n}\))</td></tr>
+<tr><td>Dichotomie</td><td>de l'ordre de log<sub>2</sub>(n)</td><td>O(log<sub>2</sub> n)</td></tr>
+</tbody></table>
+<h3>Exemple de déroulé de la dichotomie (n = 27)</h3>
+<table><thead><tr><th>a</th><th>b</th><th>m</th><th>m<sup>2</sup></th><th>m<sup>2</sup> &lt;= n ?</th></tr></thead><tbody>
+<tr><td>0</td><td>28</td><td>14</td><td>196</td><td>Faux</td></tr>
+<tr><td>0</td><td>14</td><td>7</td><td>49</td><td>Faux</td></tr>
+<tr><td>0</td><td>7</td><td>3</td><td>9</td><td>Vrai</td></tr>
+<tr><td>3</td><td>7</td><td>5</td><td>25</td><td>Vrai</td></tr>
+<tr><td>5</td><td>7</td><td>6</td><td>36</td><td>Faux</td></tr>
+<tr><td>5</td><td>6</td><td>—</td><td>—</td><td>zone de longueur 1 : a = 5</td></tr>
+</tbody></table><h3>Exercice — écrire <code>racine_entiere_2</code> par dichotomie</h3>
+<p>Même spécification que <code>racine_entiere_1</code>, avec l'algorithme par dichotomie. Cas particulier utile à vérifier : n = 1 (on initialise a = 0, b = n+1 = 2).</p><pre><code>def racine_entiere_2(n):
+    assert n &gt;= 0, 'Pre-condition'
+    a, b = 0, n + 1
+    while b - a &gt; 1:
+        m = (a + b) // 2
+        if m**2 &lt;= n:
+            a = m
+        else:
+            b = m
+    assert a &gt;= 0 and a**2 &lt;= n &lt; (a + 1)**2, 'Post-condition'
+    return a</code></pre><p><b>Déroulé pour n = 1 :</b> a=0, b=2 &rarr; m=1, m<sup>2</sup>=1 &lt;= 1 donc a=1 &rarr; b-a=1, on s'arrête : a=1. On vérifie bien 1<sup>2</sup> &lt;= 1 &lt; 2<sup>2</sup>. Les cas n = 0 et n = 17 se déroulent sur le même principe (n = 0 : b-a = 1 d'emblée, la boucle ne s'exécute pas, a = 0 ; n = 17 : a = 4).</p>
+<p><b>Nombre d'itérations dans le pire des cas :</b> à chaque tour, la longueur de la zone de recherche est divisée par 2 ; elle part de n+1 et s'arrête à 1. Il faut donc environ log<sub>2</sub>(n) itérations, contre \(\sqrt{n}\) pour le balayage — nettement moins dès que n est grand.</p>
+<h3>Les deux graphes du cours</h3>
+<p>Temps d'exécution en fonction de n (échelle logarithmique en x) : le balayage explose alors que la dichotomie reste quasi plate.</p>
+<img src="assets/algo1/cm3_graphe_complet.png" alt="Temps d'exécution du balayage et de la dichotomie pour n jusqu'à 2^30 : le balayage explose (environ 8 ms), la dichotomie reste quasi nulle">
+<p>Zoom sur l'axe des temps (échelle en microsecondes) : pour de très petits n (jusqu'à environ 2<sup>5</sup>) les deux algorithmes se valent ; ensuite le balayage décolle, tandis que la dichotomie croît régulièrement — une droite sur une échelle logarithmique en x, signature de O(log n).</p>
+<img src="assets/algo1/cm3_graphe_zoom.png" alt="Zoom sur les petits temps : les deux courbes coïncident pour n petit puis le balayage décolle, la dichotomie est une droite en échelle log">
+
+<h2>Complexités usuelles à connaître</h2>
+<table><thead><tr><th>Situation</th><th>Exemple concret</th><th>Complexité</th></tr></thead><tbody>
+<tr><td>Parcours linéaire d'un tableau de longueur n</td><td>chercher le maximum d'une liste</td><td>O(n)</td></tr>
+<tr><td>Boucles imbriquées sur deux indices de 1 à n</td><td>comparer chaque élément à chaque autre</td><td>O(n<sup>2</sup>)</td></tr>
+<tr><td>Parcours complet d'une matrice n<sub>l</sub> × n<sub>c</sub></td><td>additionner tous les éléments d'une image</td><td>O(n<sub>l</sub> × n<sub>c</sub>)</td></tr>
+<tr><td>Recherche dichotomique dans un tableau trié</td><td>chercher un mot dans un dictionnaire trié</td><td>O(log<sub>2</sub> n)</td></tr>
+<tr><td>Tris quadratiques (insertion, sélection)</td><td>trier une petite liste « à la main »</td><td>O(n<sup>2</sup>)</td></tr>
+<tr><td>Tris diviser-pour-régner (fusion, rapide)</td><td>trier une grande liste efficacement</td><td>O(n × log<sub>2</sub> n)</td></tr>
+</tbody></table>
+<div class="retenir"><b>À retenir —</b>
+<ul>
+<li>Un tableau/une matrice, c'est 4 opérations et rien d'autre : créer, longueur, lire, écrire. Toute méthode qui changerait la taille (<code>append</code>, <code>insert</code>, <code>pop</code>) est hors-jeu.</li>
+<li>Pour reconnaître une complexité expérimentalement : multiplier n par 10 et regarder le facteur sur le temps — facteur ≈ 10 : O(n) ; facteur ≈ 100 : O(n<sup>2</sup>) ; facteur quasi nul : O(1) ou O(log n).</li>
+<li>Balayage vs dichotomie : même résultat, complexités très différentes (O(\(\sqrt{n}\)) contre O(log<sub>2</sub> n)). Un bon algorithme peut rendre praticable ce qu'un algorithme correct mais naïf ne permet pas.</li>
+<li>Apprendre le tableau des complexités usuelles : il sert à estimer la complexité d'un nouveau code sans le mesurer.</li>
+</ul></div>

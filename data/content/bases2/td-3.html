@@ -1,0 +1,158 @@
+<p>Feuille 3 : applications. Énoncés puis corrigés masqués.</p>
+<div class="note"><b>Notations —</b> \(f(A) = \{f(x),\ x \in A\}\) est l'<b>image directe</b> ; \(f^{-1}(B) = \{x \in E,\ f(x) \in B\}\) est l'<b>image réciproque</b> (elle existe même quand \(f\) n'est pas bijective : \(f^{-1}\) est ici une notation pour les parties, pas pour une fonction).</div>
+<div class="note"><b>Rappels utiles —</b> \(f : E \to F\) est <b>injective</b> si \(f(x) = f(x') \Rightarrow x = x'\) ; <b>surjective</b> si tout \(y \in F\) a un antécédent ; <b>bijective</b> si les deux. \((g \circ f)(x) = g(f(x))\) : ne se définit que si l'ensemble d'arrivée de \(f\) est (contenu dans) l'ensemble de départ de \(g\). \(y \in f(A) \Leftrightarrow \exists x \in A,\ y = f(x)\) ; \(x \in f^{-1}(B) \Leftrightarrow f(x) \in B\).</div>
+
+<h2>Exercice 1</h2>
+<ol>
+<li>Soit \(f : \mathbb{Z} \times \mathbb{Z}^* \to \mathbb{R}\) définie par \(f(p, q) = p/q\). Déterminer \(f(\mathbb{Z} \times \mathbb{Z}^*)\), \(f(\mathbb{Z} \times \mathbb{N}^*)\) et \(f(\mathbb{N} \times \mathbb{N}^*)\) puis \(f^{-1}(\{3\})\), \(f^{-1}(\{\pi\})\) et \(f^{-1}(\mathbb{R}^*)\).</li>
+<li>Soit \(E\) un ensemble non vide, \(A \subset E\) et \(f : \mathcal{P}(E) \to \mathcal{P}(E)\) définie par \(f(F) = F \oplus A\) (différence symétrique). Déterminer \(f \circ f\). Que peut-on en déduire ?</li>
+</ol>
+<details><summary>Voir le corrigé</summary>
+<ol>
+<li><b>Images.</b> \(f(\mathbb{Z} \times \mathbb{Z}^*) = \mathbb{Q}\) : tout rationnel est de la forme \(p/q\) avec \(p \in \mathbb{Z}\), \(q \in \mathbb{Z}^*\) (par définition de \(\mathbb{Q}\)), et \(p/q\) est rationnel. \(f(\mathbb{Z} \times \mathbb{N}^*) = \mathbb{Q}\) aussi : un rationnel \(p/q\) avec \(q \lt 0\) s'écrit \((-p)/(-q)\) avec \(-q \gt 0\). \(f(\mathbb{N} \times \mathbb{N}^*) = \mathbb{Q}^+ = \mathbb{Q} \cap [0, +\infty[\) : si \(p \geq 0\) et \(q \gt 0\) le quotient est \(\geq 0\) ; et tout rationnel \(\geq 0\) s'écrit \(p/q\) avec \(p \in \mathbb{N}\), \(q \in \mathbb{N}^*\).<br>
+<b>Images réciproques.</b> \(f^{-1}(\{3\}) = \{(p, q) \in \mathbb{Z} \times \mathbb{Z}^*,\ p/q = 3\} = \{(3q, q),\ q \in \mathbb{Z}^*\}\) (les couples proportionnels à \((3, 1)\)). \(f^{-1}(\{\pi\}) = \varnothing\) : \(\pi\) est irrationnel, donc n'est le quotient d'aucun couple d'entiers. \(f^{-1}(\mathbb{R}^*) = \{(p, q),\ p/q \neq 0\} = \{(p, q) \in \mathbb{Z} \times \mathbb{Z}^*,\ p \neq 0\} = \mathbb{Z}^* \times \mathbb{Z}^*\).</li>
+<li>Pour \(F \in \mathcal{P}(E)\) : \((f \circ f)(F) = f(F \oplus A) = (F \oplus A) \oplus A = F \oplus (A \oplus A) = F \oplus \varnothing = F\) (associativité de \(\oplus\), \(A \oplus A = \varnothing\) et \(\varnothing\) neutre : TD 2, Ex 6). Donc <b>\(f \circ f = \mathrm{id}_{\mathcal{P}(E)}\)</b>. <b>Conséquence :</b> \(f\) est une bijection de \(\mathcal{P}(E)\) sur lui-même, et elle est sa propre réciproque : \(f^{-1} = f\) (\(f\) est une <i>involution</i>). En particulier \(f\) est injective et surjective.</li>
+</ol>
+</details>
+
+<h2>Exercice 2</h2>
+<p>Soient \(E\) et \(F\) deux ensembles et \(f : E \to F\). Démontrer que :</p>
+<ol>
+<li>\(\forall A, B \in \mathcal{P}(E),\ (A \subset B) \Rightarrow (f(A) \subset f(B))\),</li>
+<li>\(\forall A, B \in \mathcal{P}(E),\ f(A \cap B) \subset f(A) \cap f(B)\),</li>
+<li>\(\forall A, B \in \mathcal{P}(E),\ f(A \cup B) = f(A) \cup f(B)\),</li>
+<li>\(\forall C, D \in \mathcal{P}(F),\ f^{-1}(C \cup D) = f^{-1}(C) \cup f^{-1}(D)\),</li>
+<li>\(\forall C \in \mathcal{P}(F),\ f^{-1}(F \setminus C) = E \setminus f^{-1}(C)\).</li>
+</ol>
+<details><summary>Voir le corrigé</summary>
+<p>Notations : \(y \in f(A) \Leftrightarrow \exists x \in A,\ y = f(x)\) ; \(x \in f^{-1}(C) \Leftrightarrow f(x) \in C\).</p>
+<ol>
+<li>Soit \(y \in f(A)\) : il existe \(x \in A\) avec \(y = f(x)\). Comme \(A \subset B\), \(x \in B\), donc \(y = f(x) \in f(B)\). Donc \(f(A) \subset f(B)\).</li>
+<li>Soit \(y \in f(A \cap B)\) : il existe \(x \in A \cap B\) avec \(y = f(x)\). Comme \(x \in A\), \(y \in f(A)\) ; comme \(x \in B\), \(y \in f(B)\). Donc \(y \in f(A) \cap f(B)\). <i>L'inclusion réciproque est fausse en général :</i> \(f\) constante (\(f(1) = f(2) = a\)), \(A = \{1\}\), \(B = \{2\}\) : \(f(A \cap B) = f(\varnothing) = \varnothing\) alors que \(f(A) \cap f(B) = \{a\}\). (Elle est vraie si \(f\) est injective.)</li>
+<li>(\(\subset\)) \(A \subset A \cup B\), donc \(f(A) \subset f(A \cup B)\) par la question 1 ; de même \(f(B) \subset f(A \cup B)\), donc \(f(A) \cup f(B) \subset f(A \cup B)\). (\(\supset\)) Soit \(y \in f(A \cup B)\) : \(y = f(x)\) avec \(x \in A\) ou \(x \in B\) ; si \(x \in A\) alors \(y \in f(A)\), sinon \(y \in f(B)\) ; dans les deux cas \(y \in f(A) \cup f(B)\). D'où l'égalité.</li>
+<li>\(x \in f^{-1}(C \cup D) \Leftrightarrow f(x) \in C \cup D \Leftrightarrow f(x) \in C \text{ ou } f(x) \in D \Leftrightarrow x \in f^{-1}(C) \text{ ou } x \in f^{-1}(D) \Leftrightarrow x \in f^{-1}(C) \cup f^{-1}(D)\).</li>
+<li>\(x \in f^{-1}(F \setminus C) \Leftrightarrow f(x) \in F \setminus C \Leftrightarrow f(x) \notin C \Leftrightarrow x \notin f^{-1}(C) \Leftrightarrow x \in E \setminus f^{-1}(C)\) (\(f(x) \in F\) est toujours vrai car \(f\) est définie sur \(E\) tout entier).</li>
+</ol>
+</details>
+
+<h2>Exercice 3</h2>
+<ol>
+<li>On considère une fonction \(f : \mathbb{R} \to \mathbb{R}\). Pour chacune de ces trois fonctions, déterminer \(f(f^{-1}([-1, 1]))\) et \(f^{-1}(f([-1, 1]))\) pour successivement \(f\) définie par \(f(x) = x^2\), \(f(x) = e^x\) puis \(f(x) = x^3\).</li>
+<li>Soient des ensembles \(A, E, F\) avec \(A \subset E\) et une application \(f : E \to F\).
+<ul>
+<li><b>(a)</b> Montrer que \(A \subset f^{-1}(f(A))\).</li>
+<li><b>(b)</b> Donner un contre-exemple à l'inclusion \(f^{-1}(f(A)) \subset A\).</li>
+<li><b>(c)</b> Montrer que si \(f\) est injective, \(f^{-1}(f(A)) \subset A\).</li>
+</ul></li>
+<li>Soit \(B \subset F\).
+<ul>
+<li><b>(a)</b> Montrer que \(f(f^{-1}(B)) \subset B\).</li>
+<li><b>(b)</b> Donner un contre-exemple à l'inclusion \(B \subset f(f^{-1}(B))\).</li>
+<li><b>(c)</b> Montrer que si \(f\) est surjective, \(B \subset f(f^{-1}(B))\).</li>
+</ul></li>
+</ol>
+<details><summary>Voir le corrigé</summary>
+<p><b>1. Calculs.</b> On détermine à chaque fois l'image réciproque, puis l'image :</p>
+<table>
+<thead><tr><th>\(f\)</th><th>\(f^{-1}([-1,1])\)</th><th>\(f(f^{-1}([-1,1]))\)</th><th>\(f([-1,1])\)</th><th>\(f^{-1}(f([-1,1]))\)</th></tr></thead>
+<tbody>
+<tr><td>\(x^2\)</td><td>\([-1, 1]\) (\(x^2 \leq 1 \Leftrightarrow |x| \leq 1\))</td><td><b>\([0, 1]\)</b></td><td>\([0, 1]\)</td><td><b>\([-1, 1]\)</b></td></tr>
+<tr><td>\(e^x\)</td><td>\(]-\infty, 0]\) (\(e^x \gt 0\) toujours, \(e^x \leq 1 \Leftrightarrow x \leq 0\))</td><td><b>\(]0, 1]\)</b></td><td>\([1/e, e]\)</td><td><b>\([-1, 1]\)</b> (\(\ln\) est croissante)</td></tr>
+<tr><td>\(x^3\)</td><td>\([-1, 1]\) (\(x^3 \in [-1, 1] \Leftrightarrow x \in [-1, 1]\))</td><td><b>\([-1, 1]\)</b></td><td>\([-1, 1]\)</td><td><b>\([-1, 1]\)</b></td></tr>
+</tbody>
+</table>
+<p>Constat : pour \(x^2\), \(f(f^{-1}(B)) = [0, 1] \neq B = [-1, 1]\) (\(f\) n'est pas surjective) ; pour \(e^x\), de même ; pour \(x^3\) (bijective) tout redonne \([-1, 1]\). Toujours \(f^{-1}(f([-1,1])) \supset [-1, 1]\), avec égalité pour \(e^x\) et \(x^3\) (injectives) et aussi pour \(x^2\) parce que \([-1, 1]\) est symétrique.</p>
+<p><b>2.</b> Soit \(A \subset E\) et \(f : E \to F\).</p>
+<ul>
+<li><b>(a)</b> Soit \(x \in A\). Alors \(f(x) \in f(A)\), donc \(x \in f^{-1}(f(A))\). Donc \(A \subset f^{-1}(f(A))\).</li>
+<li><b>(b)</b> \(f(x) = x^2\) sur \(E = F = \mathbb{R}\) et \(A = \{1\}\) : \(f(A) = \{1\}\), \(f^{-1}(\{1\}) = \{-1, 1\} \not\subset A\). (Ou \(f\) constante sur \(\{1, 2\}\), \(A = \{1\}\) : \(f^{-1}(f(A)) = \{1, 2\}\).)</li>
+<li><b>(c)</b> Supposons \(f\) injective et soit \(x \in f^{-1}(f(A))\). Alors \(f(x) \in f(A)\) : il existe \(a \in A\) tel que \(f(x) = f(a)\). Par injectivité \(x = a \in A\). Donc \(f^{-1}(f(A)) \subset A\), d'où égalité avec (a).</li>
+</ul>
+<p><b>3.</b> Soit \(B \subset F\).</p>
+<ul>
+<li><b>(a)</b> Soit \(y \in f(f^{-1}(B))\) : il existe \(x \in f^{-1}(B)\) avec \(y = f(x)\). Comme \(x \in f^{-1}(B)\), \(f(x) \in B\), donc \(y \in B\). Donc \(f(f^{-1}(B)) \subset B\).</li>
+<li><b>(b)</b> \(f : \mathbb{R} \to \mathbb{R}\), \(f(x) = x^2\), \(B = [-1, 1]\) : \(f^{-1}(B) = [-1, 1]\), \(f(f^{-1}(B)) = [0, 1]\), qui ne contient pas \(B\) (\(-1\) n'a pas d'antécédent). Plus simple : \(E = \{1\}\), \(F = \{a, b\}\), \(f(1) = a\), \(B = \{a, b\}\) : \(f^{-1}(B) = \{1\}\) et \(f(\{1\}) = \{a\}\), qui ne contient pas \(B\).</li>
+<li><b>(c)</b> Supposons \(f\) surjective et soit \(y \in B\). Il existe \(x \in E\) avec \(f(x) = y\). Comme \(f(x) = y \in B\), \(x \in f^{-1}(B)\), donc \(y = f(x) \in f(f^{-1}(B))\). Donc \(B \subset f(f^{-1}(B))\), d'où égalité avec (a).</li>
+</ul>
+</details>
+
+<h2>Exercice 4</h2>
+<p>Soient \(E, F, G\) et \(H\) quatre ensembles, \(f : E \to F\) et \(g : G \to H\).</p>
+<ol>
+<li>À quelle condition peut-on définir \(f \circ g\) ? \(g \circ f\) ?</li>
+<li>Que peut-on dire de plus si \(f \circ g = g \circ f\) ?</li>
+<li>On suppose que \(G = F\) et \(H = E\) et que \(f\) est constante. Que vaut \(f \circ g\) ? \(g \circ f\) ?</li>
+<li>La composition des applications est-elle commutative ?</li>
+</ol>
+<details><summary>Voir le corrigé</summary>
+<ol>
+<li><b>\(f \circ g\)</b> : \(g : G \to H\) puis \(f : E \to F\) ; pour appliquer \(f\) à \(g(x)\) il faut \(g(x) \in E\), donc <b>\(H = E\)</b> (ou au moins \(g(G) \subset E\) ; on prend en général \(H = E\)). Alors \(f \circ g : G \to F\). <b>\(g \circ f\)</b> : de même il faut <b>\(F = G\)</b> (ou \(f(E) \subset G\)), et \(g \circ f : E \to H\).</li>
+<li>Si \(f \circ g\) et \(g \circ f\) sont toutes deux définies, on a \(H = E\) et \(F = G\). Pour qu'elles soient <i>égales</i>, il faut qu'elles aient même ensemble de départ (\(G = E\)) et d'arrivée (\(F = H\)) : alors <b>\(E = F = G = H\)</b> : \(f\) et \(g\) sont deux applications d'un même ensemble \(E\) dans lui-même, et elles <i>commutent</i> : \(f(g(x)) = g(f(x))\) pour tout \(x\).</li>
+<li>Avec \(G = F\) et \(H = E\) : \(g : F \to E\) et \(f : E \to F\), \(f\) constante de valeur \(c \in F\). <b>\(f \circ g\)</b> : \(F \to F\), \((f \circ g)(y) = f(g(y)) = c\) pour tout \(y\) : c'est la <b>fonction constante égale à \(c\)</b> sur \(F\). <b>\(g \circ f\)</b> : \(E \to E\), \((g \circ f)(x) = g(f(x)) = g(c)\) pour tout \(x\) : c'est la <b>fonction constante égale à \(g(c)\)</b> sur \(E\).</li>
+<li><b>Non</b>, en général. Contre-exemple sur \(\mathbb{R}\) : \(f(x) = x + 1\), \(g(x) = 2x\) : \((f \circ g)(x) = 2x + 1\) et \((g \circ f)(x) = 2x + 2\). (En \(x = 3\) : 7 contre 8.) Et même quand les deux composées sont définies, elles peuvent ne pas avoir le même ensemble de départ.</li>
+</ol>
+</details>
+
+<h2>Exercice 5</h2>
+<ol>
+<li>Soient \(f : \mathbb{R}^+ \to \mathbb{R}\) définie par \(f(x) = \sqrt{x}\) et \(g : \mathbb{R} \to \mathbb{R}^+\) définie par \(g(x) = x^2\).
+<ul>
+<li><b>(a)</b> \(f\) est-elle injective ? surjective ? Mêmes questions pour \(g\) ?</li>
+<li><b>(b)</b> Déterminer \(g \circ f\). Est-elle injective ? surjective ? Mêmes questions pour \(f \circ g\).</li>
+</ul></li>
+<li>Soient \(A, B, C\) des ensembles et \(f : A \to B\) et \(g : B \to C\) deux applications.
+<ul>
+<li><b>(a)</b> Montrer que \(g \circ f\) injective implique \(f\) injective.</li>
+<li><b>(b)</b> Montrer que \(g \circ f\) injective n'implique pas \(g\) injective.</li>
+<li><b>(c)</b> Montrer que \(g \circ f\) surjective implique \(g\) surjective.</li>
+<li><b>(d)</b> Montrer que \(g \circ f\) surjective n'implique pas \(f\) surjective.</li>
+<li><b>(e)</b> On suppose que \(g \circ f\) est bijective. Que peut-on dire de \(f\) et \(g\) ? Et si \(f \circ g\) et \(g \circ f\) sont bijectives ?</li>
+</ul></li>
+</ol>
+<details><summary>Voir le corrigé</summary>
+<p><b>1. \(f : \mathbb{R}^+ \to \mathbb{R}\), \(f(x) = \sqrt{x}\).</b></p>
+<ul>
+<li><b>(a)</b> <b>\(f\) est injective</b> (\(\sqrt{x} = \sqrt{y} \Rightarrow x = y\) en élevant au carré) mais <b>pas surjective</b> : \(\sqrt{x} \geq 0\) donc \(-1\) n'a pas d'antécédent (\(f(\mathbb{R}^+) = \mathbb{R}^+ \neq \mathbb{R}\)). <b>\(g : \mathbb{R} \to \mathbb{R}^+\), \(g(x) = x^2\) :</b> <b>pas injective</b> (\(g(-1) = g(1) = 1\)) mais <b>surjective</b> : pour \(y \in \mathbb{R}^+\), \(x = \sqrt{y}\) vérifie \(x^2 = y\).</li>
+<li><b>(b)</b> <b>\(g \circ f\)</b> : \(\mathbb{R}^+ \to \mathbb{R}^+\), \((g \circ f)(x) = (\sqrt{x})^2 = x\) : c'est l'identité de \(\mathbb{R}^+\), donc <b>bijective</b> (injective et surjective). <b>\(f \circ g\)</b> : \(\mathbb{R} \to \mathbb{R}\), \((f \circ g)(x) = \sqrt{x^2} = |x|\) : <b>ni injective</b> (\(|-1| = |1|\)) <b>ni surjective</b> (\(|x| \geq 0\), \(-1\) non atteint).</li>
+</ul>
+<p><b>2. Soient \(f : A \to B\) et \(g : B \to C\).</b></p>
+<ul>
+<li><b>(a)</b> Supposons \(g \circ f\) injective et soient \(a, a' \in A\) avec \(f(a) = f(a')\). En appliquant \(g\) : \(g(f(a)) = g(f(a'))\), donc \((g \circ f)(a) = (g \circ f)(a')\), donc \(a = a'\). Donc <b>\(f\) est injective</b>.</li>
+<li><b>(b)</b> Contre-exemple : \(A = \{1\}\), \(B = \{1, 2\}\), \(C = \{1\}\), \(f(1) = 1\), \(g(1) = g(2) = 1\). Alors \(g \circ f : 1 \mapsto 1\) est injective (un seul élément), mais \(g\) ne l'est pas (\(g(1) = g(2)\) avec \(1 \neq 2\)).</li>
+<li><b>(c)</b> Supposons \(g \circ f\) surjective et soit \(c \in C\). Il existe \(a \in A\) tel que \(g(f(a)) = c\). Posons \(b = f(a) \in B\) : \(g(b) = c\). Donc \(c\) a un antécédent par \(g\) : <b>\(g\) est surjective</b>.</li>
+<li><b>(d)</b> Avec le même exemple (\(A = \{1\}\), \(B = \{1, 2\}\), \(C = \{1\}\)) : \(g \circ f : \{1\} \to \{1\}\) est surjective, mais \(f\) ne l'est pas (2 n'a pas d'antécédent).</li>
+<li><b>(e)</b> Si \(g \circ f\) est bijective, alors par (a) et (c) : <b>\(f\) est injective et \(g\) est surjective</b> (et rien de plus en général : l'exemple précédent a \(g \circ f\) bijective, \(f\) non surjective, \(g\) non injective). Si de plus \(f \circ g\) est bijective (donc \(C = A\)), le même raisonnement donne \(g\) injective et \(f\) surjective ; ainsi <b>\(f\) et \(g\) sont toutes deux bijectives</b>. Alors \(g \circ f\) est bijective de réciproque \(f^{-1} \circ g^{-1}\). (Elles ne sont pas forcément inverses l'une de l'autre : \(f = \mathrm{id}\) et \(g\) bijection quelconque.)</li>
+</ul>
+</details>
+
+<h2>Exercice 6</h2>
+<p>Soient \(E\) et \(F\) des ensembles. On note \(\pi_E : E \times F \to E\) la projection sur la première coordonnée et \(\pi_F : E \times F \to F\) sur la deuxième. Autrement dit, \(\forall (x, y) \in E \times F,\ \pi_E(x, y) = x\) et \(\pi_F(x, y) = y\). Soit \(f : E \to F\) une application. Le graphe de \(f\) est \(G = \{(x, f(x)),\ x \in E\}\).</p>
+<ol>
+<li>Reconnaître l'ensemble \(\pi_F(G)\).</li>
+<li>Soient \(a \in E\) et \(b \in F\). Reconnaître les ensembles \(\pi_F(G \cap (\{a\} \times F))\) et \(\pi_E(G \cap (E \times \{b\}))\).</li>
+</ol>
+<details><summary>Voir le corrigé</summary>
+<ol>
+<li>\(\pi_F(G) = \{\pi_F(x, f(x)),\ x \in E\} = \{f(x),\ x \in E\} = \) <b>\(f(E)\)</b> : c'est l'<b>image de \(f\)</b> (l'ensemble des valeurs prises par \(f\)).</li>
+<li>\(G \cap (\{a\} \times F)\) : les couples \((x, f(x))\) dont la première coordonnée vaut \(a\) : c'est \(\{(a, f(a))\}\), un seul point ; sa projection est <b>\(\pi_F(G \cap (\{a\} \times F)) = \{f(a)\}\)</b>, la valeur de \(f\) en \(a\). \(G \cap (E \times \{b\})\) : les couples \((x, f(x))\) avec \(f(x) = b\), donc \(\{(x, b),\ x \in E,\ f(x) = b\}\) ; sa projection sur \(E\) est <b>\(\pi_E(G \cap (E \times \{b\})) = \{x \in E,\ f(x) = b\} = f^{-1}(\{b\})\)</b>, l'ensemble des antécédents de \(b\).</li>
+</ol>
+</details>
+
+<h2>Exercice 7</h2>
+<ol>
+<li>Montrer qu'il existe une injection de \(E\) dans \(\mathcal{P}(E)\).</li>
+<li>En considérant la partie \(A = \{x \in E \mid x \notin f(x)\}\), montrer qu'il n'existe pas de bijection \(f\) de \(E\) sur \(\mathcal{P}(E)\).</li>
+</ol>
+<details><summary>Voir le corrigé</summary>
+<ol>
+<li>L'application <b>\(i : E \to \mathcal{P}(E),\ x \mapsto \{x\}\)</b> est injective : si \(\{x\} = \{y\}\) alors \(x \in \{y\}\) donc \(x = y\). (Il existe donc « au moins autant de parties que d'éléments ».)</li>
+<li><b>Théorème de Cantor.</b> Supposons par l'absurde qu'il existe une bijection (il suffit même : une surjection) \(f : E \to \mathcal{P}(E)\), et posons \(A = \{x \in E,\ x \notin f(x)\} \in \mathcal{P}(E)\). Comme \(f\) est surjective, il existe \(a \in E\) avec \(f(a) = A\). Question : \(a \in A\) ?
+<ul>
+<li>Si \(a \in A\), par définition de \(A\) on a \(a \notin f(a) = A\) : contradiction.</li>
+<li>Si \(a \notin A = f(a)\), alors \(a\) vérifie la définition de \(A\) : \(a \in A\) : contradiction.</li>
+</ul>
+Dans les deux cas c'est absurde : <b>il n'existe aucune bijection (même aucune surjection) de \(E\) sur \(\mathcal{P}(E)\)</b>. Avec la question 1, \(\mathcal{P}(E)\) a « strictement plus » d'éléments que \(E\) : pour \(E\) fini de \(n\) éléments, \(2^n \gt n\). Le même argument que le paradoxe de Russell (CM 3) ; il montre aussi qu'il n'y a pas d'ensemble de tous les ensembles. (Vérifié : pour tout \(E\) de 0 à 3 éléments et toute application \(f : E \to \mathcal{P}(E)\), la partie \(A\) n'est jamais une valeur de \(f\).)</li>
+</ol>
+</details>
+
+<div class="retenir"><b>À retenir —</b> \(f(A) = \{f(x),\ x \in A\}\) et \(f^{-1}(B) = \{x,\ f(x) \in B\}\) ; \(f^{-1}(B)\) existe toujours (même sans bijection). \(f^{-1}\) conserve tout : \(\cup\), \(\cap\), complémentaire ; \(f\) conserve seulement \(\cup\) (\(f(A \cap B) \subset f(A) \cap f(B)\), égalité si \(f\) injective). \(A \subset f^{-1}(f(A))\), égalité si \(f\) injective ; \(f(f^{-1}(B)) \subset B\), égalité si \(f\) surjective. \(g \circ f\) injective \(\Rightarrow\) \(f\) injective ; \(g \circ f\) surjective \(\Rightarrow\) \(g\) surjective ; les réciproques sont fausses. La composition n'est pas commutative. Il n'y a jamais de surjection de \(E\) sur \(\mathcal{P}(E)\) (Cantor : \(A = \{x,\ x \notin f(x)\}\)).</div>

@@ -1,0 +1,158 @@
+<p>Ce cours pose le vocabulaire de base des ensembles : comment décrire un ensemble, ce que signifie « appartenir » et « être inclus », l'ensemble des parties, puis les opérations (union, intersection, différence, complémentaire, produit cartésien) et enfin les mots sur un alphabet. Tout le reste des maths de L1 s'écrit avec ce langage.</p>
+
+<h2>1. Notions générales</h2>
+<h3>1.1 Extension et compréhension</h3>
+<p>Intuitivement, un <b>ensemble</b> est une <b>collection d'objets</b> (les <b>éléments</b> de l'ensemble), deux à deux distincts. Pour se donner un ensemble, il y a deux façons :</p>
+<ul>
+<li><b>Par extension :</b> on donne la liste de tous les éléments de l'ensemble.</li>
+<li><b>Par compréhension :</b> on donne une propriété commune, satisfaite par tous les éléments de l'ensemble et par eux seulement.</li>
+</ul>
+<table>
+<thead><tr><th>Ensemble</th><th>Écriture</th><th>Façon de le donner</th></tr></thead>
+<tbody>
+<tr><td>\(A\)</td><td>{ Robert, Alice, Manuel }</td><td>par extension</td></tr>
+<tr><td>\(B\)</td><td>\(\{-7\ ;\ 2{,}3\ ;\ \pi\ ;\ \dfrac{\log 2}{\sqrt{7}}\ ;\) blanc \(;\) Paris\(\}\)</td><td>par extension (éléments de nature très différente)</td></tr>
+<tr><td>\(C\)</td><td>{ étudiants présents dans l'amphi qui ont plus de 19 ans }</td><td>par compréhension</td></tr>
+<tr><td>(polycopié)</td><td>{ Pierre ; Paul ; Marie } | { élèves de la classe qui ont les yeux bleus } | { élèves qui viennent en cours en pyjama }</td><td>extension, compréhension, et un ensemble « certainement vide »</td></tr>
+</tbody>
+</table>
+
+<h4>Les ensembles classiques de nombres</h4>
+<table>
+<thead><tr><th>Notation</th><th>Définition</th><th>Nom</th></tr></thead>
+<tbody>
+<tr><td>\(\mathbb{N}\)</td><td>\(\{0, 1, 2, 3, 4, \dots\}\)</td><td>entiers naturels</td></tr>
+<tr><td>\(\mathbb{N}^*\)</td><td>\(\{1, 2, 3, \dots\}\)</td><td>entiers naturels non nuls</td></tr>
+<tr><td>\(\mathbb{Z}\)</td><td>\(\{\dots, -3, -2, -1, 0, 1, 2, 3, \dots\}\)</td><td>entiers relatifs</td></tr>
+<tr><td>\(\mathbb{Q}\)</td><td>\(\left\{ \dfrac{a}{b} \;\middle|\; a \in \mathbb{Z},\ b \in \mathbb{N} \setminus \{0\} \right\}\)</td><td>nombres rationnels</td></tr>
+<tr><td>\(\mathbb{R}\)</td><td>l'ensemble des nombres réels</td><td>réels</td></tr>
+<tr><td>\(\mathbb{C}\)</td><td>\(\{a + ib \mid a \in \mathbb{R},\ b \in \mathbb{R}\}\)</td><td>nombres complexes</td></tr>
+</tbody>
+</table>
+<p>Dans « \(\{a/b \mid a \in \mathbb{Z},\ b \in \mathbb{N} \setminus \{0\}\}\) », la barre verticale se lit « tel que » : c'est la propriété (compréhension) qui décrit les éléments.</p>
+<div class="note"><b>En informatique —</b> un <b>type de données</b> est un ensemble d'objets associés à une liste d'opérations ; déclarer le type d'une variable, c'est déclarer l'ensemble des valeurs qu'elle peut prendre. En Python : <code>bool</code> = { Vrai, Faux } ; <code>int</code> = les entiers ; <code>float</code> = les nombres à virgule flottante ; <code>str</code> = les chaînes de caractères ; <code>list</code> = les listes de longueur variable.</div>
+
+<h3>1.2 Règles basiques de fonctionnement</h3>
+<h4>Relation d'appartenance</h4>
+<p>Il faut pouvoir dire si un objet appartient ou non à un ensemble. On note « \(x \in E\) » pour dire que \(x\) est un élément de \(E\) (on lit « \(x\) appartient à \(E\) »). L'ensemble \(E\) est précisément la collection des \(x\) qui vérifient \(x \in E\). Le contraire s'écrit \(x \notin E\).</p>
+<h4>Objets distincts</h4>
+<p>On peut distinguer deux éléments de \(E\), et \(E\) ne peut pas contenir deux fois le même élément. Répéter un élément ne change donc rien :</p>
+<p>\[ \{0, 1, 2\} = \{0, 0, 1, 2, 1\} \]</p>
+<h4>Ensemble vide</h4>
+<p>Il existe un ensemble particulier, l'<b>ensemble vide</b> : celui qui ne contient aucun élément. Notation : \(\{\} = \varnothing\). Exemple : \(\{x \in \mathbb{R} \mid x^2 = -1\} = \varnothing\) (aucun réel n'a un carré négatif) ; de même { triangles rectangles équilatéraux } = \(\varnothing\).</p>
+
+<div class="warn"><b>Le paradoxe de Russell (digression) —</b> Un ensemble peut être élément d'un autre ensemble, mais pas de lui-même. À la naissance de la théorie des ensembles, on envisageait « l'ensemble de tous les ensembles ». <b>Fait : on ne peut pas.</b> La « collection » de tous les ensembles n'est pas un ensemble.
+<p><b>Preuve.</b> Supposons que la collection de tous les ensembles soit un ensemble, notons-le \(E\). Considérons \(A = \{x \in E \mid x \notin x\}\). Comme \(E\) contient tous les ensembles, \(A\) appartient à \(E\). Question : \(A \in A\) ?</p>
+<ul>
+<li>Si \(A \in A\), alors par définition de \(A\), on a \(A \notin A\) : impossible.</li>
+<li>Si \(A \notin A\), alors par définition de \(A\), on a \(A \in A\) : impossible.</li>
+</ul>
+<p>Les deux cas sont contradictoires, donc \(E\) n'existe pas. <b>On retient : un ensemble ne peut pas être élément de lui-même.</b></p></div>
+<div class="note"><b>Complément —</b> ce que la preuve établit strictement, c'est que « l'ensemble de tous les ensembles » n'existe pas ; « aucun ensemble n'est élément de lui-même » est la règle de fonctionnement qu'on en retient.</div>
+
+<h3>1.3 Patatoïdes, diagrammes de Venn</h3>
+<p>On représente un ensemble par une « patate » contenant ses éléments (diagramme de Venn) : ici \(A = \{-7, \text{Toulouse}, \text{café}, 18\}\). Le polycopié le fait de même pour { Pierre ; Paul ; Marie ; Julie ; Karim }.</p>
+<p><img src="assets/patato.png" alt="Patatoïde contenant les éléments -7, Toulouse, café et 18"></p>
+
+<h2>2. Sous-ensembles</h2>
+<h3>2.1 Inclusion</h3>
+<div class="def"><b>Définition —</b> L'ensemble \(A\) est un <b>sous-ensemble</b> de l'ensemble \(B\) si tout élément de \(A\) est aussi un élément de \(B\) : \((x \in A \Rightarrow x \in B)\). Notation \(A \subset B\) (le polycopié écrit \(A \subseteq B\)) ; on dit aussi que \(A\) est <b>inclus</b> dans \(B\).</div>
+<ul>
+<li><b>Remarque :</b> pour tout ensemble \(A\), on a toujours \(\varnothing \subset A\) et \(A \subset A\) (aucun élément de \(\varnothing\) n'est à vérifier, donc l'implication est vraie).</li>
+<li><b>Exemples :</b> \(\mathbb{N} \subset \mathbb{Z} \subset \mathbb{Q} \subset \mathbb{R} \subset \mathbb{C}\) ; \(\{1, 2, 3\} \subset \{0, 1, 2, 3\}\) ; \(\{1, 2\} \subset \{1, 2, 3\}\).</li>
+</ul>
+<div class="def"><b>Définition —</b> Les ensembles \(A\) et \(B\) sont <b>égaux</b> si \((A \subset B \text{ et } B \subset A)\), c'est-à-dire s'ils ont exactement les mêmes éléments. Notation \(A = B\). Autrement dit : \(A = B \Leftrightarrow (x \in A \Leftrightarrow x \in B)\).</div>
+<p>Pour démontrer une égalité d'ensembles, on procède donc par <b>double inclusion</b> : on montre \(A \subset B\), puis \(B \subset A\) (ou par équivalences successives : voir CM 2).</p>
+
+<h3>2.2 \(\mathcal{P}(A)\), l'ensemble des parties de \(A\)</h3>
+<div class="def"><b>Définition —</b> Soit \(A\) un ensemble. La collection de tous les sous-ensembles de \(A\) est un ensemble : on le note \(\mathcal{P}(A)\) et on l'appelle l'<b>ensemble des parties de \(A\)</b>. « Une partie de \(A\) » est un synonyme de « un sous-ensemble de \(A\) ».</div>
+<p>\[ \mathcal{P}(A) = \{B \mid B \subset A\} \qquad\text{avec}\qquad B \subset A \Leftrightarrow B \in \mathcal{P}(A) \]</p>
+<ul>
+<li><b>Remarque :</b> puisque \(\varnothing \subset A\), on a \(\varnothing \in \mathcal{P}(A)\) ; puisque \(A \subset A\), on a \(A \in \mathcal{P}(A)\). Toute partie de \(A\), y compris \(\varnothing\) et \(A\) elle-même, est un <i>élément</i> de \(\mathcal{P}(A)\).</li>
+<li><b>Exemples :</b> \(A = \{0, 1\} \Rightarrow \mathcal{P}(A) = \{\varnothing, \{0\}, \{1\}, A\} = \{\varnothing, \{0\}, \{1\}, \{0, 1\}\}\). Avec \(A = \{1, 2, 3\}\) : \(\mathcal{P}(A) = \{\varnothing, \{1\}, \{2\}, \{3\}, \{1,2\}, \{1,3\}, \{2,3\}, \{1,2,3\}\}\) : 8 parties.</li>
+<li><b>\(\mathcal{P}(\varnothing) = \{\varnothing\} \neq \varnothing\)</b> : l'ensemble vide n'a qu'une partie (lui-même), donc \(\mathcal{P}(\varnothing)\) contient un élément et n'est pas vide. Image : un tiroir contenant un sac vide n'est pas vide, il contient bien un objet. De même \(\mathcal{P}(\mathcal{P}(\varnothing)) = \mathcal{P}(\{\varnothing\}) = \{\varnothing, \{\varnothing\}\}\).</li>
+</ul>
+<div class="warn"><b>Attention à ∈ et ⊂ —</b> \(\in\) relie un <i>élément</i> à un ensemble, \(\subset\) relie deux <i>ensembles</i>. Avec \(A = \{0, 1\}\) : \(0 \in A\) mais \(\{0\} \subset A\) ; et \(\{0\} \in \mathcal{P}(A)\) alors que \(0 \notin \mathcal{P}(A)\). De même \(\varnothing \subset A\) et \(\varnothing \in \mathcal{P}(A)\).</div>
+<div class="note"><b>Complément (vérifié) —</b> si \(A\) a \(n\) éléments, \(\mathcal{P}(A)\) en a \(2^n\) (1, 2, 4, 8, 16, 32 pour \(n = 0\) à 5). Attention aux coquilles en recopiant : \(\mathcal{P}(\{0, 1\})\) contient \(\{0, 1\}\), pas \(\{1, 2\}\).</div>
+
+<h2>3. Opérations sur les ensembles</h2>
+<p>Ces opérations permettent de construire de nouveaux ensembles à partir d'ensembles donnés.</p>
+<h3>3.1 Union et intersection</h3>
+<div class="def"><b>Union —</b> L'union (ou la réunion) des ensembles \(A\) et \(B\) est l'ensemble des éléments qui sont dans \(A\) <b>ou</b> dans \(B\). On la note \(A \cup B = \{x \mid x \in A \vee x \in B\}\).</div>
+<div class="def"><b>Intersection —</b> L'intersection de \(A\) et de \(B\) est l'ensemble des éléments qui appartiennent à \(A\) <b>et</b> à \(B\). On la note \(A \cap B = \{x \mid x \in A \wedge x \in B\}\). Deux ensembles sont dits <b>disjoints</b> (ou incompatibles) si \(A \cap B = \varnothing\).</div>
+<p><img src="assets/union.png" alt="Diagramme de Venn de A union B : les deux disques coloriés"> <img src="assets/inter.png" alt="Diagramme de Venn de A inter B : seule la lentille commune coloriée"></p>
+<table>
+<thead><tr><th>Propriété</th><th>Union</th><th>Intersection</th></tr></thead>
+<tbody>
+<tr><td>Idempotence</td><td>\(A \cup A = A\)</td><td>\(A \cap A = A\)</td></tr>
+<tr><td>Commutativité</td><td>\(A \cup B = B \cup A\)</td><td>\(A \cap B = B \cap A\)</td></tr>
+<tr><td>Associativité</td><td>\(A \cup (B \cup C) = (A \cup B) \cup C\), noté \(A \cup B \cup C\)</td><td>\(A \cap (B \cap C) = (A \cap B) \cap C\), noté \(A \cap B \cap C\)</td></tr>
+<tr><td>Élément neutre / absorbant</td><td>\(A \cup \varnothing = A\)</td><td>\(A \cap \varnothing = \varnothing\) ; et \(A \cap \Omega = A\) si \(A \subset \Omega\) (\(\Omega\) = « univers »)</td></tr>
+</tbody>
+</table>
+
+<h4>Distributivité</h4>
+<p>\[ (A \cup B) \cap C = (A \cap C) \cup (B \cap C) \qquad (A \cap B) \cup C = (A \cup C) \cap (B \cup C) \]</p>
+<p><img src="assets/u_inter.png" alt="Diagramme de Venn de (A union B) inter C"> <img src="assets/i_union.png" alt="Diagramme de Venn de (A inter B) union C"></p>
+<p>Ces égalités d'ensembles se lisent comme des égalités de logique (même « règle du jeu » que dans le chapitre sur le calcul propositionnel, CM 1) :</p>
+<table>
+<thead><tr><th>Ensembles</th><th>Logique</th></tr></thead>
+<tbody>
+<tr><td>\(A \cup B\) (\(x \in A\) ou \(x \in B\))</td><td>\(P \vee Q\)</td></tr>
+<tr><td>\(A \cap B\) (\(x \in A\) et \(x \in B\))</td><td>\(P \wedge Q\)</td></tr>
+<tr><td>\((A \cup B) \cap C = (A \cap C) \cup (B \cap C)\)</td><td>\((P \vee Q) \wedge R \Leftrightarrow (P \wedge R) \vee (Q \wedge R)\)</td></tr>
+<tr><td>\((A \cap B) \cup C = (A \cup C) \cap (B \cup C)\)</td><td>\((P \wedge Q) \vee R \Leftrightarrow (P \vee R) \wedge (Q \vee R)\)</td></tr>
+</tbody>
+</table>
+
+<h3>3.2 Différence, différence symétrique, complémentaire</h3>
+<div class="def"><b>Différence —</b> La différence entre l'ensemble \(A\) et l'ensemble \(B\) est l'ensemble des éléments de \(A\) qui ne sont pas dans \(B\). Notation \(A \setminus B\) (on lit « \(A\) privé de \(B\) ») : \(A \setminus B = \{x \in A \mid x \notin B\}\).</div>
+<p>(Attention à la barre de « \(\notin\) » : c'est bien \(x \notin B\), pas \(x \in B\).)</p>
+<div class="def"><b>Différence symétrique —</b> Notée \(A \,\Delta\, B\), c'est l'ensemble des éléments qui sont dans \(A\) ou dans \(B\) mais pas dans les deux : \(A \,\Delta\, B = (A \cup B) \setminus (A \cap B)\) et aussi \(A \,\Delta\, B = (A \setminus B) \cup (B \setminus A)\).</div>
+<p><img src="assets/diff.png" alt="Diagramme de Venn de A privé de B : disque A sans la lentille commune"> <img src="assets/symdiff.png" alt="Diagramme de Venn de A delta B : les deux disques sans la lentille commune"></p>
+<div class="def"><b>Complémentaire —</b> On fixe un ensemble \(\Omega\) appelé <b>univers</b>. Pour \(A \subset \Omega\), le <b>complémentaire</b> de \(A\) par rapport à \(\Omega\) est l'ensemble des éléments de \(\Omega\) qui ne sont pas éléments de \(A\) : \(\overline{A} = \Omega \setminus A\) (quand il n'y a pas d'ambiguïté). Il faut obligatoirement se placer dans un ensemble de référence pour parler de complémentaire.</div>
+<div class="thm"><b>Propriétés de la complémentation —</b>
+<ul>
+<li><b>Involution :</b> l'opération « prendre le complémentaire » appliquée deux fois redonne \(A\) : \(\Omega \setminus (\Omega \setminus A) = A\).</li>
+<li><b>Lois de Morgan :</b> \(\Omega \setminus (A \cap B) = \overline{A} \cup \overline{B}\) et \(\Omega \setminus (A \cup B) = \overline{A} \cap \overline{B}\) (le complémentaire échange \(\cup\) et \(\cap\), comme la négation échange « et » et « ou »).</li>
+</ul></div>
+<p>Figure du polycopié (II.1) : constructions à partir de \(A\) et \(B\) dans l'univers \(\Omega\) (première ligne), et leur passage au complémentaire (seconde ligne).</p>
+<table>
+<tbody>
+<tr><td><img src="assets/f_union.png" alt="A union B dans l'univers"><br>\(A \cup B\)</td><td><img src="assets/f_inter.png" alt="A inter B dans l'univers"><br>\(A \cap B\)</td><td><img src="assets/f_diff.png" alt="A privé de B dans l'univers"><br>\(A \setminus B\)</td><td><img src="assets/f_sym.png" alt="A delta B dans l'univers"><br>\(A \,\Delta\, B\)</td></tr>
+<tr><td><img src="assets/f_union_c.png" alt="Complémentaire de A union B"><br>\(\Omega \setminus (A \cup B)\)</td><td><img src="assets/f_inter_c.png" alt="Complémentaire de A inter B"><br>\(\Omega \setminus (A \cap B)\)</td><td><img src="assets/f_diff_c.png" alt="Complémentaire de A privé de B"><br>\(\Omega \setminus (A \setminus B)\)</td><td><img src="assets/f_sym_c.png" alt="Complémentaire de A delta B"><br>\(\Omega \setminus (A \,\Delta\, B)\)</td></tr>
+</tbody>
+</table>
+
+<h3>3.3 Produit cartésien</h3>
+<div class="def"><b>Définition —</b> Le <b>produit cartésien</b> des ensembles \(A\) et \(B\) (dans cet ordre) est l'ensemble des <b>couples</b> \((a, b)\) où \(a \in A\) et \(b \in B\) ; on le note \(A \times B\). Plus généralement \(A_1 \times A_2 \times \dots \times A_k\) est l'ensemble des <b>\(k\)-uplets</b> \((a_1, \dots, a_k)\) où \(a_i \in A_i\) ; si tous les \(A_i\) valent \(A\), on note \(A^k\).</div>
+<ul>
+<li><b>Remarque :</b> un couple \((a, b)\) n'est pas un ensemble : si \(a \neq b\), alors \((a, b)\) est distinct de \((b, a)\) (l'ordre compte, contrairement à \(\{a, b\} = \{b, a\}\)).</li>
+<li><b>Exemple :</b> \(\{1, 2, 3\} \times \{a, b\}\) a \(3 \times 2 = 6\) éléments : \((1,a), (1,b), (2,a), (2,b), (3,a), (3,b)\).</li>
+<li><b>Exemple (couleurs RGB) :</b> chaque couleur primaire (rouge, vert, bleu) prend une valeur entre 0 et 255 : une couleur est un élément de \([0 ; 255] \times [0 ; 255] \times [0 ; 255] = [0 ; 255]^3\). Avec des valeurs entières, cela fait \(256^3 = 16\,777\,216\) couleurs.</li>
+</ul>
+
+<h2>4. Exemple : l'ensemble des mots sur un alphabet fini</h2>
+<p>Un <b>alphabet</b> \(A\) est un ensemble fini dont les éléments sont appelés des <b>lettres</b>. Exemples : \(\{0, 1\}\) (alphabet binaire), \(\{a, b, c\}\) (trois lettres), \(\{a, \dots, z\}\) (26 lettres), { hello, word } (un alphabet à deux lettres : une « lettre » peut être un mot). N'importe quel ensemble fini convient.</p>
+<ul>
+<li>Un <b>mot</b> défini sur \(A\) est une suite finie d'éléments de \(A\) : \(u = u_1 u_2 \dots u_n\) avec \(u_i \in A\). L'entier \(n\) est la <b>longueur</b> du mot, notée \(|u|\).</li>
+<li>Le <b>mot vide</b> est noté \(\varepsilon\) : c'est le seul mot de longueur nulle.</li>
+<li>On note \(A^*\) l'ensemble des mots sur \(A\), et \(A^+ = A^* \setminus \{\varepsilon\}\) l'ensemble des mots qui ne sont pas le mot vide.</li>
+<li><b>Concaténation :</b> pour \(u, v \in A^*\), \(w = u \cdot v\) est le mot de longueur \(|u| + |v|\) : \(w = u_1 \dots u_{|u|} v_1 \dots v_{|v|}\).</li>
+<li><b>Puissance</b> (définie par récurrence) : \(u^0 = \varepsilon\) et \(u^{n+1} = u \cdot u^n\).</li>
+<li><b>Préfixe / suffixe :</b> \(v\) est un préfixe de \(u\) s'il existe un mot \(w\) tel que \(u = v \cdot w\) ; \(v\) est un suffixe de \(u\) s'il existe \(w\) tel que \(u = w \cdot v\).</li>
+<li>Un <b>langage</b> \(L\) sur \(A\) est un ensemble de mots sur \(A\), c'est-à-dire une partie de \(A^*\) : \(L \subset A^*\).</li>
+</ul>
+<table>
+<thead><tr><th>Exemple</th><th>Résultat</th></tr></thead>
+<tbody>
+<tr><td>Mots de longueur 0, 1, 2 sur \(A = \{a, b\}\)</td><td>\(\varepsilon\) | \(a, b\) | \(aa, ab, ba, bb\) : il y a \(2^n\) mots de longueur \(n\)</td></tr>
+<tr><td>Concaténation : \(ab \cdot cde\) (sur \(\{a, \dots, e\}\))</td><td>\(abcde\), de longueur \(2 + 3 = 5\)</td></tr>
+<tr><td>Puissance : \((ab)^3\) et \((ab)^0\)</td><td>\(ababab\) et \(\varepsilon\)</td></tr>
+<tr><td>Préfixes de \(abc\) / suffixes de \(abc\)</td><td>\(\varepsilon, a, ab, abc\) / \(abc, bc, c, \varepsilon\)</td></tr>
+<tr><td>Un langage</td><td>\(L\) = { mots de \(A^*\) qui commencent par \(a\) } est une partie de \(A^*\)</td></tr>
+</tbody>
+</table>
+<div class="note"><b>Complément (vérifié) —</b> le mot vide et le mot lui-même sont toujours préfixe et suffixe de \(u\). \(A^*\) est infini, mais les mots de longueur \(n\) forment exactement le produit cartésien \(A^n\) (3.3) : il y en a \(|A|^n\).</div>
+
+<div class="retenir"><b>À retenir —</b> Un ensemble se donne par extension (liste) ou par compréhension (propriété). Pas de doublons, pas d'ordre ; \(\varnothing\) existe et \(\varnothing \subset A\) pour tout \(A\). Un ensemble n'est pas élément de lui-même (paradoxe de Russell). \(A \subset B\) signifie « tout \(x\) de \(A\) est dans \(B\) » ; \(A = B\) se montre par double inclusion. \(\mathcal{P}(A)\) est l'ensemble de toutes les parties de \(A\) (\(\varnothing\) et \(A\) comprises) ; \(\mathcal{P}(\varnothing) = \{\varnothing\}\). \(\cup\) correspond à « ou », \(\cap\) à « et » ; \(A \setminus B\) garde ce qui est dans \(A\) sans être dans \(B\) ; \(A \,\Delta\, B = (A \cup B) \setminus (A \cap B) = (A \setminus B) \cup (B \setminus A)\). Le complémentaire n'a de sens que dans un univers \(\Omega\) ; Morgan : il échange \(\cup\) et \(\cap\). \(A \times B\) est l'ensemble des couples (l'ordre compte) ; \(A^*\) est l'ensemble des mots sur l'alphabet \(A\).</div>

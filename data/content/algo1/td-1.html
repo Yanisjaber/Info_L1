@@ -1,0 +1,183 @@
+<p>Ce TD travaille deux thèmes : les <b>tests unitaires</b> (CM 1) et la <b>spécification de fonction</b> (CM 2). Les exercices sont présentés en deux temps : l'énoncé, puis le corrigé (à déplier) — cherchez d'abord seul, puis comparez.</p>
+<h2>Rappels — principe des tests unitaires</h2>
+<ul>
+<li>Un <b>jeu de test</b> spécifie, pour une fonction et des paramètres donnés, la valeur de retour ou l'effet (cas d'une liste modifiée en place) attendus.</li>
+<li>Les jeux de test doivent couvrir le maximum de cas : cas particuliers et cas généraux.</li>
+<li>L'objectif est de <b>mettre en défaut</b> le code testé, pas seulement de vérifier qu'il marche sur un exemple facile.</li>
+<li>Boîte noire (avant d'écrire la fonction) ou boîte blanche (le code de la fonction testée est fourni).</li>
+</ul>
+<div class="def"><b>Assertion —</b> <code>assert &lt;expression booleenne&gt;, "message d'erreur"</code>. Le message est affiché si l'expression est évaluée à <code>False</code>, sinon l'exécution est silencieuse.</div>
+<div class="def"><b>Fonction de test —</b> rassemble les jeux de test (assertions) associés à une fonction donnée. Nommage : <code>test_&lt;nom fonction a tester&gt;</code>.</div>
+<div class="note"><b>Boîte noire —</b> dans les exercices 1, 3, 4 et 5 (boîte noire), on ne demande pas d'écrire la fonction testée elle-même — uniquement les jeux de test et la fonction de test.</div>
+<h2>Rappels — spécification de fonction</h2>
+<ul>
+<li>Le <b>type</b> des paramètres et de la (des) valeur(s) de retour.</li>
+<li>La <b>pré-condition</b> : expression booléenne devant être vérifiée par les paramètres pour que le problème puisse être résolu.</li>
+<li>La <b>post-condition</b> : expression booléenne devant être vérifiée par la (les) valeur(s) de retour.</li>
+</ul>
+<p><b>Modèle pour l'instrumentation :</b></p><pre><code>def &lt;nom de la fonction&gt;(&lt;param1&gt;, &lt;param2&gt;):
+    assert ..., 'Pre-condition'
+    ... # CODE DE LA FONCTION
+    assert ..., 'Post-condition'
+    return ...</code></pre><div class="warn"><b>Règles —</b> pour garantir que la post-condition est cohérente avec le problème posé, les paramètres de la fonction ne doivent <b>pas être modifiés</b>. Pour les fonctions auxiliaires (qui servent aux tests de propriétés), aucune pré-/post-condition n'est demandée.</div>
+
+<h2>Exercices : tests unitaires</h2>
+
+<h3>Exercice 1 — produit des éléments</h3>
+<p>On souhaite tester en <b>boîte noire</b> la fonction <code>produit_elements</code> qui accepte en paramètre une liste d'entiers et retourne le produit de ses éléments.</p>
+<p>1) Écrire 6 jeux de tests distincts correspondant aux cas suivants : liste vide ; singleton ; listes de longueurs toutes différentes et supérieures à 3 contenant : uniquement des nombres strictement positifs ; uniquement des nombres strictement négatifs ; des nombres non nuls (négatifs et positifs) ; exactement un zéro.</p>
+<p>2) Écrire la fonction de test correspondante.</p><details><summary>Voir le corrigé</summary><p><b>Méthode :</b> 6 jeux de test de longueurs toutes différentes (0, 1, 4, 5, 6, 7), pour bien séparer les cas. Les valeurs attendues sont calculées élément par élément.</p><pre><code>def test_produit_elements():
+    assert produit_elements([]) == 1, "liste vide : produit neutre"
+    assert produit_elements([5]) == 5, "singleton"
+    assert produit_elements([1,2,3,4]) == 24, "longueur 4, tous positifs"
+    assert produit_elements([-1,-2,-3,-4,-5]) == -120, "longueur 5, tous negatifs"
+    assert produit_elements([-2,3,-1,4,-5,6]) == -720, "longueur 6, non nuls melanges"
+    assert produit_elements([1,-2,3,0,-4,5,-6]) == 0, "longueur 7, exactement un zero"
+    print("tous les tests sont passes")</code></pre><div class="warn"><b>Pièges —</b> le cas « liste vide » attend <b>1</b> (élément neutre du produit) et non 0, comme la somme d'une liste vide vaut 0 (neutre de l'addition). Le cas « exactement un zéro » est un piège classique : un seul 0 annule tout le produit, quels que soient les autres éléments.</div><p>Implémentation de référence pour exécuter ces tests (non demandée en boîte noire) :</p><pre><code>def produit_elements(liste):
+    p = 1
+    for v in liste:
+        p = p * v
+    return p</code></pre></details><h3>Exercice 2 — nombre de chiffres</h3>
+<p>On souhaite tester en <b>boîte blanche</b> la fonction <code>nombre_chiffres</code> qui accepte en paramètre un entier quelconque et retourne son nombre de chiffres. Son code est le suivant :</p><pre><code>def nombre_chiffres(n):
+    if n &lt; 0:
+        n = -n
+    k = 1
+    while n &gt;= 10:
+        n //= 10
+        k += 1
+    return k</code></pre><p>1) Écrire 9 (c'est-à-dire 1 + 2×4) jeux de tests distincts correspondant aux cas suivants : zéro ; condition du <code>if</code> fausse ou vraie et, dans chacun des cas : pas d'itération ; exactement 1 itération ; exactement 4 itérations ; plus de 10 itérations.</p>
+<p>2) a) Donner les 2 entiers consécutifs tels qu'il y ait 2 itérations pour le premier et 3 itérations pour son successeur. b) Écrire les 2 assertions de test correspondantes.</p><details><summary>Voir le corrigé</summary><p><b>1) Les 9 jeux de tests</b> (le code fourni a été exécuté pour vérifier chaque valeur attendue) :</p><pre><code>def test_nombre_chiffres():
+    assert nombre_chiffres(0) == 1, "zero"
+    # if faux (n&gt;=0) :
+    assert nombre_chiffres(7) == 1, "0 iteration"
+    assert nombre_chiffres(42) == 2, "1 iteration"
+    assert nombre_chiffres(12345) == 5, "4 iterations"
+    assert nombre_chiffres(123456789012) == 12, "plus de 10 iterations"
+    # if vrai (n&lt;0) :
+    assert nombre_chiffres(-7) == 1, "0 iteration"
+    assert nombre_chiffres(-42) == 2, "1 iteration"
+    assert nombre_chiffres(-12345) == 5, "4 iterations"
+    assert nombre_chiffres(-123456789012) == 12, "plus de 10 iterations"
+    print("tous les tests sont passes")</code></pre><p>Le nombre d'itérations vaut (nombre de chiffres − 1) : 0, 1, 4 et 11 itérations pour 7, 42, 12345 et 123456789012.</p>
+<p><b>2) a)</b> Il faut que n passe de 3 chiffres à 4 chiffres : n = <b>999</b> et n+1 = <b>1000</b>.</p><pre><code># 999 -&gt; 999 -&gt; 99 -&gt; 9 : 2 iterations, k = 1+2 = 3 chiffres
+# 1000 -&gt; 1000 -&gt; 100 -&gt; 10 -&gt; 1 : 3 iterations, k = 1+3 = 4 chiffres</code></pre><p><b>b)</b> Les 2 assertions correspondantes :</p><pre><code>assert nombre_chiffres(999) == 3, "999 : 2 iterations, 3 chiffres"
+assert nombre_chiffres(1000) == 4, "1000 : 3 iterations, 4 chiffres"</code></pre></details><h3>Exercice 3 — insertion ordonnée</h3>
+<p>On souhaite tester la fonction <code>insertion_ordonnee</code> qui accepte en paramètres <code>liste</code> (une liste d'entiers triée par ordre croissant, au sens large) et <code>valeur</code> (un entier). La fonction insère <code>valeur</code> dans une <b>copie</b> de <code>liste</code> de telle façon que la nouvelle liste reste triée, et retourne la liste ainsi créée. Exemple : si <code>liste</code> vaut <code>[7,11]</code> et <code>valeur</code> vaut 9, l'insertion a lieu à l'indice 1, et la liste retournée est <code>[7,9,11]</code>.</p>
+<p>1) a) Écrire 5 jeux de tests distincts correspondant aux cas suivants : liste vide ; liste de longueur 4 avec insertion en début, en fin, à une autre position, ou avec une valeur égale à un élément déjà présent (cas « au sens large »). b) Écrire les lignes de code (avec assertions) nécessaires à la vérification du dernier jeu de test. On vérifiera en particulier que la fonction ne modifie pas la liste passée en paramètre.</p>
+<p>2) On souhaite au contraire que la fonction ait pour effet de <b>modifier</b> la liste passée en paramètre, sans rien retourner. Écrire les lignes de code (avec assertions) nécessaires à la vérification du dernier jeu de test selon ce nouveau principe.</p><details><summary>Voir le corrigé</summary><p><b>1) a)</b> 5 jeux de tests. Le 5<sup>e</sup> (valeur égale à un élément présent) couvre la clause « au sens large » : la liste reste valide qu'on insère avant ou après les éléments égaux, seul le multi-ensemble des valeurs compte.</p>
+<table><thead><tr><th>Cas</th><th>Appel</th><th>Retour attendu</th></tr></thead><tbody>
+<tr><td>liste vide</td><td><code>insertion_ordonnee([], 5)</code></td><td><code>[5]</code></td></tr>
+<tr><td>insertion en début</td><td><code>insertion_ordonnee([3,5,7,9], 1)</code></td><td><code>[1,3,5,7,9]</code></td></tr>
+<tr><td>insertion en fin</td><td><code>insertion_ordonnee([2,4,6,8], 10)</code></td><td><code>[2,4,6,8,10]</code></td></tr>
+<tr><td>insertion au milieu</td><td><code>insertion_ordonnee([3,7,9,11], 8)</code></td><td><code>[3,7,8,9,11]</code></td></tr>
+<tr><td>valeur déjà présente</td><td><code>insertion_ordonnee([2,4,4,6], 4)</code></td><td><code>[2,4,4,4,6]</code></td></tr>
+</tbody></table>
+<p><b>b)</b> Vérification du 5<sup>e</sup> jeu, avec contrôle de non-modification de la liste d'origine :</p><pre><code>liste_originale = [2,4,4,6]
+resultat = insertion_ordonnee(liste_originale, 4)
+assert resultat == [2,4,4,4,6], "la valeur doit etre inseree en gardant la liste triee"
+assert liste_originale == [2,4,4,6], "la liste passee en parametre ne doit pas etre modifiee"</code></pre><p><b>2)</b> Version « effet de bord » (modifie <code>liste</code> en place, ne retourne rien) :</p><pre><code>liste = [2,4,4,6]
+resultat = insertion_ordonnee(liste, 4)
+assert resultat is None, "cette version ne doit rien retourner"
+assert liste == [2,4,4,4,6], "la liste doit etre modifiee en place"</code></pre><div class="note"><b>Deux conventions —</b> pour une fonction qui « transforme » une liste : retourner une <b>copie</b> (la liste d'origine est intacte, plus sûr mais recopie la mémoire) ou <b>modifier en place</b> (plus économe en mémoire, mais effet de bord à documenter clairement).</div>
+<p>Implémentations de référence (non demandées) pour exécuter ces tests — copie, puis en place :</p><pre><code>def insertion_ordonnee(liste, valeur):
+    resultat = []
+    inseree = False
+    for v in liste:
+        if not inseree and valeur &lt;= v:
+            resultat.append(valeur)
+            inseree = True
+        resultat.append(v)
+    if not inseree:
+        resultat.append(valeur)
+    return resultat</code></pre><pre><code>def insertion_ordonnee(liste, valeur):
+    i = 0
+    while i &lt; len(liste) and liste[i] &lt; valeur:
+        i += 1
+    liste.append(None)
+    for j in range(len(liste) - 1, i, -1):
+        liste[j] = liste[j - 1]
+    liste[i] = valeur</code></pre></details><h3>Exercice 4 — valeurs inférieures (intermédiaire)</h3>
+<p>Écrire les jeux de tests et la fonction de test associés à <code>nb_valeurs_inferieures(liste, valeur)</code>, qui détermine et retourne le nombre d'éléments de <code>liste</code> dont la valeur est inférieure <b>ou égale</b> à <code>valeur</code>. Exemple : si <code>liste</code> vaut <code>[-3,2,8,1,7,11,3,4]</code> et <code>valeur</code> vaut 3, la fonction retourne 4 (valeurs -3, 2, 1, 3).</p><details><summary>Voir le corrigé</summary><pre><code>def test_nb_valeurs_inferieures():
+    assert nb_valeurs_inferieures([-3,2,8,1,7,11,3,4], 3) == 4, "exemple de l'enonce"
+    assert nb_valeurs_inferieures([], 5) == 0, "liste vide"
+    assert nb_valeurs_inferieures([10,20,30], 5) == 0, "aucune valeur ne convient"
+    assert nb_valeurs_inferieures([1,2,3], 100) == 3, "toutes les valeurs conviennent"
+    assert nb_valeurs_inferieures([5,5,5,2], 5) == 4, "egalite (&lt;=), plusieurs occurrences"
+    print("tous les tests sont passes")</code></pre><p>Le dernier cas teste spécifiquement le « ou égal » de l'énoncé. Attention : une implémentation buguée utilisant <code>&lt;</code> au lieu de <code>&lt;=</code> est déjà démasquée par l'exemple de l'énoncé (elle renvoie 3 au lieu de 4, car la valeur 3 n'est pas comptée) ; le dernier cas la démasque avec plusieurs occurrences égales (elle renvoie 1 au lieu de 4).</p><p>Implémentation de référence :</p><pre><code>def nb_valeurs_inferieures(liste, valeur):
+    nb = 0
+    for v in liste:
+        if v &lt;= valeur:
+            nb += 1
+    return nb</code></pre></details><h3>Exercice 5 — indices (intermédiaire)</h3>
+<p>Écrire les jeux de tests et la fonction de test associés à <code>indices_valeur(liste, valeur)</code>, qui détermine et retourne la liste des indices de <code>liste</code> où l'on peut trouver <code>valeur</code>. Exemple : si <code>liste</code> vaut <code>[11,23,67,23,23,83,23,10]</code> et <code>valeur</code> vaut 23, la fonction retourne <code>[1,3,4,6]</code>.</p><details><summary>Voir le corrigé</summary><pre><code>def test_indices_valeur():
+    assert indices_valeur([11,23,67,23,23,83,23,10], 23) == [1,3,4,6], "exemple de l'enonce"
+    assert indices_valeur([1,2,3], 9) == [], "valeur absente"
+    assert indices_valeur([], 5) == [], "liste vide"
+    assert indices_valeur([4,5,6], 5) == [1], "une seule occurrence"
+    assert indices_valeur([7,7,7], 7) == [0,1,2], "toutes les positions"
+    print("tous les tests sont passes")</code></pre><p>On teste le cas général (exemple), les cas extrêmes (liste vide, valeur absente), une occurrence unique et le cas où toutes les positions conviennent. Implémentation de référence :</p><pre><code>def indices_valeur(liste, valeur):
+    indices = []
+    for i in range(len(liste)):
+        if liste[i] == valeur:
+            indices.append(i)
+    return indices</code></pre></details><h2>Exercices : spécification de fonction</h2>
+<h3>Exercice 6 — lecture d'énoncé</h3>
+<p>Écrire la spécification des fonctions suivantes :</p>
+<ul><li>1) La fonction <code>puissance</code> calcule et retourne la puissance p = a<sup>b</sup> de deux entiers positifs a et b.</li>
+<li>2) La fonction <code>log2_entier</code> accepte en paramètre un entier n strictement positif et retourne l'unique entier k tel que 2<sup>k</sup> ≤ n &lt; 2<sup>k+1</sup>.</li></ul><details><summary>Voir le corrigé</summary><p><b>1) Fonction <code>puissance</code>.</b> Types : a, b, p entiers. Pré-condition : <code>a &gt;= 0 and b &gt;= 0</code> (deux entiers positifs). Post-condition : <code>p == a**b</code> (avec la convention usuelle 0<sup>0</sup> = 1).</p>
+<p><b>2) Fonction <code>log2_entier</code>.</b> Types : n, k entiers. Pré-condition : <code>n &gt;= 1</code> (strictement positif). Post-condition : <code>2**k &lt;= n &lt; 2**(k+1)</code> : k est le logarithme en base 2 de n arrondi à l'entier inférieur ; bien que l'énoncé parle d'un entier « positif », k peut valoir 0 (n = 1).</p><pre><code>def puissance(a, b):
+    assert a &gt;= 0 and b &gt;= 0, 'Pre-condition'
+    p = 1
+    for _ in range(b):
+        p = p * a
+    assert p == a**b, 'Post-condition'
+    return p
+
+def log2_entier(n):
+    assert n &gt;= 1, 'Pre-condition'
+    k = 0
+    while 2**(k+1) &lt;= n:
+        k += 1
+    assert 2**k &lt;= n &lt; 2**(k+1), 'Post-condition'
+    return k</code></pre><p>(Les implémentations ci-dessus, non demandées, illustrent le modèle d'instrumentation et ont été exécutées : <code>puissance(2,10) == 1024</code>, <code>log2_entier(17) == 4</code>.)</p></details><h3>Exercice 7 — écriture de fonction auxiliaire</h3>
+<p>On souhaite écrire la pré-condition pour l'exercice 3 (<code>insertion_ordonnee</code>).</p>
+<p>1) Écrire la fonction auxiliaire <code>est_croissante</code> qui accepte en paramètre une liste d'entiers <code>liste</code>, vérifie que cette liste est triée par ordre croissant (au sens large) et retourne le booléen correspondant. 2) En déduire l'assertion de pré-condition de <code>insertion_ordonnee</code>. (L'écriture de la post-condition dépasse le cadre de ce TD.)</p><details><summary>Voir le corrigé</summary><p><b>1)</b></p><pre><code>def est_croissante(liste):
+    for i in range(len(liste)-1):
+        if liste[i] &gt; liste[i+1]:
+            return False
+    return True</code></pre><p>Liste vide et singleton → <code>True</code> par convention ; liste triée (avec égalités) → <code>True</code> ; liste non triée → <code>False</code>. (Ce code a deux <code>return</code> : c'est permis pour une fonction auxiliaire non instrumentée ; la règle du return unique concerne les fonctions avec pré/post-condition.)</p><p><b>2)</b> Pré-condition déduite pour <code>insertion_ordonnee</code> :</p><pre><code>assert est_croissante(liste), "liste doit etre triee par ordre croissant (au sens large)"</code></pre></details><h3>Exercice 8 — comprendre une spécification</h3>
+<p>On donne la spécification : type du paramètre : n est un entier ; type de la valeur de retour : a est un entier ; pré-condition : <code>n &gt;= 0</code> ; post-condition : <code>a &gt;= 0 and a**2 &lt;= n &lt; (a+1)**2</code>. On répondra dans l'ordre souhaité : écrire une implémentation de cette spécification, puis décrire la nature du problème posé et en déduire un nom pertinent pour la fonction.</p>
+<div class="warn"><b>Contrainte —</b> ne pas utiliser de type <code>float</code>, qui limiterait le domaine de validité de la fonction.</div><details><summary>Voir le corrigé</summary><p><b>Implémentation</b> (sans float, par recherche incrémentale) :</p><pre><code>def racine_carree_entiere(n):
+    assert n &gt;= 0, 'Pre-condition'
+    a = 0
+    while (a+1)**2 &lt;= n:
+        a += 1
+    assert a &gt;= 0 and a**2 &lt;= n &lt; (a+1)**2, 'Post-condition'
+    return a</code></pre><p>Vérifiée contre <code>math.isqrt</code> sur une large plage, y compris juste avant/après des carrés parfaits (15/16, 99/100).</p>
+<p><b>Nature du problème :</b> la post-condition <code>a**2 &lt;= n &lt; (a+1)**2</code> caractérise exactement la <b>racine carrée entière</b> (partie entière de la racine carrée) de n : le plus grand entier dont le carré ne dépasse pas n. Nom pertinent : <code>racine_carree_entiere</code> (équivalent de <code>math.isqrt</code> en Python).</p></details><h3>Exercice 9 — complément sur les ternaires (avancé)</h3>
+<p>On souhaite écrire la fonction <code>nombre_chiffres</code> qui accepte en paramètre un entier positif ou nul n et retourne son nombre k de chiffres (en base 10).</p>
+<ul><li>1) Écrire la pré-condition de cette fonction.</li>
+<li>2) a) Écrire la fonction auxiliaire <code>est_nombre_chiffres(n,k)</code> qui retourne le booléen indiquant si k est le nombre de chiffres (en base 10) de l'entier positif ou nul n. <i>Indication :</i> un entier strictement positif a k chiffres si et seulement s'il appartient à l'intervalle [10<sup>k-1</sup> ; 10<sup>k</sup>[. L'exception est l'entier 0, qui possède 1 chiffre. b) En déduire la post-condition de <code>nombre_chiffres</code>.</li>
+<li>3) Réécrire cette post-condition sous forme d'une <b>expression ternaire</b> (<code>valeur_vrai if condition else valeur_faux</code>).</li>
+<li>4) Écrire la fonction <code>nombre_chiffres</code>. Le paramètre n ne doit pas être modifié par la fonction.</li>
+<li>5) (Pour aller plus loin) Généraliser dans le cas des nombres relatifs.</li></ul><details><summary>Voir le corrigé</summary><p><b>1) Pré-condition :</b></p><pre><code>assert n &gt;= 0, 'Pre-condition'</code></pre><p><b>2) a)</b> Fonction auxiliaire :</p><pre><code>def est_nombre_chiffres(n, k):
+    if n == 0:
+        return k == 1
+    return 10**(k-1) &lt;= n &lt; 10**k</code></pre><p><b>b)</b> Post-condition déduite (via la fonction auxiliaire) :</p><pre><code>assert est_nombre_chiffres(n, k), 'Post-condition'</code></pre><p><b>3)</b> Même post-condition, réécrite avec un ternaire (sans fonction auxiliaire) :</p><pre><code>assert (k == 1 if n == 0 else 10**(k-1) &lt;= n &lt; 10**k), 'Post-condition'</code></pre><p><b>4)</b> Fonction complète. Le paramètre <code>n</code> n'est pas modifié : on travaille sur une copie locale <code>m</code> (règle 1).</p><pre><code>def nombre_chiffres(n):
+    assert n &gt;= 0, 'Pre-condition'
+    m = n
+    k = 1
+    while m &gt;= 10:
+        m //= 10
+        k += 1
+    assert (k == 1 if n == 0 else 10**(k-1) &lt;= n &lt; 10**k), 'Post-condition'
+    return k</code></pre><p>Vérifiée sur de nombreux n : <code>k</code> coïncide avec <code>len(str(n))</code>.</p>
+<p><b>5)</b> Pour les relatifs, on applique <code>nombre_chiffres</code> à la valeur absolue :</p><pre><code>def nombre_chiffres_relatif(n):
+    return nombre_chiffres(abs(n))</code></pre><p>Vérifiée sur −42, −1, 0, 1, 42, −12345, 12345.</p></details><div class="retenir"><b>À retenir —</b>
+<ul>
+<li>Jeu de test : viser le maximum de cas distincts (vide, singleton, cas général, cas limites, égalité stricte vs large) — l'objectif est de <b>mettre en défaut</b> le code, pas de le rassurer.</li>
+<li>Boîte noire (fonction non fournie) : on écrit seulement les jeux de test d'après l'énoncé ; boîte blanche (code fourni) : on cible les branches et le nombre d'itérations (0, 1, plusieurs) pour tout couvrir.</li>
+<li>Copie vs effet de bord : une fonction qui retourne une nouvelle valeur sans toucher à ses paramètres, ou qui modifie en place et ne retourne rien (<code>None</code>) — à distinguer dans les tests.</li>
+<li>Spécification : type + pré-condition (paramètres) + post-condition (retour) ; la pré-condition peut s'appuyer sur une fonction auxiliaire (<code>est_croissante</code>) et la post-condition s'écrire avec ou sans ternaire.</li>
+<li>Ne jamais modifier les paramètres d'une fonction dont on vérifie une post-condition : travailler sur une copie locale (<code>m = n</code>).</li>
+</ul></div>

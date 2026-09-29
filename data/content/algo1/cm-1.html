@@ -1,0 +1,285 @@
+<p>Ce cours a deux parties qui n'en font qu'une : on écrit proprement pour pouvoir <b>changer</b> son code, et on le teste pour pouvoir le changer <b>sans le casser</b>. La décomposition en fonctions est le pont entre les deux : elle produit les fonctions que les tests savent examiner.</p>
+
+<h2>Partie I — Habitudes d'écriture</h2>
+
+<h2>1. Pourquoi le clean code</h2>
+<p>Objectifs : sensibiliser à quelques dispositifs qui améliorent la qualité d'un code (<i>Clean code</i>) pour qu'il réponde mieux aux attentes de ceux à qui il s'adresse (relecteurs, collaborateurs, clients…), et à la nécessité professionnelle de « bien écrire ».</p>
+<div class="def"><b>Clean code —</b> L'objectif principal du Clean code est la construction de logiciels en <b>minimisant le coût du changement</b> (évolution du besoin, changement de l'équipe qui gère…) et en <b>maximisant la capacité à répondre au changement</b>.</div>
+<p>La définition est économique, pas esthétique : un logiciel est modifié bien plus souvent qu'il n'est écrit, et chaque modification coûte d'autant plus cher que le code est difficile à comprendre.</p>
+<h3>Les quatre pistes de travail</h3>
+<table><thead><tr><th>Piste</th><th>Ce qu'elle demande</th></tr></thead><tbody>
+<tr><td>Nommer</td><td>les variables et fonctions selon des conventions propres au contexte</td></tr>
+<tr><td>Commenter</td><td>le code pour l'expliquer ou le structurer</td></tr>
+<tr><td>Décomposer</td><td>en fonctions, fonctions auxiliaires et code principal</td></tr>
+<tr><td>Factoriser</td><td>les fonctionnalités redondantes</td></tr>
+</tbody></table>
+<h3>Deux autres pistes</h3>
+<ul>
+<li><b>KISS</b> (<i>Keep It Simple, Stupid</i>) : éviter l'optimisation prématurée. On écrit d'abord un code simple et correct ; on n'optimise que si une mesure montre que c'est nécessaire.</li>
+<li><b>Règle du boy scout</b> : laisser le code source plus propre que quand on l'a trouvé. Une petite amélioration à chaque passage, plutôt qu'un grand nettoyage qui n'arrive jamais.</li>
+</ul>
+
+<h2>2. Nommer</h2>
+<p>Le cours part d'une carte de France du « pain au chocolat / chocolatine » et d'une citation d'Ambroise de Milan : <i>Si fueris Romae, Romano vivito more</i> — « À Rome, fais comme les Romains ! ».</p>
+<div class="note"><b>Principe général —</b> les conventions changent selon le langage, l'entreprise, les personnes avec qui on travaille ; la compétence visée est donc de <b>s'adapter</b> et de les utiliser selon le contexte. Il n'y a pas de « bonne » convention dans l'absolu : voici celles de l'UE Info1.Algo1.</div>
+<h3>Les conventions de l'UE</h3>
+<ul>
+<li>en <b>français</b>, pour la bonne compréhension ;</li>
+<li>des noms <b>précis</b> ;</li>
+<li>un nom de <b>variable</b> reflète ce que représente la variable ;</li>
+<li>un nom de <b>fonction</b> reflète ce que fait la fonction — le <b>quoi</b>, pas le comment — si possible avec un verbe d'action ;</li>
+<li>refléter le niveau d'abstraction : un nom fonctionnel au niveau fonctionnel, un nom technique au niveau technique.</li>
+</ul>
+<h3>Plus précisément</h3>
+<table><thead><tr><th>Règle</th><th>Exemple</th></tr></thead><tbody>
+<tr><td>préconisations Python : <b>snake_case</b> (PEP 8, <i>Style Guide for Python Code</i>)</td><td><code>liste_valeurs</code></td></tr>
+<tr><td>variables et fonctions <b>booléennes</b> : commencent par <code>est_…</code> ou <code>a_…</code></td><td><code>est_palindrome</code>, <code>a_doublons</code></td></tr>
+<tr><td>distinguer une <b>valeur</b> et son <b>indice</b> dans un tableau ou une liste</td><td><code>valeur</code> / <code>i_valeur</code></td></tr>
+<tr><td>listes : le pluriel peut suffire</td><td><code>liste_valeurs</code> ou <code>valeurs</code></td></tr>
+<tr><td>variables de comptage</td><td><code>nb_elements</code></td></tr>
+</tbody></table>
+<div class="note"><b>Le test du bon nom —</b> si vous devez lire le corps d'une fonction pour savoir ce qu'elle fait, son nom est à revoir. <code>traiter(l)</code> ne dit rien ; <code>valeurs_superieures_a_la_moyenne(valeurs)</code> dit tout — et rend le commentaire inutile.</div>
+
+<h2>3. Commenter</h2>
+<h3>Commenter pour expliquer</h3>
+<ul>
+<li>en cours de développement : indiquer l'intention pour les lignes suivantes (quitte à supprimer ensuite) ;</li>
+<li>certains commentaires — tous ? — peuvent être évités quand le nommage est bien fait ;</li>
+<li>indiquer le <b>pourquoi</b>, et pas le comment.</li>
+</ul>
+<p><b>À faire</b> — on explique le pourquoi :</p><pre><code># Division entière pour éviter les flottants
+moyenne = somme//nb_elements</code></pre><p><b>À éviter</b> — on paraphrase le code :</p><pre><code># Division de la somme par le nombre d'éléments
+moyenne = somme//nb_elements</code></pre><p>Le second commentaire ne fait que redire la ligne en français : il ajoute du texte à maintenir sans ajouter d'information. Le premier explique un choix que le code seul ne révèle pas — pourquoi <code>//</code> plutôt que <code>/</code>.</p>
+<h3>Commenter pour structurer</h3>
+<p>Sur un code long (au-delà de 1000 lignes par exemple), les commentaires servent à identifier la structure : titres et séparations entre les parties fonctionnelles ; ne pas dépasser <b>80 caractères par ligne</b>.</p><pre><code># FONCTIONS ENTREES-SORTIES
+def ...
+
+# FONCTIONS UTILITAIRES
+def ...
+
+# TRAITEMENT PRINCIPAL
+def ...
+
+# PROGRAMME PRINCIPAL
+...</code></pre><p>Cette structure n'est pas décorative : elle annonce exactement la décomposition de la section suivante.</p>
+
+<h2>4. Décomposer</h2>
+<div class="def"><b>Avantages de la décomposition en fonctions —</b> <b>lisibilité</b> ; <b>modularité et réutilisabilité</b> (dans le même programme ou dans d'autres) ; <b>testabilité et maintenance</b> (tests unitaires, diagnostic d'erreurs, mises à jour).</div>
+<p>Le troisième point fait le lien avec la partie II : on ne peut tester unitairement que ce qui a été isolé dans une fonction. Décomposer n'est pas une coquetterie de style, c'est la condition d'existence des tests.</p>
+<h3>La méthode : de haut en bas</h3>
+<p>On commence par le programme principal :</p><pre><code># PROGRAMME PRINCIPAL
+entrees = saisie_des_donnees()
+sorties = fonction_de_traitement(entrees)
+affichage_des_donnees(sorties)</code></pre><p>Puis on remonte en précisant les étapes du traitement :</p><pre><code>def fonction_de_traitement(entrees):
+    fonction_utilitaire_1(...)
+    fonction_utilitaire_2(...)
+    return ...</code></pre><table><thead><tr><th colspan="3">PROGRAMME PRINCIPAL</th></tr></thead><tbody>
+<tr><td><code>saisie_des_donnees</code><br>(entrées / sorties)</td><td><code>fonction_de_traitement</code><br>appelle <code>utilitaire_1</code> et <code>utilitaire_2</code> (étapes du traitement, testables unitairement)</td><td><code>affichage_des_donnees</code><br>(entrées / sorties)</td></tr>
+</tbody></table>
+<p>On écrit d'abord le niveau le plus abstrait — le <b>quoi</b> — puis on descend vers le <b>comment</b>. Les fonctions du bas ne font ni saisie ni affichage : ce sont exactement celles que la partie II saura tester.</p>
+<h3>L'exemple du cours</h3>
+<p>Le code suivant permet à l'utilisateur de saisir une liste d'entiers dont on calcule la moyenne, puis constitue et affiche la liste des nombres supérieurs ou égaux à cette moyenne. Il s'agit de le décomposer en fonctions pour améliorer la lisibilité.</p>
+<p><b>Avant</b> — 16 lignes, tout au même niveau :</p><pre><code>nb_elements = int(input("Nombre d'elements a saisir : "))
+liste = []
+for _ in range(nb_elements):
+    valeur = int(input("Saisir un entier : "))
+    liste.append(valeur)
+somme = 0
+for valeur in liste:
+    somme += valeur
+moyenne = somme/nb_elements
+liste_superieurs = []
+for valeur in liste:
+    if valeur&gt;=moyenne:
+        liste_superieurs.append(valeur)
+for valeur in liste_superieurs:
+    print(valeur,end=' ')
+print()</code></pre><p><b>Après</b> — proposition de correction, suivant la structure en quatre sections. Le programme principal se lit en trois lignes.</p><pre><code># FONCTIONS ENTREES-SORTIES
+def saisie_des_valeurs():
+    nb_elements = int(input("Nombre d'elements a saisir : "))
+    valeurs = []
+    for _ in range(nb_elements):
+        valeurs.append(int(input("Saisir un entier : ")))
+    return valeurs
+
+def affichage_des_valeurs(valeurs):
+    for valeur in valeurs:
+        print(valeur, end=' ')
+    print()
+
+# FONCTIONS UTILITAIRES
+def moyenne(valeurs):
+    somme = 0
+    for valeur in valeurs:
+        somme += valeur
+    return somme / len(valeurs)
+
+# TRAITEMENT PRINCIPAL
+def valeurs_superieures_a_la_moyenne(valeurs):
+    moyenne_des_valeurs = moyenne(valeurs)
+    superieures = []
+    for valeur in valeurs:
+        if valeur &gt;= moyenne_des_valeurs:
+            superieures.append(valeur)
+    return superieures
+
+# PROGRAMME PRINCIPAL
+valeurs = saisie_des_valeurs()
+superieures = valeurs_superieures_a_la_moyenne(valeurs)
+affichage_des_valeurs(superieures)</code></pre><p>Ce qu'on a gagné : <code>moyenne</code> et <code>valeurs_superieures_a_la_moyenne</code> ne contiennent ni saisie ni affichage. Elles prennent des paramètres et renvoient un résultat : ce sont des fonctions <b>testables</b>. Au passage, <code>moyenne</code> est réutilisable ailleurs.</p>
+
+<h2>5. Factoriser</h2>
+<div class="def"><b>Factoriser —</b> repérer des fonctions dont le code est très ressemblant ; mettre en commun les parties de code identiques ; les différences amènent à rajouter un ou plusieurs <b>paramètres supplémentaires</b>.</div>
+<div class="warn"><b>Attention —</b> copier-coller du code produit du code presque identique, donc factorisable. Le copier-coller n'est pas interdit : c'est un signal qu'il y aura quelque chose à factoriser juste après.</div>
+<h3>L'exemple du cours</h3>
+<p>Un point mobile est repéré par ses coordonnées <code>(x, y)</code>. Il s'agit de factoriser les trois fonctions <code>monter</code>, <code>descendre</code> et <code>droite</code>.</p>
+<p><b>Avant</b> — trois fois la même mécanique :</p><pre><code>def monter(point):
+    x, y = point
+    return (x, y+1)
+
+def descendre(point):
+    x, y = point
+    return (x, y-1)
+
+def droite(point):
+    x, y = point
+    return (x+1, y)</code></pre><p><b>Après</b> — la partie identique est « décomposer le point, puis renvoyer un point translaté ». Les différences sont les deux valeurs ajoutées à <code>x</code> et <code>y</code> : elles deviennent deux paramètres.</p><pre><code>def deplacer(point, dx, dy):
+    # dx et dy : déplacement demandé sur chaque axe
+    x, y = point
+    return (x + dx, y + dy)
+
+def monter(point):
+    return deplacer(point, 0, 1)
+
+def descendre(point):
+    return deplacer(point, 0, -1)
+
+def droite(point):
+    return deplacer(point, 1, 0)
+
+def gauche(point):
+    return deplacer(point, -1, 0)</code></pre><p>Les trois fonctions d'origine peuvent disparaître au profit d'appels directs (<code>deplacer(point, 0, 1)</code>, <code>deplacer(point, 0, -1)</code>, <code>deplacer(point, 1, 0)</code>) ou être conservées comme noms de commodité, ce qui garde un vocabulaire lisible au niveau d'abstraction supérieur. Le bénéfice se voit à la dernière ligne : ajouter <code>gauche</code> coûte une ligne au lieu de trois, et une correction de bug dans le déplacement se fait à un seul endroit — « minimiser le coût du changement ».</p>
+
+<h2>Partie II — Tests unitaires</h2>
+<h2>6. Le cadre et l'objectif</h2>
+<div class="def"><b>Cadre du problème —</b> le cadre d'étude est celui des <b>fonctions</b>. Il se généralise à tout code présentant une ou plusieurs entrées et une ou plusieurs sorties : programme principal, portion de code.</div>
+<p>On <b>exclut</b> deux situations :</p>
+<ul>
+<li>les interactions avec l'utilisateur : dans le cadre étudié, les entrées sont données simultanément et les sorties recueillies simultanément ;</li>
+<li>les effets de bord non testables : affichage, etc.</li>
+</ul>
+<div class="def"><b>Objectif —</b> étant donnée une fonction, répondre à la question : la fonction effectue-t-elle bien ce qu'on attend qu'elle fasse ?</div>
+<p>Ces exclusions expliquent la section 4 : une fonction qui fait un <code>input</code> ou un <code>print</code> au milieu de son traitement est hors cadre. C'est pourquoi la décomposition sépare les entrées-sorties du traitement.</p>
+
+<h2>7. Les jeux de tests</h2>
+<div class="def"><b>Jeu de test —</b> un jeu de test permet de spécifier, pour une fonction et des paramètres donnés, la <b>valeur de retour attendue</b>.</div>
+<div class="note"><b>Méthode —</b> pour vérifier qu'une fonction répond au problème posé : la tester sur des jeux de tests couvrant le maximum de cas possibles ; trouver les <b>cas particuliers</b>, les <b>cas extrêmes</b>, les <b>cas généraux</b>. <b>Objectif : mettre en défaut le code à tester.</b></div>
+<p>On n'écrit pas des tests pour se rassurer, mais pour essayer de casser sa propre fonction. Un test qui passe du premier coup sur le cas le plus banal n'apprend presque rien ; c'est la liste vide, le singleton ou la valeur limite qui révèle les bugs. On étudie ainsi la couverture de tests, les domaines des paramètres et des valeurs de retour — étude qui se poursuivra avec la spécification de fonction.</p>
+<p>La méthodologie d'élaboration des tests sera vue plus en détail dans l'UE Info2.ILU1. En Info1.Algo1, on peut vous demander d'élaborer des jeux de test de deux façons :</p>
+<ul>
+<li><b>boîte noire</b> : sans connaître le code de la fonction ; les cas à traiter sont donnés explicitement ;</li>
+<li><b>boîte blanche</b> : le code de la fonction est donné ; les cas sont caractérisés par la façon dont la fonction les exécute.</li>
+</ul>
+<p><b>Fonction d'exemple :</b> une liste est un palindrome si elle se lit de la même manière dans les deux sens. <code>est_palindrome</code> accepte une liste d'entiers et retourne le booléen indiquant si la liste est (<code>True</code>) ou non (<code>False</code>) un palindrome.</p>
+
+<h2>8. Test en boîte noire</h2>
+<div class="def"><b>Boîte noire —</b> on ne connaît pas le code de la fonction : on se base uniquement sur l'énoncé pour écrire les tests ; on peut donc les écrire <b>avant</b> la fonction ; on cherche à couvrir l'intégralité des besoins identifiés dans l'énoncé.</div>
+<table><thead><tr><th></th><th>Boîte noire</th><th>Boîte blanche</th></tr></thead><tbody>
+<tr><td>On se base sur</td><td>l'énoncé</td><td>le code</td></tr>
+<tr><td>Tests écrits</td><td>AVANT la fonction</td><td>APRÈS la fonction</td></tr>
+<tr><td>Cas caractérisés par</td><td>la forme des paramètres / besoins de l'énoncé</td><td>les chemins d'exécution</td></tr>
+</tbody></table>
+<p>La différence n'est pas la difficulté, c'est l'information dont on dispose — et donc le moment où l'on écrit les tests.</p>
+<h3>Question 2 du cours : six jeux de tests en boîte noire</h3>
+<p>Caractéristiques demandées : liste vide ; singleton ; longueur impaire (pour les deux valeurs de retour possibles) ; longueur paire (pour les deux valeurs de retour possibles).</p>
+<table><thead><tr><th>Cas</th><th>Paramètre</th><th>Retour attendu</th></tr></thead><tbody>
+<tr><td>liste vide</td><td><code>[]</code></td><td><code>True</code></td></tr>
+<tr><td>singleton</td><td><code>[7]</code></td><td><code>True</code></td></tr>
+<tr><td>longueur impaire, palindrome</td><td><code>[1, 2, 1]</code></td><td><code>True</code></td></tr>
+<tr><td>longueur impaire, non palindrome</td><td><code>[1, 2, 3]</code></td><td><code>False</code></td></tr>
+<tr><td>longueur paire, palindrome</td><td><code>[1, 2, 2, 1]</code></td><td><code>True</code></td></tr>
+<tr><td>longueur paire, non palindrome</td><td><code>[1, 2, 3, 4]</code></td><td><code>False</code></td></tr>
+</tbody></table>
+<div class="warn"><b>Cas extrêmes —</b> les deux premiers sont ceux qui piègent le plus souvent les implémentations. Une liste vide et un singleton sont des palindromes : ils se lisent identiquement dans les deux sens.</div>
+
+<h2>9. Test en boîte blanche</h2>
+<div class="def"><b>Boîte blanche —</b> on connaît le code de la fonction : on s'appuie dessus pour identifier les cas à tester ; on écrit donc les tests <b>après</b> la fonction. Un jeu de tests qui couvre l'intégralité des lignes d'une fonction est dit <b>complet</b>.</div>
+<p>Implémentation fournie par le cours :</p><pre><code>def est_palindrome(liste):
+    i,j = 0,len(liste)-1
+    while i&lt;j:
+        if liste[i]!=liste[j]:
+            return False
+        i += 1
+        j -= 1
+    return True</code></pre><p>Deux indices se déplacent l'un vers l'autre depuis les extrémités. Les cas à tester ne se décrivent plus par la forme de la liste, mais par <b>ce que fait la boucle</b>.</p>
+<h3>Question 3 du cours : cinq jeux de tests en boîte blanche</h3>
+<table><thead><tr><th>Cas d'exécution</th><th>Paramètre</th><th>Ce qui se passe</th><th>Retour</th></tr></thead><tbody>
+<tr><td>aucune itération</td><td><code>[]</code></td><td>i=0, j=-1 : la condition <code>i&lt;j</code> est fausse d'emblée</td><td><code>True</code></td></tr>
+<tr><td>une itération incomplète</td><td><code>[1, 2]</code></td><td>on entre dans la boucle et on sort par <code>return False</code> avant la fin du tour</td><td><code>False</code></td></tr>
+<tr><td>exactement une itération</td><td><code>[1, 1]</code></td><td>un tour complet, puis i=1, j=0 arrête la boucle</td><td><code>True</code></td></tr>
+<tr><td>une itération complète puis une incomplète</td><td><code>[1, 2, 3, 1]</code></td><td>premier tour concluant, sortie par <code>return False</code> au deuxième</td><td><code>False</code></td></tr>
+<tr><td>exactement deux itérations complètes</td><td><code>[1, 2, 2, 1]</code></td><td>deux tours complets, puis i=2, j=1 arrête la boucle</td><td><code>True</code></td></tr>
+</tbody></table>
+<p>Le singleton <code>[7]</code> convient aussi pour le premier cas (i=0, j=0), et <code>[1, 2, 1]</code> pour le troisième.</p>
+<div class="note"><b>Noire vs blanche —</b> plusieurs jeux se ressemblent, mais la justification change. En boîte noire, <code>[1, 2, 2, 1]</code> est « une liste paire qui est un palindrome » ; en boîte blanche, c'est « le cas qui fait deux tours complets ». C'est cette justification qui est demandée en examen.</div>
+
+<h2>10. Mise en œuvre : l'instruction assert</h2>
+<div class="note"><b>Principes pour les tests —</b> éviter les interactions utilisateur (saisie, affichage) exigeant une vérification humaine entre l'obtenu et l'attendu ; <b>automatiser</b> les tests ; les regrouper dans une <b>fonction</b> que l'on peut décider d'appeler ou non.</div>
+<div class="def"><b>Assertion —</b> expression booléenne qui doit être évaluée à vrai. Si elle est évaluée à faux, l'exécution du programme s'arrête. (Fonctionnalité présente dans quasiment tous les langages.)</div><pre><code>assert &lt;expression booleenne&gt;, "message d'erreur"</code></pre><p><b>Sémantique :</b> le message d'erreur est affiché si l'assertion est évaluée à faux ; sinon l'exécution est silencieuse. Schéma : on compare <i>obtenu</i> et <i>attendu</i> ; s'ils sont égaux, exécution silencieuse et le programme continue ; sinon le programme s'arrête et affiche le message. Un test qui réussit ne dit rien : c'est ce qui permet d'en enchaîner des dizaines. Le silence est la bonne nouvelle.</p>
+<div class="def"><b>Fonction de test —</b> on regroupe tous les jeux de tests associés à une fonction dans une fonction de test nommée <code>test_&lt;nom fonction a tester&gt;(...)</code>.</div>
+<h3>Question 4 du cours : la fonction de test</h3><pre><code>def test_est_palindrome():
+    # Cas extrêmes
+    assert est_palindrome([]) == True, "palindrome : liste vide"
+    assert est_palindrome([7]) == True, "palindrome : singleton"
+    # Longueur impaire
+    assert est_palindrome([1, 2, 1]) == True, "palindrome : impaire oui"
+    assert est_palindrome([1, 2, 3]) == False, "palindrome : impaire non"
+    # Longueur paire
+    assert est_palindrome([1, 2, 2, 1]) == True, "palindrome : paire oui"
+    assert est_palindrome([1, 2, 3, 4]) == False, "palindrome : paire non"
+    # Cas issus du code (boîte blanche)
+    assert est_palindrome([1, 2]) == False, "palindrome : sortie au 1er tour"
+    assert est_palindrome([1, 2, 3, 1]) == False, "palindrome : sortie au 2e tour"
+    print("test_est_palindrome : tous les tests sont passes")</code></pre><p>On appelle ensuite <code>test_est_palindrome()</code> depuis le programme principal — et on peut décider de ne plus l'appeler une fois la mise au point terminée.</p>
+
+<h2>11. Compléments et pièges</h2>
+<h3>Assertions et efficacité</h3>
+<p>Les <code>assert</code> peuvent être coûteuses en temps ou en mémoire. Après la mise au point, on peut désactiver toutes les assertions en lançant Python en <b>mode optimisé</b> (<code>-O</code> ou <code>-OO</code>) :</p><pre><code>python3 -O fichier.py</code></pre><div class="warn"><b>Attention —</b> <code>assert</code> est exclusivement réservée au <b>débogage</b>. Les assertions étant désactivées en mode optimisé, elles ne doivent pas intervenir dans le fonctionnement d'un programme autrement que pour en vérifier la correction. En particulier : les expressions des assertions ne doivent pas avoir d'<b>effets de bord</b> (exemple à éviter : <code>assert liste.append(5)==None</code> — en mode optimisé, l'ajout ne se ferait plus) ; elles ne doivent servir ni à valider des entrées utilisateur, ni le contenu de fichiers.</div>
+<div class="note"><b>Ne pas confondre —</b> l'instruction <code>assert</code> vérifie une assertion <i>exécutable</i>. Elle est distincte des assertions <i>formelles</i> qui guident un outil de preuve d'algorithme — vues en Info2.Algo2.</div>
+<div class="note"><b>Pour aller plus loin —</b> une librairie dédiée (<code>unittest</code>…) permet de structurer les tests en modules, classes et fonctions, d'avoir un jeu d'assertions plus riche, de lancer automatiquement les tests et d'obtenir un retour d'exécution par test. Vue en Info2.ILU1 ; lecture conseillée : realpython.com/python-assert-statement.</div>
+
+<h2>Glossaire des définitions</h2>
+<table><thead><tr><th>Terme</th><th>Définition</th></tr></thead><tbody>
+<tr><td>Clean code</td><td>Construction de logiciels en minimisant le coût du changement et en maximisant la capacité à répondre au changement.</td></tr>
+<tr><td>KISS</td><td><i>Keep It Simple, Stupid</i> : éviter l'optimisation prématurée.</td></tr>
+<tr><td>Règle du boy scout</td><td>Laisser le code source plus propre que quand on l'a trouvé.</td></tr>
+<tr><td>snake_case</td><td>Convention de nommage Python (PEP 8) : mots en minuscules séparés par des tirets bas.</td></tr>
+<tr><td>Factoriser</td><td>Repérer des fonctions au code très ressemblant, mettre en commun les parties identiques, transformer les différences en paramètres supplémentaires.</td></tr>
+<tr><td>Jeu de test</td><td>Spécification, pour une fonction et des paramètres donnés, de la valeur de retour attendue.</td></tr>
+<tr><td>Boîte noire</td><td>On ne connaît pas le code : on se base sur l'énoncé et l'on peut écrire les tests avant la fonction.</td></tr>
+<tr><td>Boîte blanche</td><td>On connaît le code : on s'appuie dessus, donc après avoir écrit la fonction.</td></tr>
+<tr><td>Jeu de tests complet</td><td>Jeu de tests qui couvre l'intégralité des lignes d'une fonction.</td></tr>
+<tr><td>Assertion</td><td>Expression booléenne qui doit être évaluée à vrai ; sinon l'exécution s'arrête.</td></tr>
+<tr><td>Fonction de test</td><td>Fonction regroupant tous les jeux de tests d'une fonction, nommée <code>test_&lt;nom&gt;</code>.</td></tr>
+<tr><td>Mode optimisé</td><td><code>python3 -O</code> (ou <code>-OO</code>) : désactive toutes les instructions <code>assert</code>.</td></tr>
+</tbody></table>
+
+<h2>Synthèse : questions-réponses</h2>
+<table><thead><tr><th>Question</th><th>Réponse du cours</th></tr></thead><tbody>
+<tr><td>Pourquoi bien écrire ?</td><td>Pour minimiser le coût du changement et maximiser la capacité à y répondre.</td></tr>
+<tr><td>Comment nommer une fonction ?</td><td>Par ce qu'elle fait (le quoi, pas le comment), avec un verbe d'action si possible, en snake_case et en français dans cette UE.</td></tr>
+<tr><td>Que doit dire un commentaire ?</td><td>Le pourquoi, pas le comment. Un bon nommage rend beaucoup de commentaires inutiles.</td></tr>
+<tr><td>Quand factoriser ?</td><td>Dès qu'un copier-coller a produit du code presque identique ; les différences deviennent des paramètres.</td></tr>
+<tr><td>À quoi sert un jeu de tests ?</td><td>À spécifier la valeur de retour attendue pour des paramètres donnés — avec pour objectif de mettre le code en défaut.</td></tr>
+<tr><td>Boîte noire ou blanche ?</td><td>Sans le code, d'après l'énoncé, avant d'écrire la fonction / avec le code, d'après les chemins d'exécution, après l'avoir écrite.</td></tr>
+<tr><td>Garder les assert en production ?</td><td>Non : réservés au débogage, ils disparaissent en mode optimisé — donc jamais d'effet de bord ni de validation d'entrées dedans.</td></tr>
+</tbody></table>
+<div class="retenir"><b>À retenir —</b>
+<ul>
+<li>Clean code = minimiser le coût du changement ; nommer (snake_case, français, <code>est_</code>/<code>a_</code> pour les booléens, <code>nb_</code> pour les comptages), commenter le <b>pourquoi</b>, décomposer de haut en bas, factoriser en ajoutant des paramètres.</li>
+<li>Entrées/sorties séparées du traitement : seules les fonctions « pures » sont testables unitairement.</li>
+<li>Un jeu de test = paramètres + retour attendu + caractéristique couverte ; on cherche à <b>mettre le code en défaut</b> (vide, singleton, extrêmes).</li>
+<li>Boîte noire = d'après l'énoncé, avant le code ; boîte blanche = d'après les chemins d'exécution (0, 1, 2 itérations, sorties anticipées), après le code.</li>
+<li><code>assert cond, "message"</code> : silencieux si vrai ; désactivé par <code>python3 -O</code> ; jamais d'effet de bord ni de validation d'entrée.</li>
+<li>Réflexe d'examen : pour chaque test, donner le paramètre, le retour attendu <b>et</b> la caractéristique couverte — la justification est notée.</li>
+</ul></div>

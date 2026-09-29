@@ -1,0 +1,1517 @@
+{
+ "id": "sn",
+ "seances": [
+  {
+   "id": "cm-1",
+   "type": "CM",
+   "numero": 1,
+   "date": "2026-09-07",
+   "titre": "Sécurité et vie privée en ligne",
+   "resume": "Anonymat relatif, identité et vie privée, cadenas HTTPS/TLS, authentification, cryptographie à clefs publiques et PKI, malwares (cheval de Troie, virus, ver) et objets connectés.",
+   "pdf": "pdf/sn/CM_1_07-09.pdf",
+   "fichier": "data/content/sn/cm-1.html"
+  }
+ ],
+ "qcm": [
+  {
+   "id": "sn-q001",
+   "seance": "cm-1",
+   "type": "unique",
+   "q": "Dans le fait divers du cours (numéro d'aide aux victimes de harcèlement), que font les membres du forum ?",
+   "choix": [
+    "Ils saturent le numéro d'appels pour le saboter",
+    "Ils diffusent le numéro à des inconnus pour aider les victimes",
+    "Ils usurpent l'identité d'un responsable du service",
+    "Ils piratent la base de données des victimes"
+   ],
+   "rep": [
+    0
+   ],
+   "expl": "Le cours part d'un numéro mis en place pour les victimes de harcèlement, sabotés par des membres d'un forum qui le saturent d'appels : des personnes en détresse n'ont pas pu joindre le service.",
+   "niveau": 1
+  },
+  {
+   "id": "sn-q002",
+   "seance": "cm-1",
+   "type": "unique",
+   "q": "Quelle est la leçon principale du premier exemple (le numéro saturé) pour l'informaticien ?",
+   "choix": [
+    "Les systèmes téléphoniques sont plus sûrs qu'Internet",
+    "Un forum est un espace où le droit ne s'applique pas",
+    "Ce qui se passe sur Internet a des répercussions dans la vie réelle",
+    "Le harcèlement en ligne est sans conséquence tant qu'il reste virtuel"
+   ],
+   "rep": [
+    2
+   ],
+   "expl": "Des personnes en détresse n'ont pas pu joindre le service qui leur était destiné : les effets sont réels. Il n'existe pas de « zone informatique » hors du droit.",
+   "niveau": 1
+  },
+  {
+   "id": "sn-q003",
+   "seance": "cm-1",
+   "type": "multiple",
+   "q": "D'après le cours, que punit la loi ? (plusieurs réponses)",
+   "choix": [
+    "Des comportements se limitant aux systèmes informatiques, comme l'intrusion dans un système",
+    "Des comportements jugés d'après leur lien avec des activités hors informatique",
+    "Uniquement les actes qui ont lieu hors ligne",
+    "Le cyber-harcèlement",
+    "Uniquement les actes commis par des professionnels de l'informatique"
+   ],
+   "rep": [
+    0,
+    1,
+    3
+   ],
+   "expl": "Le cours cite : cyber-harcèlement puni ; sont punis à la fois des comportements limités aux systèmes informatiques (intrusion) et des comportements jugés d'après leur lien avec le monde réel (sabotage d'un numéro d'aide). L'écran n'est pas une frontière juridique.",
+   "niveau": 2
+  },
+  {
+   "id": "sn-q004",
+   "seance": "cm-1",
+   "type": "unique",
+   "q": "Combien de temps a-t-il fallu, dans l'exemple du cours, pour découvrir que les saboteurs du numéro avaient laissé une preuve de leur identité ?",
+   "choix": [
+    "Trois jours",
+    "Trois heures",
+    "Trois mois",
+    "Trois semaines"
+   ],
+   "rep": [
+    0
+   ],
+   "expl": "« Au bout de trois jours, quelqu'un a découvert qu'en saturant le numéro de téléphone, les membres du forum laissaient une preuve de leur identité » : l'action elle-même les avait dénoncés.",
+   "niveau": 1
+  },
+  {
+   "id": "sn-q005",
+   "seance": "cm-1",
+   "type": "unique",
+   "q": "Vis-à-vis de qui l'anonymat en ligne est-il (en partie) réel ?",
+   "choix": [
+    "Vis-à-vis des autres utilisateurs",
+    "Vis-à-vis des gestionnaires de sites web",
+    "Vis-à-vis des fournisseurs d'accès",
+    "Vis-à-vis de la justice"
+   ],
+   "rep": [
+    0
+   ],
+   "expl": "L'anonymat en ligne est un anonymat vis-à-vis des autres utilisateurs, pas vis-à-vis de l'infrastructure : sites web et fournisseurs d'accès peuvent retrouver les personnes sur demande de la justice.",
+   "niveau": 1
+  },
+  {
+   "id": "sn-q006",
+   "seance": "cm-1",
+   "type": "multiple",
+   "q": "Qui peut, dans tous les cas, retrouver l'identité d'une personne sur demande de la justice ?",
+   "choix": [
+    "Les fournisseurs d'accès (FAI)",
+    "Les autres utilisateurs du forum",
+    "Les gestionnaires de sites web",
+    "Uniquement le pirate qui a réalisé l'attaque",
+    "Uniquement le navigateur de la victime"
+   ],
+   "rep": [
+    0,
+    2
+   ],
+   "expl": "Le cours : « les gestionnaires de sites web et les fournisseurs d'accès peuvent dans tous les cas retrouver les personnes, sur demande de la justice ».",
+   "niveau": 1
+  },
+  {
+   "id": "sn-q007",
+   "seance": "cm-1",
+   "type": "unique",
+   "q": "Que désigne « Tokuteichu » dans le cours ?",
+   "choix": [
+    "Des utilisateurs japonais spécialisés dans l'identification de personnes à partir de leurs publications ou images",
+    "Un logiciel malveillant apparu au Japon",
+    "Une loi japonaise sur le cyber-harcèlement",
+    "Un protocole japonais de chiffrement"
+   ],
+   "rep": [
+    0
+   ],
+   "expl": "Au Japon, des utilisateurs (de l'ordre de 500 000) se sont spécialisés dans l'identification de personnes à partir de leurs publications ou images.",
+   "niveau": 2
+  },
+  {
+   "id": "sn-q008",
+   "seance": "cm-1",
+   "type": "unique",
+   "q": "Quel est l'ordre de grandeur du nombre d'utilisateurs « Tokuteichu » cité dans le cours ?",
+   "choix": [
+    "500 000",
+    "5 millions",
+    "5 000",
+    "50 000"
+   ],
+   "rep": [
+    0
+   ],
+   "expl": "Le cours parle d'« un ordre de 500 000 » utilisateurs spécialisés dans l'identification de personnes au Japon.",
+   "niveau": 2
+  },
+  {
+   "id": "sn-q009",
+   "seance": "cm-1",
+   "type": "unique",
+   "q": "Pourquoi est-il « extrêmement recommandé » au Japon de changer très régulièrement de surnom en ligne ?",
+   "choix": [
+    "Parce que les pseudonymes sont chiffrés au bout d'un mois",
+    "Pour éviter qu'un pseudonyme unique serve de fil conducteur entre toutes vos traces",
+    "Parce que la loi japonaise l'impose",
+    "Pour que le fournisseur d'accès ne vous retrouve plus"
+   ],
+   "rep": [
+    1
+   ],
+   "expl": "Un pseudonyme unique relie toutes les traces d'une même personne ; le changer régulièrement limite le recoupement. Le fournisseur d'accès, lui, peut toujours retrouver la personne sur demande de la justice.",
+   "niveau": 2
+  },
+  {
+   "id": "sn-q010",
+   "seance": "cm-1",
+   "type": "unique",
+   "q": "Que faut-il pour identifier quelqu'un à partir d'informations publiques, selon le cours ?",
+   "choix": [
+    "Un piratage du compte de la personne",
+    "Des moyens techniques très importants",
+    "L'accord du fournisseur d'accès",
+    "De la patience et le recoupement d'informations publiques"
+   ],
+   "rep": [
+    3
+   ],
+   "expl": "« L'identification ne demande ni piratage ni moyens techniques particuliers. Elle demande de la patience et le recoupement d'informations publiques. »",
+   "niveau": 1
+  },
+  {
+   "id": "sn-q011",
+   "seance": "cm-1",
+   "type": "unique",
+   "q": "Quelle est la définition d'une identité dans le cours ?",
+   "choix": [
+    "Une chose liée à une unique personne",
+    "Un pseudonyme choisi par l'utilisateur",
+    "Un ensemble d'informations partagées par plusieurs personnes",
+    "Un mot de passe associé à un compte"
+   ],
+   "rep": [
+    0
+   ],
+   "expl": "Une identité est une chose liée à une unique personne ; la connaître permet d'apprendre plein de choses sur elle.",
+   "niveau": 1
+  },
+  {
+   "id": "sn-q012",
+   "seance": "cm-1",
+   "type": "unique",
+   "q": "Comment le cours décrit-il la « vie privée » (privacy) par rapport à l'identité ?",
+   "choix": [
+    "C'est le chiffrement de ses messages",
+    "C'est le fait de ne rien publier du tout",
+    "C'est le problème inverse : des qualificatifs indirects peuvent suffire à trouver l'identité",
+    "C'est la même chose que l'identité"
+   ],
+   "rep": [
+    2
+   ],
+   "expl": "La vie privée est le problème inverse de l'identité : des qualificatifs indirects peuvent être suffisants pour trouver l'identité d'une personne.",
+   "niveau": 2
+  },
+  {
+   "id": "sn-q013",
+   "seance": "cm-1",
+   "type": "unique",
+   "q": "Que dit le cours du terme « vie privée » ?",
+   "choix": [
+    "C'est un terme juridique sans équivalent en anglais",
+    "C'est une mauvaise traduction de l'anglais « privacy »",
+    "C'est un synonyme d'anonymat",
+    "C'est la traduction exacte de « private key »"
+   ],
+   "rep": [
+    1
+   ],
+   "expl": "Le cours précise que « vie privée » est une mauvaise traduction du terme anglais privacy.",
+   "niveau": 1
+  },
+  {
+   "id": "sn-q014",
+   "seance": "cm-1",
+   "type": "unique",
+   "q": "Que montre l'exemple de la photo d'arrêt de bus sans aucun humain dessus ?",
+   "choix": [
+    "Chaque indice est anodin, mais leur recoupement peut identifier la personne",
+    "Une photo sans personne ne peut jamais révéler quoi que ce soit",
+    "Seul le visage permet d'identifier quelqu'un",
+    "Publier une photo est interdit par la loi"
+   ],
+   "rep": [
+    0
+   ],
+   "expl": "Aucun indice ne nomme la personne, mais ensemble ils ne désignent plus qu'elle : c'est le recoupement qui identifie, et c'est contre ce mécanisme que la vie privée cherche à protéger.",
+   "niveau": 2
+  },
+  {
+   "id": "sn-q015",
+   "seance": "cm-1",
+   "type": "unique",
+   "q": "Selon le cours, la sécurité au sens général est la protection :",
+   "choix": [
+    "Des entreprises et de l'État",
+    "Uniquement des données numériques",
+    "Des personnes et des biens",
+    "Uniquement des réseaux et des serveurs"
+   ],
+   "rep": [
+    2
+   ],
+   "expl": "Protection des personnes (vie privée, prévention de crimes contre les personnes) et des biens (éviter le vol ou la destruction).",
+   "niveau": 1
+  },
+  {
+   "id": "sn-q016",
+   "seance": "cm-1",
+   "type": "multiple",
+   "q": "Quels sont les deux objectifs du cours (diapo 6) ?",
+   "choix": [
+    "Rappeler qu'Internet est un espace partagé : se protéger protège aussi les autres",
+    "Former des experts en cyberattaque",
+    "Apprendre à concevoir des systèmes de chiffrement",
+    "Apprendre à se rendre totalement anonyme",
+    "Donner quelques règles de bon sens pour se protéger"
+   ],
+   "rep": [
+    0,
+    4
+   ],
+   "expl": "L'objectif : quelques règles de bon sens, et rappeler qu'Internet est un espace partagé, donc que suivre ces règles protège aussi les autres (une machine mal protégée devient un relais).",
+   "niveau": 2
+  },
+  {
+   "id": "sn-q017",
+   "seance": "cm-1",
+   "type": "unique",
+   "q": "Pourquoi une machine mal protégée met-elle aussi les autres en danger ?",
+   "choix": [
+    "Elle consomme trop de bande passante sur le réseau",
+    "Elle empêche les autres de se connecter",
+    "Elle peut servir de relais pour propager un malware ou attaquer quelqu'un à l'insu de son propriétaire",
+    "Elle chiffre les données des voisins"
+   ],
+   "rep": [
+    2
+   ],
+   "expl": "Internet est un espace partagé : la machine mal protégée devient un relais, pour propager un logiciel malveillant ou participer à une attaque contre quelqu'un d'autre.",
+   "niveau": 2
+  },
+  {
+   "id": "sn-q018",
+   "seance": "cm-1",
+   "type": "unique",
+   "q": "D'après le cours, qu'est-ce qu'on fait vraiment quand on « discute sur un forum comme dans un bar » ou « lit son mail comme son courrier » ?",
+   "choix": [
+    "On échange directement avec la personne en face",
+    "On se déplace virtuellement dans un lieu",
+    "On lit le contenu d'un écran et on écrit avec un clavier",
+    "On communique sans aucun intermédiaire technique"
+   ],
+   "rep": [
+    2
+   ],
+   "expl": "La réalité est bien plus pauvre que la croyance : on lit un écran et on écrit avec un clavier. La seule certitude est qu'on interagit avec une application sur son ordinateur.",
+   "niveau": 1
+  },
+  {
+   "id": "sn-q019",
+   "seance": "cm-1",
+   "type": "unique",
+   "q": "Quelle est la « seule certitude » quand on utilise un outil informatique ?",
+   "choix": [
+    "On sait avec qui on communique",
+    "On interagit avec une application sur son ordinateur",
+    "Le site visité est bien celui qu'il prétend être",
+    "Le message est lu uniquement par son destinataire"
+   ],
+   "rep": [
+    1
+   ],
+   "expl": "Vous ne savez pas qui est en face, vous savez seulement quelle application tourne sur votre machine. Le reste doit être prouvé.",
+   "niveau": 2
+  },
+  {
+   "id": "sn-q020",
+   "seance": "cm-1",
+   "type": "multiple",
+   "q": "Parmi les différences « bar / Internet » du cours, lesquelles sont exactes ? (plusieurs réponses)",
+   "choix": [
+    "Sur Internet, ce qui se passe reste sur Internet",
+    "Sur Internet, une personne que vous venez de rencontrer ne sait rien de vous",
+    "Avec le développement de l'IA, cela ne va pas s'arranger",
+    "Sur Internet, ce que vous écrivez reste écrit pour toujours",
+    "Sur Internet, des personnes pourront faire le lien entre ce que vous avez écrit et vous"
+   ],
+   "rep": [
+    2,
+    3,
+    4
+   ],
+   "expl": "Dans un bar, l'inconnu ne sait rien de vous et ce qui s'y passe y reste. Sur Internet : permanence (écrit pour toujours) et recoupement (lien possible avec vous toute votre vie), aggravés par l'IA.",
+   "niveau": 2
+  },
+  {
+   "id": "sn-q021",
+   "seance": "cm-1",
+   "type": "unique",
+   "q": "Quels sont les deux mots qui résument la différence entre un bar et un forum ?",
+   "choix": [
+    "Permanence et recoupement",
+    "Anonymat et gratuité",
+    "Visibilité et rapidité",
+    "Chiffrement et signature"
+   ],
+   "rep": [
+    0
+   ],
+   "expl": "Une conversation de bar s'efface ; un message de forum reste (permanence) et pourra être relié à vous (recoupement).",
+   "niveau": 1
+  },
+  {
+   "id": "sn-q022",
+   "seance": "cm-1",
+   "type": "unique",
+   "q": "Sur les réseaux sociaux, quelle règle de bon sens le cours donne-t-il ?",
+   "choix": [
+    "N'interagir qu'avec des personnes que l'on connaît",
+    "Accepter tout le monde pour se faire des contacts",
+    "Toujours indiquer les réseaux que l'on utilise",
+    "Utiliser le même pseudonyme partout"
+   ],
+   "rep": [
+    0
+   ],
+   "expl": "Ne pas interagir en dehors des connaissances réelles (amis, famille).",
+   "niveau": 1
+  },
+  {
+   "id": "sn-q023",
+   "seance": "cm-1",
+   "type": "unique",
+   "q": "Un inconnu vous demande si vous utilisez tel réseau social (XYZ). Quelle est la « seule bonne réponse » selon le cours ?",
+   "choix": [
+    "« Oui, mais mon profil est privé »",
+    "« Je ne réponds qu'en message privé »",
+    "« Non, je n'utilise pas XYZ »",
+    "« Oui, mon pseudo est... »"
+   ],
+   "rep": [
+    2
+   ],
+   "expl": "Confirmer que vous utilisez un service, c'est déjà donner un qualificatif indirect de plus à quelqu'un qui cherche à vous identifier.",
+   "niveau": 2
+  },
+  {
+   "id": "sn-q024",
+   "seance": "cm-1",
+   "type": "unique",
+   "q": "Sur les forums, comment le cours conseille-t-il de se comporter ?",
+   "choix": [
+    "Comme dans la rue, devant des personnes qui peuvent vous reconnaître",
+    "Comme dans un bar, puisque tout y est oublié",
+    "En ne répondant jamais à personne",
+    "Sous un pseudonyme unique pour ne pas être reconnu"
+   ],
+   "rep": [
+    0
+   ],
+   "expl": "« L'anonymat s'en va, les écrits restent » : il faut se comporter comme dans la rue.",
+   "niveau": 1
+  },
+  {
+   "id": "sn-q025",
+   "seance": "cm-1",
+   "type": "unique",
+   "q": "HTTPS, c'est :",
+   "choix": [
+    "Un navigateur sécurisé",
+    "Un certificat délivré par une autorité",
+    "Un protocole de messagerie électronique",
+    "Le protocole HTTP dont les messages sont transmis en utilisant TLS"
+   ],
+   "rep": [
+    3
+   ],
+   "expl": "HTTPS = HTTP (protocole du web) + TLS (Transport Layer Security) pour sécuriser l'échange. Vaut aussi pour un site marchand où l'on saisit des coordonnées bancaires.",
+   "niveau": 1
+  },
+  {
+   "id": "sn-q026",
+   "seance": "cm-1",
+   "type": "unique",
+   "q": "Que signifie le sigle TLS ?",
+   "choix": [
+    "Trusted Login System",
+    "Total Layer Shield",
+    "Transport Layer Security",
+    "Transfer Link Service"
+   ],
+   "rep": [
+    2
+   ],
+   "expl": "TLS = Transport Layer Security, le protocole qui sécurise le transport des messages.",
+   "niveau": 1
+  },
+  {
+   "id": "sn-q027",
+   "seance": "cm-1",
+   "type": "unique",
+   "q": "Que signifie exactement le cadenas affiché devant https:// dans le navigateur ?",
+   "choix": [
+    "Le site est certifié honnête et sans danger",
+    "Le site appartient bien à l'organisation que vous croyez",
+    "D'après votre navigateur, vous êtes bien en communication sécurisée",
+    "Votre ordinateur est protégé contre les virus"
+   ],
+   "rep": [
+    2
+   ],
+   "expl": "Le cadenas garantit une communication chiffrée, pas qu'elle va au bon endroit. Deux failles possibles : le navigateur se trompe d'interlocuteur, ou vous vous trompez de site.",
+   "niveau": 2
+  },
+  {
+   "id": "sn-q028",
+   "seance": "cm-1",
+   "type": "multiple",
+   "q": "Quelles sont les deux erreurs possibles derrière le cadenas ? (plusieurs réponses)",
+   "choix": [
+    "Le navigateur se trompe d'interlocuteur (comment authentifie-t-il le site ?)",
+    "Le fournisseur d'accès refuse la connexion",
+    "Vous vous trompez de site (adresse ressemblante)",
+    "Le site n'a pas de page d'accueil",
+    "Le protocole TLS ne chiffre pas les messages"
+   ],
+   "rep": [
+    0,
+    2
+   ],
+   "expl": "Le cadenas ne prouve pas que la communication va au bon endroit : erreur 1 = le navigateur, erreur 2 = vous.",
+   "niveau": 2
+  },
+  {
+   "id": "sn-q029",
+   "seance": "cm-1",
+   "type": "unique",
+   "q": "Un site frauduleux à l'adresse ressemblante peut-il afficher un cadenas ?",
+   "choix": [
+    "Non : le cadenas n'apparaît que pour les sites honnêtes",
+    "Oui, mais seulement si l'utilisateur l'a autorisé",
+    "Non : le navigateur refuse tout site à adresse ressemblante",
+    "Oui : la liaison avec l'escroc peut être très bien chiffrée"
+   ],
+   "rep": [
+    3
+   ],
+   "expl": "Le cadenas garantit que la communication est chiffrée, pas qu'elle va au bon endroit.",
+   "niveau": 2
+  },
+  {
+   "id": "sn-q030",
+   "seance": "cm-1",
+   "type": "unique",
+   "q": "Comment le cours définit-il « authentifier » ?",
+   "choix": [
+    "Saisir un login et un mot de passe",
+    "Chiffrer un message pour son destinataire",
+    "Avoir une preuve de l'identité",
+    "Vérifier que la connexion est chiffrée"
+   ],
+   "rep": [
+    2
+   ],
+   "expl": "Authentifier, c'est avoir une preuve de l'identité. Piège : chiffrer n'est pas authentifier (le cadenas peut coexister avec un mauvais interlocuteur).",
+   "niveau": 1
+  },
+  {
+   "id": "sn-q031",
+   "seance": "cm-1",
+   "type": "unique",
+   "q": "Pour un site Internet, l'identité c'est :",
+   "choix": [
+    "L'apparence de la page",
+    "L'adresse affichée",
+    "Le cadenas dans le navigateur",
+    "Le nom du fournisseur d'accès"
+   ],
+   "rep": [
+    1
+   ],
+   "expl": "Pour un site, l'identité est l'adresse affichée : d'où l'importance de vérifier qu'on n'est pas sur une adresse ressemblante.",
+   "niveau": 1
+  },
+  {
+   "id": "sn-q032",
+   "seance": "cm-1",
+   "type": "unique",
+   "q": "Comment obtient-on une preuve d'identité, selon le cours ?",
+   "choix": [
+    "En utilisant de la cryptographie",
+    "En vérifiant que le site est gratuit",
+    "En lisant les avis d'autres utilisateurs",
+    "En regardant l'apparence du site"
+   ],
+   "rep": [
+    0
+   ],
+   "expl": "On obtient une preuve en utilisant la cryptographie, laquelle sert à construire des PKI sûres dans certaines limites.",
+   "niveau": 1
+  },
+  {
+   "id": "sn-q033",
+   "seance": "cm-1",
+   "type": "unique",
+   "q": "Comment le cours résume-t-il l'histoire de la sécurité informatique ?",
+   "choix": [
+    "Elle a été conçue avant les ordinateurs",
+    "Elle est arrivée en service après-vente, ajoutée sur des systèmes conçus sans elle",
+    "Elle a été intégrée dès la conception de tous les systèmes",
+    "Elle a été inventée par les vendeurs pour vendre plus"
+   ],
+   "rep": [
+    1
+   ],
+   "expl": "Trois lignes : on a vendu des usages qui facilitent la vie ; on s'est aperçu que les vendeurs étaient beaucoup trop optimistes ; la sécurité est arrivée en service après-vente.",
+   "niveau": 1
+  },
+  {
+   "id": "sn-q034",
+   "seance": "cm-1",
+   "type": "unique",
+   "q": "Dans l'analogie du téléphone, la clef publique correspond à :",
+   "choix": [
+    "Le message laissé sur le répondeur",
+    "Le numéro du téléphone, que tout le monde peut connaître",
+    "Le téléphone greffé sur vous",
+    "L'annuaire téléphonique"
+   ],
+   "rep": [
+    1
+   ],
+   "expl": "Clef secrète (privée) = téléphone greffé sur vous (personne d'autre ne peut s'en servir) ; clef publique = son numéro.",
+   "niveau": 1
+  },
+  {
+   "id": "sn-q035",
+   "seance": "cm-1",
+   "type": "unique",
+   "q": "Pour transmettre un message confidentiel à une seule personne, quelle clef utilise-t-on ?",
+   "choix": [
+    "La clef publique de l'émetteur",
+    "La clef privée de l'émetteur",
+    "La clef privée du destinataire",
+    "La clef publique du destinataire"
+   ],
+   "rep": [
+    3
+   ],
+   "expl": "Chiffrement avec la clef publique du destinataire : elle seule peut écouter ce message (comme laisser un message à son numéro). Attention : la clef privée de l'émetteur sert à signer.",
+   "niveau": 2
+  },
+  {
+   "id": "sn-q036",
+   "seance": "cm-1",
+   "type": "unique",
+   "q": "Pour prouver qu'on est bien l'auteur d'un message (authentifier l'émetteur), on l'utilise avec :",
+   "choix": [
+    "La clef privée de l'émetteur (signature)",
+    "La clef publique de l'émetteur",
+    "La clef privée du destinataire",
+    "La clef publique du destinataire"
+   ],
+   "rep": [
+    0
+   ],
+   "expl": "Signature avec la clef privée de l'émetteur : « lui seul a pu produire ceci » (comme un appel dont le numéro affiché prouve l'identité).",
+   "niveau": 2
+  },
+  {
+   "id": "sn-q037",
+   "seance": "cm-1",
+   "type": "multiple",
+   "q": "Associez correctement clef et usage (plusieurs réponses exactes).",
+   "choix": [
+    "Clef publique du destinataire : chiffrer",
+    "La clef publique doit rester secrète",
+    "Clef privée de l'émetteur : signer",
+    "Clef publique de l'émetteur : signer",
+    "Clef privée du destinataire : chiffrer pour l'émetteur"
+   ],
+   "rep": [
+    0,
+    2
+   ],
+   "expl": "Le sens d'utilisation de la paire de clefs décide de la propriété : chiffrer (confidentialité) avec la publique du destinataire, signer (authenticité) avec la privée de l'émetteur.",
+   "niveau": 3
+  },
+  {
+   "id": "sn-q038",
+   "seance": "cm-1",
+   "type": "unique",
+   "q": "D'après le cours, les principaux problèmes actuels de la cryptographie concernent surtout :",
+   "choix": [
+    "Le coût des clefs",
+    "La sécurité des méthodes plus que leur efficacité",
+    "L'absence de normes",
+    "L'efficacité des méthodes plus que leur sécurité"
+   ],
+   "rep": [
+    3
+   ],
+   "expl": "La cryptographie assure techniquement le chiffrement et la signature ; ses problèmes actuels tiennent plus à l'efficacité qu'à la sécurité. Le vrai problème est la confiance.",
+   "niveau": 3
+  },
+  {
+   "id": "sn-q039",
+   "seance": "cm-1",
+   "type": "unique",
+   "q": "Qu'est-ce qu'une PKI (infrastructure à clefs publiques) ?",
+   "choix": [
+    "Un antivirus pour les navigateurs",
+    "Un algorithme de signature",
+    "Un annuaire associant une clef publique à une personne",
+    "Un protocole de chiffrement des messages"
+   ],
+   "rep": [
+    2
+   ],
+   "expl": "Une PKI est un annuaire associant une clef publique à une personne ; le problème n'est pas la cryptographie, mais en qui on a confiance.",
+   "niveau": 1
+  },
+  {
+   "id": "sn-q040",
+   "seance": "cm-1",
+   "type": "unique",
+   "q": "Quel est « le vrai problème » d'une PKI selon le cours ?",
+   "choix": [
+    "En qui on a confiance",
+    "La vitesse de calcul",
+    "Le prix des certificats",
+    "La longueur des clefs"
+   ],
+   "rep": [
+    0
+   ],
+   "expl": "« Le problème n'est pas la cryptographie, mais en qui on a confiance. » C'est la phrase à retenir du cours.",
+   "niveau": 1
+  },
+  {
+   "id": "sn-q041",
+   "seance": "cm-1",
+   "type": "unique",
+   "q": "Un certificat est un énoncé signé qui dit que :",
+   "choix": [
+    "Le site B ne contient aucun logiciel malveillant",
+    "L'identité B certifie que la clef K est associée à l'identité B",
+    "L'autorité A certifie que la clef K est associée à l'identité B",
+    "La clef K est secrète"
+   ],
+   "rep": [
+    2
+   ],
+   "expl": "Certificat : A certifie que K est associée à B. Le second énoncé décrit un certificat auto-signé.",
+   "niveau": 1
+  },
+  {
+   "id": "sn-q042",
+   "seance": "cm-1",
+   "type": "unique",
+   "q": "Qu'est-ce qu'un certificat auto-signé ?",
+   "choix": [
+    "Un certificat où l'autorité et l'identité certifiée sont la même : B certifie que K est associée à B",
+    "Un certificat signé par le navigateur",
+    "Un certificat signé par deux autorités",
+    "Un certificat qui n'a pas de clef"
+   ],
+   "rep": [
+    0
+   ],
+   "expl": "L'intéressé affirme lui-même son identité. Il ne prouve rien à un inconnu : c'est une carte d'identité fabriquée à la maison.",
+   "niveau": 2
+  },
+  {
+   "id": "sn-q043",
+   "seance": "cm-1",
+   "type": "unique",
+   "q": "Que vaut un certificat auto-signé pour un inconnu ?",
+   "choix": [
+    "C'est le plus sûr, car il n'y a pas d'intermédiaire",
+    "C'est aussi fiable qu'un certificat classique",
+    "Rien : c'est l'équivalent d'une carte d'identité fabriquée à la maison",
+    "Il prouve l'identité mais pas la confidentialité"
+   ],
+   "rep": [
+    2
+   ],
+   "expl": "C'est l'intéressé lui-même qui affirme son identité : aucune preuve pour un tiers.",
+   "niveau": 2
+  },
+  {
+   "id": "sn-q044",
+   "seance": "cm-1",
+   "type": "unique",
+   "q": "Que fait le navigateur quand l'autorité qui a signé le certificat d'un site ne figure pas dans sa liste ?",
+   "choix": [
+    "Il demande le mot de passe à l'utilisateur",
+    "Il accepte le site par défaut",
+    "Il refuse immédiatement le site",
+    "Il cherche à vérifier la clef de cette autorité, et ainsi de suite, jusqu'à une autorité reconnue"
+   ],
+   "rep": [
+    3
+   ],
+   "expl": "Il remonte la chaîne de certification. Si une autorité reconnue est atteinte, le site s'ouvre ; sinon, barre rouge.",
+   "niveau": 2
+  },
+  {
+   "id": "sn-q045",
+   "seance": "cm-1",
+   "type": "unique",
+   "q": "Si le navigateur ne peut pas remonter jusqu'à une autorité reconnue, que se passe-t-il ?",
+   "choix": [
+    "Le navigateur ajoute l'autorité à sa liste",
+    "Le site s'ouvre avec un cadenas jaune",
+    "Le site s'ouvre sans chiffrement",
+    "Barre rouge : le navigateur refuse le site"
+   ],
+   "rep": [
+    3
+   ],
+   "expl": "Chaîne impossible : barre rouge et refus du site.",
+   "niveau": 1
+  },
+  {
+   "id": "sn-q046",
+   "seance": "cm-1",
+   "type": "unique",
+   "q": "Sur quel élément unique repose toute la construction des certificats côté navigateur ?",
+   "choix": [
+    "La longueur des clefs de chiffrement",
+    "La liste d'autorités présente dans le navigateur",
+    "Le nombre de sites visités",
+    "Le fournisseur d'accès"
+   ],
+   "rep": [
+    1
+   ],
+   "expl": "Si quelqu'un contrôle cette liste, il contrôle ce que le cadenas veut dire.",
+   "niveau": 2
+  },
+  {
+   "id": "sn-q047",
+   "seance": "cm-1",
+   "type": "unique",
+   "q": "Quelle est l'attaque « par fausse autorité » ?",
+   "choix": [
+    "Voler la clef privée d'un site",
+    "Saturer un site d'appels",
+    "Ajouter sur votre ordinateur une autorité qui délivrera de faux certificats",
+    "Envoyer un virus par courriel"
+   ],
+   "rep": [
+    2
+   ],
+   "expl": "Exemple commun : l'entreprise dans laquelle vous travaillez, sur l'ordinateur qu'elle vous fournit. Ce n'est pas toujours le cas, mais ça arrive.",
+   "niveau": 2
+  },
+  {
+   "id": "sn-q048",
+   "seance": "cm-1",
+   "type": "unique",
+   "q": "Sur un ordinateur fourni par votre employeur, que prouve le cadenas vis-à-vis de ce dernier ?",
+   "choix": [
+    "Rien : il a pu ajouter une autorité de faux certificats",
+    "Que l'employeur n'a aucun accès à vos données",
+    "Que vos échanges lui sont invisibles",
+    "Que le site est authentique"
+   ],
+   "rep": [
+    0
+   ],
+   "expl": "Sur une machine que vous ne contrôlez pas, le cadenas ne prouve plus rien vis-à-vis du propriétaire de la machine ; il protège encore d'un attaquant extérieur.",
+   "niveau": 3
+  },
+  {
+   "id": "sn-q049",
+   "seance": "cm-1",
+   "type": "unique",
+   "q": "Qu'est-ce qu'un cheval de Troie ?",
+   "choix": [
+    "Un protocole de chiffrement",
+    "Un logiciel en apparence inoffensif mais qui contient une fonctionnalité malveillante",
+    "Un logiciel qui se propage seul par le réseau",
+    "Un logiciel qui s'insère dans un fichier hôte"
+   ],
+   "rep": [
+    1
+   ],
+   "expl": "Cheval de Troie : apparence inoffensive, fonctionnalité malveillante. Son objectif est d'installer un parasite (spyware ou virus).",
+   "niveau": 1
+  },
+  {
+   "id": "sn-q050",
+   "seance": "cm-1",
+   "type": "multiple",
+   "q": "Quels parasites un cheval de Troie cherche-t-il à installer ? (plusieurs réponses)",
+   "choix": [
+    "Un logiciel espion (spyware)",
+    "Une clef publique",
+    "Un certificat auto-signé",
+    "Un virus",
+    "Un pare-feu"
+   ],
+   "rep": [
+    0,
+    3
+   ],
+   "expl": "Son objectif est d'installer un parasite : spyware ou virus.",
+   "niveau": 2
+  },
+  {
+   "id": "sn-q051",
+   "seance": "cm-1",
+   "type": "unique",
+   "q": "Quel logiciel peut, selon le cours, être un cheval de Troie ?",
+   "choix": [
+    "Un logiciel cracké",
+    "Un logiciel installé depuis une source officielle",
+    "Un logiciel mis à jour régulièrement",
+    "Un navigateur affichant un cadenas"
+   ],
+   "rep": [
+    0
+   ],
+   "expl": "Quelqu'un a modifié un programme pour vous le distribuer gratuitement : la question est ce qu'il y gagne.",
+   "niveau": 1
+  },
+  {
+   "id": "sn-q052",
+   "seance": "cm-1",
+   "type": "unique",
+   "q": "Qu'est-ce qu'un virus informatique ?",
+   "choix": [
+    "Un logiciel qui se réplique et se propage en s'insérant dans des programmes ou documents légitimes appelés hôtes",
+    "Un logiciel qui chiffre vos communications",
+    "Un logiciel qui vous est présenté comme un jeu gratuit",
+    "Un logiciel qui se propage sans aucun support, par le réseau"
+   ],
+   "rep": [
+    0
+   ],
+   "expl": "Un virus a besoin d'un hôte (programme ou document légitime) pour se propager.",
+   "niveau": 1
+  },
+  {
+   "id": "sn-q053",
+   "seance": "cm-1",
+   "type": "multiple",
+   "q": "Quels sont les types de virus cités dans le cours ? (plusieurs réponses)",
+   "choix": [
+    "De fichier",
+    "De courrier électronique",
+    "De secteur d'amorçage",
+    "De macro",
+    "De script"
+   ],
+   "rep": [
+    0,
+    2,
+    3,
+    4
+   ],
+   "expl": "Virus : secteur d'amorçage, fichier, macro, script. Le courrier électronique est un type de ver.",
+   "niveau": 2
+  },
+  {
+   "id": "sn-q054",
+   "seance": "cm-1",
+   "type": "unique",
+   "q": "Qu'est-ce qui distingue un ver d'un virus ?",
+   "choix": [
+    "Le ver s'insère dans des fichiers légitimes",
+    "Le ver doit être installé par l'utilisateur",
+    "Le ver n'a pas besoin de support physique ou logique (hôte) pour se propager",
+    "Le ver est inoffensif"
+   ],
+   "rep": [
+    2
+   ],
+   "expl": "Un ver peut être considéré comme un virus réseau : il se propage seul, sans hôte.",
+   "niveau": 1
+  },
+  {
+   "id": "sn-q055",
+   "seance": "cm-1",
+   "type": "multiple",
+   "q": "Quels sont les types de vers cités dans le cours ? (plusieurs réponses)",
+   "choix": [
+    "De secteur d'amorçage",
+    "De réseaux de partage de fichiers",
+    "De messagerie instantanée",
+    "De courrier électronique",
+    "De réseau"
+   ],
+   "rep": [
+    1,
+    2,
+    3,
+    4
+   ],
+   "expl": "Le ver est de réseau, de courrier électronique, de messagerie instantanée, d'Internet ou de réseaux de partage de fichiers. Le secteur d'amorçage est un type de virus.",
+   "niveau": 3
+  },
+  {
+   "id": "sn-q056",
+   "seance": "cm-1",
+   "type": "unique",
+   "q": "Pour distinguer cheval de Troie, virus et ver, la bonne question est :",
+   "choix": [
+    "De quoi a-t-il besoin pour arriver jusqu'à vous ?",
+    "Combien de temps met-il à être détecté ?",
+    "Quel dégât fait-il une fois installé ?",
+    "Quel système d'exploitation vise-t-il ?"
+   ],
+   "rep": [
+    0
+   ],
+   "expl": "Ils se différencient par la façon dont ils arrivent et se propagent, pas par ce qu'ils font une fois en place : cheval de Troie = vous ; virus = hôte ; ver = rien.",
+   "niveau": 2
+  },
+  {
+   "id": "sn-q057",
+   "seance": "cm-1",
+   "type": "unique",
+   "q": "Un programme se propage seul d'une machine à l'autre par le réseau sans aucun fichier hôte. Il s'agit d'un :",
+   "choix": [
+    "Spyware installé par l'utilisateur",
+    "Cheval de Troie",
+    "Virus",
+    "Ver"
+   ],
+   "rep": [
+    3
+   ],
+   "expl": "Sans hôte ni intervention de l'utilisateur, se propageant par le réseau : c'est un ver (virus réseau).",
+   "niveau": 1
+  },
+  {
+   "id": "sn-q058",
+   "seance": "cm-1",
+   "type": "unique",
+   "q": "Un « jeu gratuit » téléchargé volontairement installe discrètement un logiciel espion. Il s'agit d'un :",
+   "choix": [
+    "Ver",
+    "Cheval de Troie",
+    "Certificat auto-signé",
+    "Virus de secteur d'amorçage"
+   ],
+   "rep": [
+    1
+   ],
+   "expl": "Apparence inoffensive, fonctionnalité malveillante (parasite spyware) et installation par l'utilisateur lui-même : cheval de Troie.",
+   "niveau": 2
+  },
+  {
+   "id": "sn-q059",
+   "seance": "cm-1",
+   "type": "unique",
+   "q": "Un programme s'insère dans des documents Word (macros) et se copie vers d'autres documents. Il s'agit d'un :",
+   "choix": [
+    "Cheval de Troie",
+    "Virus de macro",
+    "Certificat auto-signé",
+    "Ver de messagerie instantanée"
+   ],
+   "rep": [
+    1
+   ],
+   "expl": "Un virus s'insère dans des programmes ou documents légitimes (hôtes) ; le type « de macro » cible les documents avec macros.",
+   "niveau": 2
+  },
+  {
+   "id": "sn-q060",
+   "seance": "cm-1",
+   "type": "unique",
+   "q": "Comment le cours définit-il un objet connecté ?",
+   "choix": [
+    "Un smartphone équipé d'un capteur",
+    "Un ordinateur relié à un réseau filaire",
+    "Un appareil qui ne fonctionne qu'avec Internet",
+    "Un matériel électronique qui peut communiquer avec un smartphone, une tablette, une montre, un ordinateur ou une télévision"
+   ],
+   "rep": [
+    3
+   ],
+   "expl": "Définition du cours : matériel électronique capable de communiquer avec un smartphone, une tablette tactile, une montre, un ordinateur ou une télévision.",
+   "niveau": 1
+  },
+  {
+   "id": "sn-q061",
+   "seance": "cm-1",
+   "type": "multiple",
+   "q": "Quels sont les deux risques principaux liés aux objets connectés dans le cours ?",
+   "choix": [
+    "Coût trop élevé des abonnements",
+    "Piratage",
+    "Épuisement de la batterie",
+    "Utilisation commerciale des données personnelles et atteintes à la vie privée",
+    "Incompatibilité avec les téléphones"
+   ],
+   "rep": [
+    1,
+    3
+   ],
+   "expl": "Risques : commercial/vie privée (garantir l'anonymat des données collectées) et piratage, sur des objets non conçus par des spécialistes de la sécurité.",
+   "niveau": 1
+  },
+  {
+   "id": "sn-q062",
+   "seance": "cm-1",
+   "type": "unique",
+   "q": "Que s'est-il passé en septembre 2017 selon le cours ?",
+   "choix": [
+    "L'attaque BlueBorne (exécution de code et téléchargement de données sur des appareils connectés)",
+    "L'apparition de Tokuteichu au Japon",
+    "Le premier ver de courrier électronique",
+    "La saturation du numéro d'aide aux victimes"
+   ],
+   "rep": [
+    0
+   ],
+   "expl": "BlueBorne : septembre 2017, exécution de code et téléchargement de données personnelles, notamment sur enceintes et assistants vocaux.",
+   "niveau": 2
+  },
+  {
+   "id": "sn-q063",
+   "seance": "cm-1",
+   "type": "unique",
+   "q": "Que peut faire une application autorisée à accéder à la caméra, d'après le cours ?",
+   "choix": [
+    "Uniquement prendre des photos affichées à l'utilisateur",
+    "Rien, l'accès est réservé au système",
+    "Prendre des photos ou enregistrer et transmettre des films même en tâche de fond",
+    "Uniquement filmer quand l'écran est allumé"
+   ],
+   "rep": [
+    2
+   ],
+   "expl": "Si vous autorisez l'accès, l'application pourra photographier ou filmer même lorsqu'elle s'exécute en tâche de fond.",
+   "niveau": 2
+  },
+  {
+   "id": "sn-q064",
+   "seance": "cm-1",
+   "type": "unique",
+   "q": "Que signifie le « (uniquement ?) » à propos des assistants vocaux (« OK Google », « Alexa »...) ?",
+   "choix": [
+    "Ils n'enregistrent que la voix du propriétaire",
+    "Ils n'écoutent que lorsqu'on prononce le mot d'activation",
+    "Ils écoutent en permanence, pas seulement quand on les appelle : un micro qui attend un mot d'activation est allumé",
+    "Ils ne fonctionnent que connectés en Wi-Fi"
+   ],
+   "rep": [
+    2
+   ],
+   "expl": "Le cours dit que les assistants vous écoutent en permanence (uniquement ?) pour répondre à vos attentes ; le doute porte sur ce qu'ils font du reste.",
+   "niveau": 3
+  },
+  {
+   "id": "sn-q065",
+   "seance": "cm-1",
+   "type": "multiple",
+   "q": "Que peuvent révéler les capteurs GPS, gyroscope et boussole ?",
+   "choix": [
+    "Les personnes présentes autour de vous",
+    "Ce que vous dites",
+    "Dans quelle direction vous regardez",
+    "Comment vous vous déplacez",
+    "Où vous êtes"
+   ],
+   "rep": [
+    2,
+    3,
+    4
+   ],
+   "expl": "GPS/gyroscope/boussole : position, déplacements, direction. Les conversations relèvent du micro ; l'environnement et les personnes de la caméra.",
+   "niveau": 2
+  },
+  {
+   "id": "sn-q066",
+   "seance": "cm-1",
+   "type": "unique",
+   "q": "Laquelle de ces phrases est la « phrase à retenir » du cours ?",
+   "choix": [
+    "Le cadenas garantit que le site est authentique",
+    "Un logiciel gratuit est toujours sûr",
+    "L'anonymat est garanti sur Internet",
+    "Le problème n'est pas la cryptographie, mais en qui on a confiance"
+   ],
+   "rep": [
+    3
+   ],
+   "expl": "Elle vaut pour les certificats, mais aussi pour les applications autorisées, les objets installés chez soi et les machines fournies.",
+   "niveau": 1
+  },
+  {
+   "id": "sn-q067",
+   "seance": "cm-1",
+   "type": "unique",
+   "q": "Comment la section « Comment se protéger ? » (diapo 23) est-elle présentée dans la fiche de cours ?",
+   "choix": [
+    "Une diapositive sur les antivirus",
+    "Une diapositive détaillant cinq règles officielles",
+    "Une diapositive sur les certificats",
+    "Diapositive vide, reconstituée à partir des règles vues dans le reste du cours"
+   ],
+   "rep": [
+    3
+   ],
+   "expl": "Cette diapositive est vide dans le support (discussion orale) : le contenu est une reconstitution à confronter avec ce qui a été dit en amphi.",
+   "niveau": 3
+  },
+  {
+   "id": "sn-q068",
+   "seance": "cm-1",
+   "type": "unique",
+   "q": "Laquelle de ces affirmations est FAUSSE ?",
+   "choix": [
+    "Un certificat auto-signé ne prouve rien à un inconnu",
+    "Sites web et fournisseurs d'accès peuvent retrouver une personne sur demande de la justice",
+    "Un ver n'a pas besoin de fichier hôte",
+    "Le cadenas prouve que vous êtes sur le bon site"
+   ],
+   "rep": [
+    3
+   ],
+   "expl": "Le cadenas prouve seulement que la communication est chiffrée (d'après le navigateur) ; il ne prouve pas que le site est le bon.",
+   "niveau": 2
+  },
+  {
+   "id": "sn-q069",
+   "seance": "cm-1",
+   "type": "unique",
+   "q": "Laquelle de ces affirmations est VRAIE ?",
+   "choix": [
+    "Un ver peut être vu comme un virus réseau",
+    "Un cheval de Troie se propage seul par le réseau",
+    "Un certificat auto-signé est délivré par une autorité reconnue",
+    "Un virus se propage sans hôte"
+   ],
+   "rep": [
+    0
+   ],
+   "expl": "Ver = virus réseau, sans hôte. Le virus a besoin d'un hôte ; le cheval de Troie a besoin de vous.",
+   "niveau": 2
+  }
+ ],
+ "flashcards": [
+  {
+   "id": "sn-f001",
+   "seance": "cm-1",
+   "recto": "Quelle est la leçon du fait divers du numéro d'aide aux victimes de harcèlement ?",
+   "verso": "Ce qui se passe sur Internet a des répercussions dans la vie réelle ; l'anonymat supposé est porteur de dérives non maîtrisées."
+  },
+  {
+   "id": "sn-f002",
+   "seance": "cm-1",
+   "recto": "Existe-t-il une « zone informatique » hors du droit ?",
+   "verso": "Non. L'écran n'est pas une frontière juridique : le cyber-harcèlement est puni, ainsi que les comportements limités à l'informatique (intrusion) et ceux jugés d'après leur lien avec le monde réel."
+  },
+  {
+   "id": "sn-f003",
+   "seance": "cm-1",
+   "recto": "Au bout de combien de temps les saboteurs du numéro ont-ils été démasqués ?",
+   "verso": "Trois jours : l'action elle-même laissait une preuve de leur identité."
+  },
+  {
+   "id": "sn-f004",
+   "seance": "cm-1",
+   "recto": "L'anonymat en ligne : vis-à-vis de qui ?",
+   "verso": "Vis-à-vis des autres utilisateurs, pas de l'infrastructure : sites web et fournisseurs d'accès peuvent retrouver les personnes, sur demande de la justice."
+  },
+  {
+   "id": "sn-f005",
+   "seance": "cm-1",
+   "recto": "Tokuteichu ?",
+   "verso": "Au Japon, utilisateurs spécialisés dans l'identification de personnes à partir de leurs publications ou images, de l'ordre de 500 000."
+  },
+  {
+   "id": "sn-f006",
+   "seance": "cm-1",
+   "recto": "Que faut-il pour identifier quelqu'un à partir de données publiques ?",
+   "verso": "Ni piratage ni moyens techniques particuliers : de la patience et le recoupement d'informations publiques."
+  },
+  {
+   "id": "sn-f007",
+   "seance": "cm-1",
+   "recto": "Pourquoi changer régulièrement de surnom en ligne (conseil japonais) ?",
+   "verso": "Pour éviter qu'un pseudonyme unique serve de fil conducteur entre toutes vos traces."
+  },
+  {
+   "id": "sn-f008",
+   "seance": "cm-1",
+   "recto": "Identité (définition du cours)",
+   "verso": "Une chose liée à une unique personne ; la connaître permet d'apprendre plein de choses sur elle."
+  },
+  {
+   "id": "sn-f009",
+   "seance": "cm-1",
+   "recto": "Vie privée (privacy)",
+   "verso": "Mauvaise traduction de « privacy » : le problème inverse de l'identité, des qualificatifs indirects peuvent suffire à trouver l'identité d'une personne."
+  },
+  {
+   "id": "sn-f010",
+   "seance": "cm-1",
+   "recto": "Que montre l'exemple de la photo d'arrêt de bus sans humain ?",
+   "verso": "Chaque indice est anodin, mais leur recoupement identifie (aucun ne vous nomme, ensemble ils ne désignent que vous)."
+  },
+  {
+   "id": "sn-f011",
+   "seance": "cm-1",
+   "recto": "Sécurité (définition du cours)",
+   "verso": "Protection des personnes (vie privée, prévention des crimes) et des biens (vol, destruction)."
+  },
+  {
+   "id": "sn-f012",
+   "seance": "cm-1",
+   "recto": "Objectifs du cours de sécurité",
+   "verso": "Donner des règles de bon sens pour se protéger, et rappeler qu'Internet est un espace partagé : se protéger protège aussi les autres."
+  },
+  {
+   "id": "sn-f013",
+   "seance": "cm-1",
+   "recto": "Pourquoi une machine mal protégée met-elle les autres en danger ?",
+   "verso": "Elle devient un relais : propager un logiciel malveillant ou participer à l'insu de son propriétaire à une attaque."
+  },
+  {
+   "id": "sn-f014",
+   "seance": "cm-1",
+   "recto": "Croyance vs réalité : que fait-on vraiment en lisant son mail ou en allant « chez un commerçant » en ligne ?",
+   "verso": "On lit le contenu d'un écran et on écrit avec un clavier. Seule certitude : on interagit avec une application sur son ordinateur."
+  },
+  {
+   "id": "sn-f015",
+   "seance": "cm-1",
+   "recto": "Forum vs bar : les deux mots clés",
+   "verso": "Permanence (ce qu'on écrit reste écrit pour toujours) et recoupement (lien possible avec vous toute votre vie ; l'IA n'arrange rien)."
+  },
+  {
+   "id": "sn-f016",
+   "seance": "cm-1",
+   "recto": "Règle des réseaux sociaux (diapo 9)",
+   "verso": "N'interagir qu'avec des personnes connues ; hors amis/famille, la seule bonne réponse : « Non, je n'utilise pas XYZ »."
+  },
+  {
+   "id": "sn-f017",
+   "seance": "cm-1",
+   "recto": "Règle des forums (diapo 9)",
+   "verso": "Ne pas compter sur l'anonymat (« l'anonymat s'en va, les écrits restent ») ; se comporter comme dans la rue."
+  },
+  {
+   "id": "sn-f018",
+   "seance": "cm-1",
+   "recto": "HTTPS",
+   "verso": "HTTP (protocole du web) dont les messages sont transmis en utilisant TLS pour sécuriser l'échange."
+  },
+  {
+   "id": "sn-f019",
+   "seance": "cm-1",
+   "recto": "TLS",
+   "verso": "Transport Layer Security : le protocole qui sécurise le transport des messages."
+  },
+  {
+   "id": "sn-f020",
+   "seance": "cm-1",
+   "recto": "Que signifie le cadenas ?",
+   "verso": "D'après votre navigateur, vous êtes en communication sécurisée (chiffrée) : pas forcément avec le bon site."
+  },
+  {
+   "id": "sn-f021",
+   "seance": "cm-1",
+   "recto": "Les deux erreurs possibles derrière le cadenas",
+   "verso": "Erreur 1 : le navigateur se trompe d'interlocuteur (comment authentifie-t-il le site ?). Erreur 2 : vous vous trompez de site (adresse ressemblante)."
+  },
+  {
+   "id": "sn-f022",
+   "seance": "cm-1",
+   "recto": "Authentifier",
+   "verso": "Avoir une preuve de l'identité. Pour un site Internet, l'identité c'est l'adresse affichée."
+  },
+  {
+   "id": "sn-f023",
+   "seance": "cm-1",
+   "recto": "Trois remarques sur l'authentification (diapo 12)",
+   "verso": "Identité d'un site = adresse affichée ; preuve obtenue par la cryptographie ; la cryptographie sert à construire des PKI sûres dans certaines limites."
+  },
+  {
+   "id": "sn-f024",
+   "seance": "cm-1",
+   "recto": "Histoire de la sécurité informatique en une phrase",
+   "verso": "On a vendu des usages qui facilitent la vie, les vendeurs étaient trop optimistes : la sécurité est arrivée en service après-vente."
+  },
+  {
+   "id": "sn-f025",
+   "seance": "cm-1",
+   "recto": "Analogie du téléphone : clef secrète / clef publique",
+   "verso": "Clef secrète (privée) = téléphone greffé sur vous, personne d'autre ne peut s'en servir ; clef publique = son numéro, connu de tous."
+  },
+  {
+   "id": "sn-f026",
+   "seance": "cm-1",
+   "recto": "Quelle clef pour chiffrer un message destiné à quelqu'un ?",
+   "verso": "La clef publique du destinataire : seul lui pourra le lire (confidentialité)."
+  },
+  {
+   "id": "sn-f027",
+   "seance": "cm-1",
+   "recto": "Quelle clef pour signer ?",
+   "verso": "La clef privée de l'émetteur : « lui seul a pu produire ceci » (authenticité)."
+  },
+  {
+   "id": "sn-f028",
+   "seance": "cm-1",
+   "recto": "Cryptographie (définition et problèmes actuels)",
+   "verso": "Discipline assurant techniquement les propriétés du chiffrement et de la signature ; les problèmes actuels concernent l'efficacité plus que la sécurité."
+  },
+  {
+   "id": "sn-f029",
+   "seance": "cm-1",
+   "recto": "PKI",
+   "verso": "Infrastructure à clefs publiques : annuaire associant une clef publique à une personne. Le problème n'est pas la cryptographie, mais en qui on a confiance."
+  },
+  {
+   "id": "sn-f030",
+   "seance": "cm-1",
+   "recto": "Certificat",
+   "verso": "Énoncé signé : l'autorité A certifie que la clef K est associée à l'identité B."
+  },
+  {
+   "id": "sn-f031",
+   "seance": "cm-1",
+   "recto": "Certificat auto-signé",
+   "verso": "L'autorité B certifie que la clef K est associée à B : l'intéressé se certifie lui-même, carte d'identité fabriquée à la maison, ne prouve rien à un inconnu."
+  },
+  {
+   "id": "sn-f032",
+   "seance": "cm-1",
+   "recto": "Comment le navigateur vérifie-t-il un certificat ?",
+   "verso": "Il dispose d'une liste d'autorités qu'il peut vérifier ; il remonte la chaîne (A2 signée par A1, ...) jusqu'à une autorité reconnue : cadenas, sinon barre rouge (site refusé)."
+  },
+  {
+   "id": "sn-f033",
+   "seance": "cm-1",
+   "recto": "Attaque par fausse autorité",
+   "verso": "Ajout dans votre ordinateur d'une autorité qui délivre de faux certificats (ex. l'ordinateur fourni par votre entreprise) : le cadenas ne prouve plus rien vis-à-vis du propriétaire de la machine."
+  },
+  {
+   "id": "sn-f034",
+   "seance": "cm-1",
+   "recto": "Phrase à retenir du cours",
+   "verso": "« Le problème n'est pas la cryptographie, mais en qui on a confiance. »"
+  },
+  {
+   "id": "sn-f035",
+   "seance": "cm-1",
+   "recto": "Cheval de Troie",
+   "verso": "Logiciel en apparence inoffensif contenant une fonctionnalité malveillante ; installe un parasite (spyware ou virus) ; vous l'installez vous-même ; les logiciels crackés peuvent en être."
+  },
+  {
+   "id": "sn-f036",
+   "seance": "cm-1",
+   "recto": "Virus informatique (définition et types)",
+   "verso": "Se réplique puis se propage en s'insérant dans des programmes ou documents légitimes (hôtes). Types : secteur d'amorçage, fichier, macro, script."
+  },
+  {
+   "id": "sn-f037",
+   "seance": "cm-1",
+   "recto": "Ver informatique (définition et types)",
+   "verso": "N'a pas besoin de support (disque, programme hôte, fichier) : un virus réseau. Types : réseau, courrier électronique, messagerie instantanée, Internet, réseaux de partage de fichiers."
+  },
+  {
+   "id": "sn-f038",
+   "seance": "cm-1",
+   "recto": "Comment distinguer cheval de Troie, virus, ver ?",
+   "verso": "Par la façon d'arriver : cheval de Troie = vous l'installez ; virus = il a besoin d'un hôte ; ver = il n'a besoin de rien (par le réseau)."
+  },
+  {
+   "id": "sn-f039",
+   "seance": "cm-1",
+   "recto": "Comment se protéger des malwares ? (reconstitution, diapo 23 vide)",
+   "verso": "Mises à jour, logiciels d'origine sûre, méfiance envers pièces jointes et liens, vérifier l'adresse avant un mot de passe, sauvegardes, ne pas faire confiance à une machine fournie par un tiers."
+  },
+  {
+   "id": "sn-f040",
+   "seance": "cm-1",
+   "recto": "Objet connecté",
+   "verso": "Matériel électronique pouvant communiquer avec un smartphone, une tablette, une montre, un ordinateur ou une télévision."
+  },
+  {
+   "id": "sn-f041",
+   "seance": "cm-1",
+   "recto": "Risques des objets connectés",
+   "verso": "Utilisation commerciale des données personnelles / atteintes à la vie privée (garantir l'anonymat des données collectées) et piratage (objets non conçus par des spécialistes de la sécurité)."
+  },
+  {
+   "id": "sn-f042",
+   "seance": "cm-1",
+   "recto": "BlueBorne",
+   "verso": "Attaque de septembre 2017 : exécution de code et téléchargement de données personnelles sur des appareils connectés (enceintes, assistants vocaux)."
+  },
+  {
+   "id": "sn-f043",
+   "seance": "cm-1",
+   "recto": "Que révèlent caméra, micro et autres capteurs ?",
+   "verso": "Caméra : environnement, personnes présentes (même en tâche de fond) ; micro : conversations, qui est là (assistants qui écoutent en permanence) ; GPS/gyroscope/boussole : position, déplacements, direction."
+  }
+ ],
+ "exercices": [
+  {
+   "id": "sn-e001",
+   "seance": "cm-1",
+   "titre": "Le cadenas et le webmail piégé",
+   "difficulte": 2,
+   "enonce": "Vous recevez un message vous invitant à consulter votre webmail universitaire. Le lien mène à une page qui affiche un cadenas devant <code>https://</code> et dont la page de connexion ressemble à celle de l'université, mais l'adresse est légèrement différente de l'adresse officielle. Vous saisissez votre login et votre mot de passe.<br><b>1)</b> Le cadenas est-il un signe suffisant de sécurité ? Que signifie-t-il exactement ?<br><b>2)</b> Quelles sont les deux erreurs possibles qu'il ne couvre pas ? Laquelle est en jeu ici ?<br><b>3)</b> Quelle est, pour un site, l'identité que l'on doit vérifier ?<br><b>4)</b> Quelle bonne pratique aurait évité le problème ?",
+   "indice": "Le cadenas garantit que la communication est chiffrée. Pour qui est-elle chiffrée ?",
+   "corrige": "<b>1)</b> Non. Le cadenas signifie seulement : d'après votre navigateur, vous êtes bien en communication sécurisée (canal chiffré par TLS, HTTPS = HTTP + TLS). Il ne garantit pas que la communication va au bon endroit ; un site frauduleux peut afficher un cadenas, la liaison avec l'escroc est simplement bien protégée.<br><b>2)</b> Erreur 1 : le navigateur se trompe d'interlocuteur (comment authentifie-t-il le site ?). Erreur 2 : vous vous trompez de site (adresse ressemblante). Ici, c'est l'erreur 2 : l'adresse est ressemblante mais n'est pas celle de l'université.<br><b>3)</b> Pour un site Internet, l'identité, c'est l'adresse affichée. Authentifier, c'est avoir une preuve de l'identité.<br><b>4)</b> Vérifier l'adresse avant de saisir un mot de passe (et ne pas se contenter du cadenas) ; se méfier des liens reçus, même venant d'un contact (reconstitution de la diapo 23, vide dans le support)."
+  },
+  {
+   "id": "sn-e002",
+   "seance": "cm-1",
+   "titre": "Chaînes de certificats et barre rouge",
+   "difficulte": 3,
+   "enonce": "Le navigateur de Léa contient la liste d'autorités reconnues : <b>{A1, A3}</b>. Trois sites présentent les certificats suivants :<br>- Site S : certificat signé par A2 ; la clef de A2 est certifiée par A1.<br>- Site T : certificat signé par A4 ; la clef de A4 est certifiée par A5 ; A5 n'est certifiée par personne de la liste.<br>- Site U : certificat auto-signé (U certifie que sa clef est associée à U).<br><b>1)</b> Pour chaque site, que fait le navigateur (cadenas ou barre rouge) ? Justifier.<br><b>2)</b> Léa travaille sur l'ordinateur de son entreprise, qui a ajouté sa propre autorité E à la liste du navigateur. E signe un faux certificat pour le site de sa banque. Que voit Léa ? Le cadenas prouve-t-il que la banque est réellement en face ?<br><b>3)</b> Quelle phrase du cours résume cette situation ?",
+   "indice": "Le navigateur remonte la chaîne jusqu'à une autorité de sa liste.",
+   "corrige": "<b>1)</b> S : A2 n'est pas dans la liste, mais son certificat est signé par A1, qui est dans la liste : la chaîne est complète, cadenas, le site s'ouvre. T : A4 puis A5, aucune autorité de la liste n'est atteinte : impossible de remonter la chaîne, barre rouge, le site est refusé. U : certificat auto-signé, c'est l'intéressé lui-même qui affirme son identité ; il ne prouve rien à un inconnu (carte d'identité fabriquée à la maison) et, faute de chaîne vers une autorité reconnue, le navigateur ne peut pas l'authentifier : barre rouge.<br><b>2)</b> Léa voit un cadenas : la chaîne aboutit à E, désormais dans la liste. Mais le cadenas ne prouve plus rien vis-à-vis du propriétaire de la machine (l'entreprise) : il continue de protéger d'un attaquant extérieur, pas de celui qui a installé l'autorité. C'est l'attaque par fausse autorité. Il ne faut pas considérer une machine fournie par un tiers comme un environnement de confiance.<br><b>3)</b> « Le problème n'est pas la cryptographie, mais en qui on a confiance. »"
+  },
+  {
+   "id": "sn-e003",
+   "seance": "cm-1",
+   "titre": "Chiffrer ou signer : quelle clef ?",
+   "difficulte": 2,
+   "enonce": "Alice et Bob disposent chacun d'une paire de clefs (une publique, une privée), dans l'analogie du téléphone.<br><b>1)</b> Alice veut envoyer un message que seul Bob pourra lire. Quelle clef utilise-t-elle ? Quelle propriété obtient-elle ?<br><b>2)</b> Bob veut prouver à Alice que le message vient bien de lui. Quelle clef utilise-t-il ? Quelle propriété obtient-elle ?<br><b>3)</b> Dans l'analogie du téléphone, à quoi correspond chaque clef et chaque opération ?<br><b>4)</b> Alice a-t-elle une preuve que la clef publique qu'elle croit être celle de Bob l'est vraiment ? Comment une PKI y répond-elle et quelle est sa limite ?",
+   "indice": "Le sens d'utilisation de la paire de clefs décide de la propriété obtenue.",
+   "corrige": "<b>1)</b> Alice chiffre avec la clef publique de Bob : seul Bob peut lire (confidentialité).<br><b>2)</b> Bob signe avec sa clef privée : lui seul a pu produire la signature (authenticité).<br><b>3)</b> Clef privée = téléphone greffé sur vous (personne d'autre ne peut s'en servir) ; clef publique = son numéro. Chiffrer = laisser un message au numéro : seul le propriétaire peut l'écouter. Signer/authentifier = demander à la personne de vous appeler : le numéro affiché prouve son identité.<br><b>4)</b> Non, pas par la seule cryptographie : il faut pouvoir associer avec certitude une personne à un numéro. Une PKI est un annuaire associant une clef publique à une personne, basé sur des certificats (l'autorité A certifie que la clef K est associée à B). Sa limite n'est pas technique : le problème est la confiance envers l'autorité."
+  },
+  {
+   "id": "sn-e004",
+   "seance": "cm-1",
+   "titre": "Cheval de Troie, virus ou ver ?",
+   "difficulte": 1,
+   "enonce": "Classez chaque scénario (cheval de Troie, virus ou ver) et justifiez :<br><b>a)</b> Un logiciel de retouche photo « craqué » téléchargé sur un forum installe discrètement un spyware.<br><b>b)</b> Un programme se copie dans des documents Word à macros et part avec eux quand on les envoie.<br><b>c)</b> Un programme se propage seul, de machine en machine, via le réseau, sans qu'aucun utilisateur n'ouvre de fichier.<br><b>d)</b> Un programme se propage en s'envoyant à tous les contacts du carnet d'adresses d'une messagerie.<br><b>e)</b> Quelle question permet de distinguer ces trois catégories ? Donnez deux règles de protection (reconstitution).",
+   "indice": "Demandez-vous de quoi le logiciel a besoin pour arriver jusqu'à vous.",
+   "corrige": "<b>a)</b> Cheval de Troie : apparence inoffensive (logiciel gratuit), fonction malveillante, installé par l'utilisateur lui-même ; il installe un parasite (spyware).<br><b>b)</b> Virus (de macro) : se réplique en s'insérant dans des documents légitimes (hôtes).<br><b>c)</b> Ver : n'a pas besoin d'hôte, un virus réseau.<br><b>d)</b> Ver de courrier électronique (l'un des types de vers du cours).<br><b>e)</b> De quoi a-t-il besoin pour arriver jusqu'à vous ? Cheval de Troie : de vous ; virus : d'un hôte ; ver : de rien. Protections (reconstitution de la diapo 23, vide) : mises à jour ; logiciels d'origine sûre (éviter les crackés) ; méfiance envers pièces jointes et liens ; sauvegardes."
+  }
+ ]
+}

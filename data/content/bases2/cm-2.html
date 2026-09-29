@@ -1,0 +1,148 @@
+<p>Suite du chapitre de logique : on passe des propositions aux <b>prédicats</b> (des énoncés qui dépendent d'un élément \(x\)), avec les quantificateurs \(\forall\) et \(\exists\), puis on complète la boîte à outils de démonstration : l'absurde et les équivalences.</p>
+
+<h2>1. Prédicats et quantificateurs</h2>
+<div class="def"><b>Définition —</b> Un <b>prédicat</b> \(P(x)\) sur un ensemble \(E\) est une proposition dont la valeur de vérité dépend d'un élément \(x\) de \(E\).</div>
+<p>Exemple : \(P(n)\) « l'entier \(n\) est pair » est un prédicat sur les entiers. Vrai pour \(n = 2\) (ou 4, 6, 218…), faux pour \(n = 3\). Pour un prédicat, deux situations extrêmes sont utiles : celle où \(P(x)\) est <b>toujours vrai</b>, quel que soit \(x\) dans \(E\) ; celle où \(P(x)\) est vrai pour <b>au moins un</b> \(x\) (la négation de « \(P(x)\) n'est vrai pour aucun \(x\) »). D'où le formalisme :</p>
+<table>
+<thead><tr><th>En français</th><th>En langage formel</th></tr></thead>
+<tbody>
+<tr><td>pour tout \(x\) de \(E\), \(P(x)\) est vraie</td><td>\(\forall x \in E,\ P(x)\)</td></tr>
+<tr><td>il existe au moins un \(x\) de \(E\) pour lequel \(P(x)\) est vraie</td><td>\(\exists x \in E,\ P(x)\)</td></tr>
+<tr><td>il existe un unique \(x\) de \(E\) pour lequel \(P(x)\) est vraie</td><td>\(\exists! x \in E,\ P(x)\)</td></tr>
+</tbody>
+</table>
+
+<h3>Variable muette</h3>
+<p>Dans « \(\forall x \in E,\ P(x)\) », l'énoncé ne dépend pas d'<i>un</i> élément \(x\) : ils sont tous testés. On dit que \(x\) est une variable <b>muette</b> : on peut la renommer sans changer le sens.</p>
+<p>\[ (\forall x \in E,\ P(x)) \Leftrightarrow (\forall y \in E,\ P(y)) \]</p>
+<p>Formellement c'est pareil pour « \(\exists x \in E,\ P(x)\) ». Mais par commodité, après un « \(\exists x\) », le symbole \(x\) désigne dans la suite un élément qui satisfait \(P(x)\). Exemple : \(\forall x \in [0, +\infty[,\ \exists! y_x \in [0, +\infty[,\ x = y_x^2\) ; on note \(\sqrt{x}\) ce réel \(y_x\).</p>
+
+<h3>Concrètement, comment démontrer</h3>
+<ul>
+<li>Pour montrer « \(\forall x \in E,\ P(x)\) » : on <b>fixe</b> un élément \(x\) de \(E\) (quelconque) et on montre \(P(x)\) pour cet élément.</li>
+<li>Pour montrer « \(\exists x \in E,\ P(x)\) » : le plus souvent, on <b>donne explicitement</b> un \(x\) qui convient.</li>
+</ul>
+<div class="note"><b>Complément —</b> À l'inverse, quand un énoncé \(\forall\) est une <i>hypothèse</i>, on peut l'appliquer à n'importe quel élément de \(E\) ; quand un énoncé \(\exists\) est une hypothèse, on <i>nomme</i> un tel élément et on travaille avec lui.</div>
+
+<div class="ex"><b>Exemple — \(\forall \varepsilon > 0,\ \exists \rho \in \mathbb{Q},\ \rho \in\, ]0, \varepsilon[\).</b>
+<p>Le début « \(\forall \varepsilon > 0, \dots\) » dit qu'on commence par se donner un \(\varepsilon > 0\) quelconque. Ce qu'il faut montrer ensuite est « \(\exists \rho \in \mathbb{Q}, \dots\) » : on cherche un rationnel explicite \(\rho\) tel que \(0 \lt \rho \lt \varepsilon\). On tente une solution de la forme \(10^{-k}\) avec \(k \in \mathbb{N}\) :</p>
+<p>\[ 10^{-k} \lt \varepsilon \;\Leftrightarrow\; \ln(10^{-k}) \lt \ln(\varepsilon) \;\Leftrightarrow\; -k \ln 10 \lt \ln \varepsilon \;\Leftrightarrow\; k \gt \frac{-\ln \varepsilon}{\ln 10} \]</p>
+<p>En particulier \(k = \left\lfloor \dfrac{-\ln \varepsilon}{\ln 10} \right\rfloor + 1\) convient (\(\lfloor \cdot \rfloor\) = partie entière).</p></div>
+
+<div class="warn"><b>Attention à la rédaction : le mot « Soit ».</b> Dans « Soit \(\varepsilon > 0\) donné quelconque » puis « Soit \(\delta = 10^{-k}\) avec \(k = \dots\) », le même mot a deux sens opposés : dans le premier cas on fixe un réel \(\varepsilon\) sur lequel on s'interdit toute restriction ; dans le second on prend l'initiative, purement arbitraire, de s'intéresser à un réel particulier. Pour lever l'ambiguïté, on écrit plutôt :
+<p><i>M'est donné \(\varepsilon\) un réel de \(]0, 1[\).<br>Je pose \(\delta = 10^{-k}\) avec \(k = \lfloor -\ln \varepsilon / \ln 10 \rfloor + 1\). Alors […], et donc \(\delta \in\, ]0, \varepsilon[\).</i></p>
+« M'est donné » = c'est l'autre qui choisit (forme passive) ; « Je pose » = c'est moi qui choisis (forme active).</div>
+<div class="note"><b>Complément (vérifié) —</b> la restriction à \(\varepsilon \in\, ]0, 1[\) garantit \(k \geq 1\), donc \(k \in \mathbb{N}\) ; pour un grand \(\varepsilon\) la formule peut donner \(k\) négatif (\(\varepsilon = 100\) donne \(k = -1\)). Pour \(\varepsilon \geq 1\) le cas est de toute façon trivial (\(\rho = 1/2\) convient).</div>
+
+<h2>2. Calculs avec un quantificateur</h2>
+<h3>Négation</h3>
+<div class="thm"><b>Négation d'un quantificateur —</b>
+\[ \neg(\forall x \in E,\ P(x)) \;\Leftrightarrow\; (\exists x \in E,\ \neg P(x)) \]
+\[ \neg(\exists x \in E,\ P(x)) \;\Leftrightarrow\; (\forall x \in E,\ \neg P(x)) \]
+Règle pratique : on échange \(\forall\) et \(\exists\), et on nie ce qui suit (comme De Morgan échange « et » et « ou »).</div>
+
+<div class="ex"><b>Exemple —</b> deux notions bien distinctes pour une fonction \(f : \mathbb{R} \to \mathbb{R}\).
+<table>
+<thead><tr><th>On dit que \(f\)…</th><th>Ça s'écrit</th><th>Négation (à comparer)</th></tr></thead>
+<tbody>
+<tr><td>est la fonction nulle</td><td>\(\forall x \in \mathbb{R},\ f(x) = 0\)</td><td>n'est pas la fonction nulle : \(\exists x \in \mathbb{R},\ f(x) \neq 0\)</td></tr>
+<tr><td>s'annule</td><td>\(\exists x \in \mathbb{R},\ f(x) = 0\)</td><td>ne s'annule pas : \(\forall x \in \mathbb{R},\ f(x) \neq 0\)</td></tr>
+</tbody>
+</table></div>
+<div class="warn"><b>Piège —</b> « n'est pas la fonction nulle » ne veut pas dire « ne s'annule jamais » (\(f(x) = x\) n'est pas nulle et s'annule en 0).</div>
+
+<h3>Quantificateurs et connecteurs « et », « ou »</h3>
+<table>
+<thead><tr><th></th><th>Le connecteur est dans le quantificateur</th><th>Ce qui est vrai</th><th>Le connecteur est entre deux quantificateurs</th></tr></thead>
+<tbody>
+<tr><td>(1)</td><td>\(\forall x \in E,\ (P(x) \text{ et } Q(x))\)</td><td>\(\Leftrightarrow\)</td><td>\((\forall x,\ P(x)) \text{ et } (\forall x,\ Q(x))\)</td></tr>
+<tr><td>(2)</td><td>\(\forall x \in E,\ (P(x) \text{ ou } Q(x))\)</td><td>\(\Leftarrow\) seul</td><td>\((\forall x,\ P(x)) \text{ ou } (\forall x,\ Q(x))\)</td></tr>
+<tr><td>(3)</td><td>\(\exists x \in E,\ (P(x) \text{ et } Q(x))\)</td><td>\(\Rightarrow\) seul</td><td>\((\exists x,\ P(x)) \text{ et } (\exists x,\ Q(x))\)</td></tr>
+<tr><td>(4)</td><td>\(\exists x \in E,\ (P(x) \text{ ou } Q(x))\)</td><td>\(\Leftrightarrow\)</td><td>\((\exists x,\ P(x)) \text{ ou } (\exists x,\ Q(x))\)</td></tr>
+</tbody>
+</table>
+<p>« \(\Leftarrow\) seul » : seul le sens de droite à gauche est vrai (\(\Rightarrow\) est faux en général) ; « \(\Rightarrow\) seul » : seul le sens de gauche à droite est vrai. Mnémotechnique : \(\forall\) se comporte bien avec « et », \(\exists\) avec « ou » : ce sont les deux équivalences ; les deux autres sont à sens unique.</p>
+<ul>
+<li><b>(2)</b> À gauche : pour chaque \(x\), \(P(x)\) ou \(Q(x)\) est vrai, mais ce peut être \(P\) pour certains \(x\) et \(Q\) pour d'autres. À droite : \(P\) est toujours vrai, ou bien \(Q\) est toujours vrai. Contre-exemple au sens \(\Rightarrow\) : \(E = \mathbb{Z}\), \(P(n)\) « \(n\) est pair », \(Q(n)\) « \(n\) est impair ». Chaque entier est pair ou impair, mais il est faux que tous soient pairs ou que tous soient impairs.</li>
+<li><b>(3)</b> À gauche : il existe <i>un</i> \(x\) qui satisfait à la fois \(P\) et \(Q\). À droite : un \(x\) satisfait \(P\) et un \(x'\) (peut-être différent) satisfait \(Q\). Contre-exemple au sens \(\Leftarrow\) : « il existe \(x \in \mathbb{R}\) tel que \(\sin x = 0\) » et « il existe \(x \in \mathbb{R}\) tel que \(\cos x = 0\) » sont vraies (\(\sin 0 = 0\) et \(\cos \frac{\pi}{2} = 0\)), mais « il existe \(x\) tel que \(\sin x = 0\) et \(\cos x = 0\) » est fausse, puisque \(\sin^2 x + \cos^2 x = 1\) pour tout \(x\) réel.</li>
+</ul>
+<p>Vérifié par programme : (1), (4) et les deux négations sur tous les prédicats d'un ensemble à 3 éléments ; le sens indiqué de (2) et (3) est toujours vrai, et l'autre sens a des contre-exemples.</p>
+
+<h2>3. Calculs avec plusieurs quantificateurs</h2>
+<p>Pour un prédicat \(P(x, y)\) qui dépend de deux éléments :</p>
+<p>\[ \forall x \in E,\ \forall y \in E,\ P(x,y) \;\Leftrightarrow\; \forall y \in E,\ \forall x \in E,\ P(x,y) \]</p>
+<p>\[ \exists x \in E,\ \exists y \in E,\ P(x,y) \;\Leftrightarrow\; \exists y \in E,\ \exists x \in E,\ P(x,y) \]</p>
+<p>Deux quantificateurs <b>de même nature</b> se permutent. En revanche \(\forall x\, \exists y\) et \(\exists y\, \forall x\) sont très différents :</p>
+<ul>
+<li>\(\forall x \in E,\ \exists y \in E,\ P(x,y)\) : pour chaque \(x\) on peut trouver un \(y\) qui vérifie \(P(x,y)\), et ce \(y\) <i>peut changer</i> quand on change de \(x\).</li>
+<li>\(\exists y \in E,\ \forall x \in E,\ P(x,y)\) : le <i>même</i> \(y\) doit convenir pour tous les \(x\) à la fois.</li>
+</ul>
+<div class="thm"><b>Propriété —</b> \[ \exists y \in E,\ \forall x \in E,\ P(x,y) \;\Rightarrow\; \forall x \in E,\ \exists y \in E,\ P(x,y) \] mais la réciproque est fausse en général.</div>
+<table>
+<thead><tr><th>Exemple</th><th>\(\exists c\ \forall x\) (le même \(c\) pour tous)</th><th>\(\forall x\ \exists c\) (\(c\) peut dépendre de \(x\))</th></tr></thead>
+<tbody>
+<tr><td>\(f : \mathbb{R} \to \mathbb{R}\), \(f(x) = c\)</td><td>\(f\) est <b>constante</b> : \(\exists c \in \mathbb{R},\ \forall x \in \mathbb{R},\ f(x) = c\)</td><td>vraie pour <b>toute</b> fonction \(f\) (il suffit de prendre \(c = f(x)\))</td></tr>
+<tr><td>\(P(x, y)\) : \(y \gt x\) sur \(\mathbb{Z}\)</td><td>faux : \(y\) ne peut pas dépasser tous les entiers (\(x = y\) donne \(y \gt y\))</td><td>vrai : \(y = x + 1\) convient</td></tr>
+</tbody>
+</table>
+<p>Pour éviter la confusion, on note parfois en indice les variables dont dépendent les choix : \(\forall x \in \mathbb{R},\ \exists c_x \in \mathbb{R},\ f(x) = c_x\) insiste sur le fait qu'on peut changer \(c_x\) en fonction de \(x\).</p>
+
+<h2>4. Raisonnement par l'absurde (ou tiers exclu)</h2>
+<div class="thm"><b>Principe —</b> Si \(\neg P\) implique une affirmation fausse, alors \(P\) est vraie.</div>
+<p>Pour prouver \(P\), on <b>suppose le contraire</b> (\(\neg P\)) et on aboutit à une contradiction (quelque chose de faux) : la seule issue est que \(P\) soit vraie.</p>
+<div class="ex"><b>Exemple — \(\sqrt{2}\) est irrationnel.</b></div>
+<div class="proof"><b>Preuve —</b> Supposons par l'absurde que \(\sqrt{2}\) soit rationnel : il existe \(a \in \mathbb{N}\) et \(b \in \mathbb{N} \setminus \{0\}\) tels que \(\sqrt{2} = a/b\). Quitte à simplifier par un facteur commun, on peut supposer que \(a\) et \(b\) sont premiers entre eux (le seul diviseur commun est 1).
+<ul>
+<li>Comme \(\sqrt{2} = a/b\), en élevant au carré : \(2b^2 = a^2\). Donc 2 divise \(a^2\) (noté \(2 \mid a^2\)), et par conséquent \(2 \mid a\) : il existe \(a' \in \mathbb{N}\) tel que \(a = 2a'\).</li>
+<li>On en déduit \(2b^2 = (2a')^2 = 4a'^2\), donc \(2a'^2 = b^2\). En particulier \(2 \mid b^2\), et donc \(2 \mid b\).</li>
+<li>Alors 2 est un diviseur commun à \(a\) et à \(b\) : contradiction avec « \(a\) et \(b\) premiers entre eux ».</li>
+</ul>
+On conclut que \(\sqrt{2}\) est irrationnel. ∎</div>
+<div class="note"><b>Remarque —</b> Le pas « \(2 \mid a^2 \Rightarrow 2 \mid a\) » n'est pas évident : le polycopié le justifie par l'unicité de la décomposition en facteurs premiers (lemme de Gauss, vu plus tard en arithmétique). On peut aussi le montrer par contraposée, avec un raisonnement de parité comme au CM 1 : si \(a\) est impair, \(a = 2m + 1\) et \(a^2 = 2(2m^2 + 2m) + 1\) est impair.</div>
+
+<h2>5. Équivalences et conditions nécessaires / suffisantes</h2>
+<p>Pour montrer une équivalence \(P \Leftrightarrow Q\), on peut soit raisonner par <b>équivalences successives</b> :</p>
+<p>\[ P \Leftrightarrow P_1 \Leftrightarrow P_2 \Leftrightarrow \cdots \Leftrightarrow Q \]</p>
+<p>ce qui donne \(P \Leftrightarrow Q\) par transitivité de l'équivalence ; soit (le plus souvent) montrer \(P \Leftrightarrow Q\) en <b>séparant les deux implications</b> : on montre \(P \Rightarrow Q\), <b>et</b> \(Q \Rightarrow P\) séparément. On sépare ainsi <b>condition nécessaire</b> et <b>condition suffisante</b> :</p>
+<ul>
+<li>\(P \Rightarrow Q\) : \(Q\) est une condition <b>nécessaire</b> pour que \(P\) soit vraie (si \(P\) est vraie, il faut que \(Q\) le soit) ;</li>
+<li>\(Q \Rightarrow P\) : \(Q\) est une condition <b>suffisante</b> pour que \(P\) soit vraie (\(Q\) vraie suffit à garantir \(P\)) ;</li>
+<li>\(P \Leftrightarrow Q\) : \(Q\) est une condition <b>nécessaire et suffisante</b> (CNS) pour \(P\).</li>
+</ul>
+<div class="note"><b>Remarque —</b> Raisonner par équivalences est souvent plus compact, mais aussi plus délicat et contraignant : on doit conserver des équivalences à chaque étape, et l'introduction de notations ou de choix intermédiaires est mal aisée. La séparation des conditions nécessaires et suffisantes est donc toujours plus confortable.</div>
+
+<h3>Appliqué à l'égalité de deux ensembles</h3>
+<p>Pour montrer que deux sous-ensembles \(A\) et \(B\) d'un ensemble \(E\) sont égaux, deux rédactions types :</p>
+<div class="def"><b>Par équivalences successives —</b> Soit \(x \in E\). On a (nota : on ne suppose pas que \(x \in A\) !!) :<br>
+\(x \in A \Leftrightarrow \dots \Leftrightarrow \dots \Leftrightarrow x \in B\). Donc \(A = B\).</div>
+<div class="def"><b>Par double inclusion —</b><br>
+M'est donné \(x \in A\). Alors […] et donc \(x \in B\). Donc \(A \subset B\).<br>
+M'est donné \(y \in B\). Alors […] et donc \(y \in A\). Donc \(B \subset A\).<br>
+Ainsi, \(A = B\).</div>
+
+<h3>Résoudre un problème \(P(x)\)</h3>
+<p>Déterminer les solutions \(x\) d'un problème \(P(x)\), c'est déterminer l'ensemble \(S\) des \(x\) pour lesquels \(P(x)\) est vraie. Deux rédactions types :</p>
+<div class="def"><b>Par équivalences —</b> Soit \(x \in E\) (nota : on ne suppose pas que \(x\) vérifie \(P(x)\) !!). On a : \(P(x) \Leftrightarrow [\dots] \Leftrightarrow x \in \{x_1, \dots, x_n\}\). Donc l'ensemble des \(x\) vérifiant \(P(x)\) est \(\{x_1, \dots, x_n\}\).</div>
+<div class="def"><b>Par « analyse / synthèse » —</b><br>
+<i>Analyse :</i> soit \(x\) une solution (un élément tel que \(P(x)\) est vraie). Alors […], et donc \(x \in \{x_1, \dots, x_n\}\).<br>
+<i>Synthèse :</i> réciproquement, si \(x \in \{x_1, \dots, x_n\}\), alors […] et donc \(P(x)\) est vraie.<br>
+Finalement l'ensemble des \(x\) vérifiant \(P(x)\) est \(\{x_1, \dots, x_n\}\).</div>
+
+<div class="ex"><b>Exemple — Déterminer l'ensemble \(S\) des réels \(x \leq 2\) tels que \(x = \sqrt{2 - x}\).</b>
+<p><b>Première solution : condition nécessaire, puis suffisante (analyse / synthèse).</b></p>
+<ul>
+<li><i>Analyse.</i> Soit \(x\) une solution. Alors \(x^2 = 2 - x\), donc \(x^2 + x - 2 = 0\), c'est-à-dire \((x - 1)(x + 2) = 0\), donc \(x \in \{1, -2\}\). Ainsi \(S \subset \{1, -2\}\).</li>
+<li><i>Synthèse (réciproque).</i> Pour \(x = -2\) : \(\sqrt{2 - x} = \sqrt{4} = 2 \neq x\), donc \(-2\) n'est pas solution. Pour \(x = 1\) : \(\sqrt{2 - x} = 1 = x\), donc 1 est solution. <b>Donc \(S = \{1\}\).</b></li>
+</ul>
+<p><b>Deuxième solution : par équivalences.</b> Soit \(x \in\, ]-\infty, 2]\). On a :</p>
+<table>
+<tbody>
+<tr><td>\(x = \sqrt{2 - x}\)</td><td>\(\Leftrightarrow\)</td><td>\(x^2 = 2 - x\) <b>et</b> \(x \geq 0\)</td></tr>
+<tr><td></td><td>\(\Leftrightarrow\)</td><td>\(x^2 + x - 2 = 0\) <b>et</b> \(x \geq 0\)</td></tr>
+<tr><td></td><td>\(\Leftrightarrow\)</td><td>\(x \in \{1, -2\}\) <b>et</b> \(x \geq 0\)</td></tr>
+<tr><td></td><td>\(\Leftrightarrow\)</td><td>\(x = 1\)</td></tr>
+</tbody>
+</table>
+<p>Donc \(S = \{1\}\). Le « et \(x \geq 0\) » est indispensable : \(x = \sqrt{y} \Leftrightarrow (x^2 = y \text{ et } x \geq 0)\), car une racine carrée est toujours positive ; c'est lui qui élimine \(-2\) (\(\sqrt{4} = 2 \neq -2\)).</p></div>
+
+<div class="retenir"><b>À retenir —</b> \(\forall\) : on fixe un \(x\) quelconque ; \(\exists\) : on exhibe un \(x\). \(\neg(\forall x\, P) \Leftrightarrow \exists x\, \neg P\) et \(\neg(\exists x\, P) \Leftrightarrow \forall x\, \neg P\). \(\forall\) passe dans un « et » et \(\exists\) dans un « ou » (équivalences) ; ailleurs un seul sens : \((\forall x\, P) \text{ ou } (\forall x\, Q) \Rightarrow \forall x\, (P \text{ ou } Q)\) et \(\exists x\, (P \text{ et } Q) \Rightarrow (\exists x\, P) \text{ et } (\exists x\, Q)\). Même quantificateur : on permute ; \(\forall\) et \(\exists\) : \(\exists y\, \forall x\, P \Rightarrow \forall x\, \exists y\, P\), jamais l'inverse. Absurde : on suppose \(\neg P\) et on cherche une contradiction. Équivalence : successives ou deux implications (nécessaire / suffisante) ; solutions : équivalences ou analyse / synthèse, avec la réciproque.</div>

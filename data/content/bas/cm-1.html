@@ -1,0 +1,641 @@
+<div class="note"><b>Périmètre —</b> ce CM 1 est entièrement consacré à la partie <b>Systèmes</b> de l'UE (les 64 diapositives de l'équipe pédagogique Système, d'après Silberschatz, Galvin et Gagne, <i>Operating System Concepts</i>, 10e éd.). Il va des fondements du système d'exploitation jusqu'aux commandes Unix (fichiers, droits, liens). La partie Architecture (nombres, portes logiques) n'apparaît pas dans cette fiche.</div>
+
+<h2>1. Qu'est-ce qu'un système d'exploitation ?</h2>
+
+<div class="def"><b>Définition —</b> Un <b>système d'exploitation</b> (SE, <i>operating system</i>) est un logiciel destiné à faciliter et simplifier l'utilisation d'un ordinateur. Il permet d'exploiter les capacités du matériel en mettant à la disposition de l'utilisateur un ensemble de <b>services</b>.</div>
+
+<p>Le SE est un <b>intermédiaire obligé</b> : il se place entre les programmes des utilisateurs et le matériel. Un programme ne parle jamais directement au disque ou au clavier ; il demande un service au système, qui réalise l'opération à sa place et lui rend le résultat.</p>
+
+<pre><code>  Programme utilisateur
+        |   ^
+ demandes   |   services
+        v   |
+  Système d'exploitation
+        |   ^
+        v   |
+      Matériel</code></pre>
+
+<p>Le SE fournit à chaque utilisateur un environnement de travail adapté à ce qu'il veut faire : une <b>machine virtuelle</b>, c'est-à-dire une version simplifiée — une <b>abstraction</b> — de l'architecture matérielle réelle.</p>
+
+<p>Cette idée d'abstraction est la clé de tout le cours. Écrire dans un fichier ne demande pas de savoir sur quel secteur du disque les octets atterrissent, ni comment le contrôleur est câblé : le SE expose la notion simple de « fichier » et se charge de la traduction vers le matériel.</p>
+
+<h3>Les différents types de SE</h3>
+<p>On classe historiquement les systèmes selon deux axes : le nombre d'utilisateurs simultanés et le nombre de programmes exécutés simultanément.</p>
+<table>
+<thead><tr><th>Type</th><th>Utilisateurs</th><th>Programmes</th></tr></thead>
+<tbody>
+<tr><td>Mono-utilisateur monotâche</td><td>un seul</td><td>un seul à la fois</td></tr>
+<tr><td>Mono-utilisateur multitâche</td><td>un seul</td><td>plusieurs en même temps</td></tr>
+<tr><td>Multi-utilisateur multitâche</td><td>plusieurs simultanément</td><td>plusieurs en même temps</td></tr>
+</tbody>
+</table>
+<p>Plus on descend dans ce tableau, plus le système travaille : partager le processeur, isoler les programmes, protéger les fichiers de chacun. Unix (partie 11 et suivantes) appartient à la troisième catégorie.</p>
+
+<h2>2. Historique des systèmes d'exploitation</h2>
+<p>L'évolution des systèmes est étroitement liée à celle du matériel : chaque nouveau composant (bande, disque, transistor, circuit intégré, réseau) crée un problème de gestion que le logiciel doit prendre en charge. Lire cette frise, c'est voir apparaître une à une les fonctions du SE moderne.</p>
+
+<h3>Génération zéro : premiers prototypes (1944–1950)</h3>
+<ul>
+<li>Programmation en <b>langage machine</b> uniquement.</li>
+<li>Mise au point « en ligne », en examinant directement le contenu binaire de la mémoire.</li>
+<li>Périphériques d'entrées/sorties (E/S) primitifs.</li>
+<li><b>Pas de système d'exploitation</b> : le programmeur est seul face à la machine.</li>
+</ul>
+
+<h3>1re génération : machines commerciales (1951–1958)</h3>
+<p>Apparition d'un <b>superviseur</b>, ancêtre du noyau, qui permet le <b>parallélisme entre le CPU</b> (<i>Central Process Unit</i>) <b>et les E/S</b>. Son cycle : lire le travail suivant sur une bande magnétique d'entrée, lui donner le CPU, reprendre le contrôle, mettre les résultats sur bande. C'est le <b>traitement par lots</b> (par fournées, <i>batch</i>) :</p>
+<pre><code>Cartes perforées -&gt; Bande magnétique -&gt; Ordinateur -&gt; Bande magnétique -&gt; Imprimante
+                    (transferts souvent effectués par un ordinateur auxiliaire)</code></pre>
+<p>Le programmeur n'a aucun accès à la machine : il remet un paquet de cartes à un opérateur, qui organise les travaux, puis récupère le listing des résultats dans un casier. C'est aussi l'époque du développement du langage Fortran.</p>
+
+<h3>2e génération : machines à transistors (1958–1964)</h3>
+<ul>
+<li>Apparition des <b>disques</b>.</li>
+<li>Le superviseur prend en charge toutes les E/S : pour accéder à un périphérique, l'utilisateur doit passer par des <b>directives du système</b> — l'ancêtre de l'appel système.</li>
+<li>Un sous-ensemble du système gère les disques et le placement des fichiers, avec des protections.</li>
+<li>Apparition d'utilitaires : vidage mémoire, gestion de catalogues de fichiers.</li>
+</ul>
+
+<h3>3e génération : circuits intégrés (1964–1973)</h3>
+<p>Les systèmes deviennent <b>multi-programmés</b> : plusieurs programmes s'exécutent « simultanément », de sorte que le CPU est toujours occupé — pendant qu'un programme attend une E/S, un autre calcule. Le système doit gérer le partage des ressources :</p>
+<ul>
+<li>allocation du CPU et <b>ordonnancement</b> des tâches ;</li>
+<li>allocation et partage de la mémoire ;</li>
+<li>synchronisation entre les tâches ;</li>
+<li>gestion des files complexes d'E/S.</li>
+</ul>
+
+<h3>4e génération : minis et micro-ordinateurs (à partir de 1973)</h3>
+<ul>
+<li>Apparition des <b>microprocesseurs</b>.</li>
+<li>Les systèmes deviennent de plus en plus sophistiqués, tandis que leur interface utilisateur se simplifie.</li>
+<li>Apparition de VM/CMS (IBM), VMS (VAX de Digital), CP/M, MS-DOS (IBM-PC et compatibles) et MAC OS (Apple) pour les micro-ordinateurs, ainsi que d'Unix pour micros et minis.</li>
+</ul>
+
+<h3>5e génération : VLSI, machines dédiées, réseaux (à partir des années 1980)</h3>
+<p>Les circuits <b>VLSI</b> (<i>Very Large Scale Integration</i>) permettent de placer un très grand nombre de transistors sur une puce pour un coût faible. Deux conséquences :</p>
+<ul>
+<li>construction de <b>machines spéciales dédiées</b> à des applications spécifiques (traitement d'images, du signal, etc.) ;</li>
+<li>construction de matériel pour les <b>réseaux</b> : les réseaux locaux permettent de répartir la puissance de calcul et de partager des périphériques.</li>
+</ul>
+
+<table>
+<thead><tr><th>Génération</th><th>Période</th><th>Matériel</th><th>Responsabilité ajoutée au SE</th></tr></thead>
+<tbody>
+<tr><td>0</td><td>1944–1950</td><td>prototypes</td><td>aucune (pas de SE)</td></tr>
+<tr><td>1re</td><td>1951–1958</td><td>machines commerciales</td><td>superviseur, parallélisme CPU/E/S, traitement par lots</td></tr>
+<tr><td>2e</td><td>1958–1964</td><td>transistors, disques</td><td>fichiers et protections, directives système</td></tr>
+<tr><td>3e</td><td>1964–1973</td><td>circuits intégrés</td><td>multiprogrammation : partage du CPU et de la mémoire</td></tr>
+<tr><td>4e</td><td>depuis 1973</td><td>microprocesseurs</td><td>interface utilisateur simplifiée</td></tr>
+<tr><td>5e</td><td>depuis les années 1980</td><td>VLSI, réseaux</td><td>réseau et répartition, machines dédiées</td></tr>
+</tbody>
+</table>
+
+<div class="note"><b>Bilan —</b> chaque génération ajoute une responsabilité au système : parallélisme CPU/E/S (1re), fichiers et protections (2e), partage du CPU et de la mémoire entre plusieurs programmes (3e), interface utilisateur (4e), réseau et répartition (5e). Ces cinq responsabilités sont exactement la liste des tâches d'un SE moderne.</div>
+
+<h2>3. Motivations du développement des SE</h2>
+<p>Pourquoi consacrer autant d'efforts à cette couche logicielle ? Quatre motivations, qui se répondent.</p>
+<ol>
+<li><b>Réduire et dominer la complexité des machines.</b> L'utilisateur doit pouvoir lancer des opérations complexes avec des instructions simples, et les programmes doivent pouvoir utiliser les services fournis par le SE plutôt que de réimplémenter chacun sa propre gestion du matériel.</li>
+<li><b>Rentabiliser l'utilisation des ordinateurs.</b> En faisant travailler le CPU de manière optimale — il ne doit pas rester inactif pendant qu'une tâche attend un disque — et en facilitant la programmation.</li>
+<li><b>Préserver les investissements.</b> Les SE doivent permettre de changer de matériel en modifiant le moins possible les programmes des utilisateurs : c'est la <b>compatibilité</b>. Le SE absorbe les différences matérielles ; les programmes ne voient qu'une interface stable.</li>
+<li><b>Faciliter la vie des utilisateurs.</b> Les SE doivent fournir des interfaces conviviales pour travailler efficacement et confortablement.</li>
+</ol>
+
+<h2>4. L'architecture matérielle</h2>
+<p>Pour comprendre ce que fait le SE, il faut connaître les ressources qu'il gère. Le matériel fournit les ressources nécessaires pour deux grandes choses :</p>
+<ul>
+<li>exécuter les traitements demandés par le SE ou les utilisateurs : c'est le rôle du <b>processeur</b>, ou <b>Unité Centrale (UC)</b>, en anglais <i>Central Processing Unit</i> (<b>CPU</b>) ;</li>
+<li>stocker l'information en mémoire ou sur disque, et communiquer (terminaux, réseau…) : c'est le rôle des <b>périphériques d'entrées-sorties (E/S)</b>, en anglais <i>Input/Output devices</i> (I/O).</li>
+</ul>
+
+<h3>La carte mère et le bus système</h3>
+<p>Physiquement, ces éléments sont assemblés sur une <b>carte mère</b> : un socket de processeur, des emplacements de mémoire DRAM, des connecteurs de bus PCIe et des connecteurs d'E/S et d'alimentation. Une fois ses emplacements peuplés, la carte mère est un ordinateur complet. Un CPU généraliste, même bon marché, contient plusieurs cœurs ; certaines cartes acceptent plusieurs sockets, ce qui donne les architectures <b>NUMA</b>.</p>
+<pre><code>  disques    souris / clavier / imprimante        écran
+     |                  |                           |
+contrôleur         contrôleur USB             adaptateur
+de disque                |                    graphique
+     |                   |                           |
+=====+===================+===========================+=====  bus
+     |                                               |
+    CPU                                          mémoire</code></pre>
+<p>Les périphériques d'E/S et les UC sont connectés au travers d'un <b>bus</b> qui permet l'accès à une <b>mémoire partagée</b>. Ils s'exécutent en parallèle et sont en concurrence pour les cycles mémoire — d'où la nécessité d'un <b>arbitre : le système</b>.</p>
+
+<h3>Les périphériques</h3>
+<p>Chaque contrôleur de périphérique d'E/S :</p>
+<ul>
+<li>gère un type particulier de périphériques (disque, terminal, réseau…) ;</li>
+<li>possède dans le SE un code spécialisé dédié à sa gestion : le <b>pilote de périphérique</b> (<i>device driver</i>) ;</li>
+<li>peut avoir une mémoire locale pour ses informations privées et pour améliorer ses performances ;</li>
+<li>indique qu'il a fini une opération en déclenchant une <b>interruption</b>.</li>
+</ul>
+<div class="note"><b>Pourquoi une interruption ? —</b> le périphérique ne dit pas « j'ai fini » en étant interrogé en permanence par le CPU (ce qui gaspillerait des cycles) ; il <i>interrompt</i> le CPU au moment utile. Toute la mécanique de la partie 5 en découle.</div>
+
+<h3>Multi-processeurs et multi-cœurs</h3>
+<p>Deux architectures parallèles cohabitent aujourd'hui :</p>
+<ul>
+<li><b>multi-processeurs</b> : plusieurs processeurs distincts, chacun avec ses registres et son cache, reliés à une mémoire principale commune ;</li>
+<li><b>multi-cœurs</b> : un seul processeur contenant plusieurs cœurs, chacun avec ses registres et son cache L1, partageant un cache L2 puis la mémoire principale.</li>
+</ul>
+<p>Dans les deux cas la mémoire principale est partagée : le SE doit gérer plusieurs flots d'exécution réellement simultanés, et non plus seulement une simultanéité simulée par alternance rapide.</p>
+
+<h2>5. Modes d'exécution et événements asynchrones</h2>
+
+<h3>Les deux modes d'exécution d'une UC</h3>
+<p>Une unité centrale possède <b>deux modes d'exécution</b> : c'est le fondement matériel de toute la protection du système.</p>
+<table>
+<thead><tr><th>Mode</th><th>Pour qui</th><th>Instructions autorisées</th></tr></thead>
+<tbody>
+<tr><td><code>user</code></td><td>les programmes des utilisateurs</td><td>toutes sauf certaines <b>instructions privilégiées</b>, qui sont interdites</td></tr>
+<tr><td><code>kernel</code></td><td>en principe réservé au SE</td><td>l'ensemble des instructions du processeur</td></tr>
+</tbody>
+</table>
+<p>Lorsqu'un événement est pris en compte par l'UC, un nouveau mode d'exécution est installé pendant le traitement de cet événement. C'est ainsi qu'un programme utilisateur, qui n'a pas le droit d'accéder directement au disque, obtient tout de même une lecture : il déclenche un événement, le traitement s'exécute en mode kernel dans le noyau, puis la main revient au programme en mode user.</p>
+
+<h3>Les événements asynchrones</h3>
+<p>Pendant l'exécution d'un code par l'UC, plusieurs événements peuvent se produire de manière <b>asynchrone</b> et interrompre le programme en cours. Un traitement associé à l'événement est alors exécuté, sous un mode d'exécution défini pour chaque événement traité. Ces traitements font partie du <b>noyau</b> du SE.</p>
+<pre><code>        lire l'instruction suivante
+                  |
+                  v
+          exécuter l'instruction
+                  |
+                  v
+             événement ? --non--&gt; (retour à « lire l'instruction suivante »)
+                  |
+                 oui
+                  v
+     traitement dans le noyau (tâche courante suspendue)
+                  |
+                  v
+     (retour à « lire l'instruction suivante »)</code></pre>
+<p>Après chaque instruction, l'UC vérifie s'il y a un événement en attente. Si oui, la tâche courante est suspendue, le traitement (<i>handler</i>) s'exécute, puis la boucle reprend. Le programme interrompu ne « voit » rien : à son échelle, il ne s'est rien passé.</p>
+
+<h3>Les trois types d'événements</h3>
+<table>
+<thead><tr><th>Événement</th><th>Origine</th><th>Exemples</th></tr></thead>
+<tbody>
+<tr><td><b>Interruption matérielle</b></td><td>déclenchée par un périphérique (extérieur au programme)</td><td>fin d'une E/S, caractère disponible, timer de l'horloge</td></tr>
+<tr><td><b>Exception</b> (ou déroutement)</td><td>erreur dans le code exécuté, ou panne matérielle sur un périphérique</td><td>division par 0, instruction illégale</td></tr>
+<tr><td><b>Interruption logicielle</b></td><td>exécution d'une instruction particulière : le programme fait un appel au SE pour demander un service</td><td><code>read</code>, <code>fork</code>…</td></tr>
+</tbody>
+</table>
+<div class="note"><b>Bilan —</b> la différence tient à l'<b>origine</b> : une interruption matérielle vient de l'extérieur du programme (elle est vraiment asynchrone) ; une exception vient du programme lui-même, qui a fait une <i>faute</i> ; une interruption logicielle vient aussi du programme, mais <i>volontairement</i> — c'est l'<b>appel système</b>, la porte d'entrée légale vers le mode kernel.</div>
+
+<h3>L'horloge et les timers</h3>
+<p>L'horloge d'un système informatique permet de gérer des <b>timers</b>, afin d'éviter les boucles infinies ou qu'une activité ne monopolise une ressource :</p>
+<ul>
+<li>le timer est programmé grâce à une <b>instruction privilégiée</b> (donc en mode kernel) pour déclencher une interruption lorsqu'un délai s'est écoulé ;</li>
+<li>le traitement de cette interruption interrompt le programme en cours et prend le contrôle de l'UC pour décider de ce qu'il convient de faire alors : terminer le programme, donner le CPU à un autre, etc.</li>
+</ul>
+<p>Sans ce mécanisme, un programme entré dans une boucle infinie garderait le processeur pour toujours. Le timer est ce qui garantit au SE de toujours pouvoir reprendre la main.</p>
+
+<h2>6. Modèle de comportement d'un SE</h2>
+<div class="def"><b>Définition —</b> Un <b>processus</b> représente une exécution d'un code sous le contrôle du SE.</div>
+<p>Un <i>programme</i> est un fichier, statique, posé sur un disque ; le <i>processus</i>, lui, est ce programme en train de s'exécuter, avec sa mémoire, son état et les ressources que le système lui a accordées. Le même programme lancé deux fois donne deux processus distincts.</p>
+
+<h3>Du démarrage à la boucle d'attente</h3>
+<ul>
+<li>Le <b>bootstrap</b> est un code exécuté automatiquement au démarrage de la machine. Son rôle : à partir d'un disque, <b>charger en mémoire centrale le noyau</b> du système (<i>kernel</i>), puis <b>initialiser le système</b> en démarrant les services fournis en dehors du noyau.</li>
+<li>Une fois lancé, le noyau <b>attend les événements</b> — interruption matérielle, interruption logicielle ou exception — qui déclencheront l'exécution des tâches décrites ci-dessous.</li>
+</ul>
+<p>Le SE n'est donc pas un programme qui « tourne en permanence » à côté des vôtres : c'est un ensemble de traitements réveillés par des événements. Entre deux événements, c'est le code des utilisateurs qui occupe le processeur.</p>
+
+<h2>7. Les grandes tâches du SE</h2>
+
+<h3>Gestion des processus</h3>
+<p>Cette partie concerne l'exécution des programmes : création, gestion de l'exécution simultanée (multitâche), synchronisation, communication. On parle de <b>multiprogrammation</b>, de <b>temps partagé</b> et de <b>parallélisme</b>. Les programmes doivent partager le processeur central pour permettre une exécution « simultanée ». Pour cela, le système doit :</p>
+<ul>
+<li>pouvoir <b>reprendre le contrôle du CPU à tout moment</b> pour répondre à un événement extérieur (par exemple <code>Ctrl-c</code>) ;</li>
+<li>posséder un <b>algorithme d'ordonnancement</b> pour décider, à un instant donné, lequel parmi les programmes présents doit recevoir le contrôle du CPU ;</li>
+<li>répartir la mémoire physique entre les différents programmes en concurrence (gestion des conflits) ;</li>
+<li>fournir des directives permettant à l'utilisateur de contrôler les programmes en cours : destruction, changement de priorités, mise en sommeil, réveil, etc. ;</li>
+<li>permettre à plusieurs programmes de partager du code ou des données en mémoire ;</li>
+<li>gérer le parallélisme.</li>
+</ul>
+<p>Enfin, le SE gère les communications entre processus et fournit des outils permettant à plusieurs processus de se synchroniser.</p>
+
+<h3>Gestion de la mémoire</h3>
+<ul>
+<li>le transfert des programmes et des données nécessaires à la création des processus, depuis un support secondaire (le disque) vers un support central (la RAM, <i>Random Access Memory</i>) ;</li>
+<li>l'allocation de la mémoire ;</li>
+<li>le transfert depuis la mémoire principale vers la mémoire secondaire — le mouvement inverse, lorsque la mémoire centrale vient à manquer.</li>
+</ul>
+
+<h3>Gestion des fichiers</h3>
+<p>Il s'agit de gérer les mémoires secondaires. L'utilisateur doit pouvoir stocker programmes et données dans des fichiers confiés au SE (<i>file system</i>, <i>network file system</i>, etc.). Cette partie concerne la création, la destruction, la correspondance avec les dispositifs physiques, les protections, le catalogage et le partage.</p>
+
+<h3>Gestion des entrées-sorties</h3>
+<p>Les mécanismes qu'utilisent les processus pour communiquer avec l'extérieur : clavier, écran, disques, etc. Point crucial pour les performances : les entrées-sorties sont <b>lentes par rapport à la vitesse du CPU</b>. C'est précisément pour cela que le système fait travailler un autre processus pendant qu'un premier attend son disque.</p>
+
+<h3>Gestion des communications dans les réseaux</h3>
+<p>La gestion des connexions à un réseau de communication, les systèmes répartis et les architectures clients/serveurs.</p>
+
+<h2>8. Interfaces avec l'utilisateur</h2>
+<p>Le SE doit fournir une interface de dialogue entre le système et ses utilisateurs. Pour cela, il doit :</p>
+<ul>
+<li>fournir un sous-système de gestion des fichiers ;</li>
+<li>permettre le chargement de programmes exécutables en mémoire ;</li>
+<li>posséder un système de traitement des erreurs ;</li>
+<li>fournir des outils permettant à un utilisateur d'intervenir dans le déroulement de son programme : interruptions programmées, arrêt, mise au point, etc. ;</li>
+<li>fournir des utilitaires : éditeur de texte, compilateur, outils de mise au point, système de file d'attente pour l'imprimante, envoi de messages sur une console distante, etc. ;</li>
+<li>fournir des outils pour l'administration du système (ci-dessous) ;</li>
+<li>fournir un <b>interpréteur de commandes (shell)</b> et/ou une <b>interface graphique</b> : c'est la partie la plus « visible » du système.</li>
+</ul>
+
+<h3>Les outils d'administration</h3>
+<p>Ils servent d'abord à <b>gérer les utilisateurs</b> :</p>
+<ul>
+<li>en attribuant à chaque utilisateur un nom (<i>login</i>) et un mot de passe ;</li>
+<li>en lui attribuant un certain nombre de ressources : espace disque pour les fichiers, privilèges pour l'exécution de commandes spéciales, etc. ;</li>
+<li>en enregistrant les ressources effectivement utilisées.</li>
+</ul>
+<p>Ils servent ensuite à <b>gérer les ressources du système</b> : régler et mettre à jour le système en fonction du matériel, effectuer des sauvegardes régulières de tous les fichiers. Enfin, ils permettent de <b>contrôler les performances</b> en effectuant des mesures et en détectant les points d'embouteillage et les saturations : utilisation du CPU, de la mémoire, taux de remplissage des disques, temps de connexion, etc.</p>
+<div class="note"><b>Hiérarchie implicite —</b> le shell est la partie la plus visible du système, mais aussi la plus superficielle. Tout ce qui a été décrit dans les parties précédentes — processus, mémoire, fichiers, E/S — se trouve derrière lui.</div>
+
+<h2>9. Protection et sécurité</h2>
+
+<h3>Objectifs</h3>
+<ul>
+<li>le SE gère des <b>ressources partagées</b>, utilisées par les processus créés par ses utilisateurs, ainsi que les ressources privées que peuvent créer ces processus : fichiers, répertoires, mémoire partagée, périphériques, etc. ;</li>
+<li>le <b>propriétaire</b> d'une ressource doit pouvoir contrôler l'utilisation de cette ressource.</li>
+</ul>
+
+<h3>Les processus ne doivent pas interférer</h3>
+<p>Ni entre eux, ni avec le système. Deux mécanismes s'en chargent :</p>
+<ul>
+<li>la <b>protection des pages de mémoire</b> allouées à un processus ou au système, grâce au mécanisme matériel d'accès à la mémoire : la <b>MMU</b> (<i>Memory Management Unit</i>), qui déclenche une erreur en cas d'accès interdit ;</li>
+<li>les <b>droits d'accès</b> : une ressource R appartenant à l'utilisateur U1 possède des droits d'accès pour décider si le processus P appartenant à l'utilisateur U2 peut faire tel accès (lecture, modification, suppression…) à cette ressource.</li>
+</ul>
+<div class="note"><b>La MMU est du matériel —</b> c'est elle qui, à chaque accès mémoire, vérifie que l'adresse touchée appartient bien au processus courant. Une violation lève une <i>exception</i> — l'événement vu en partie 5 — que le noyau traite, en général en tuant le processus fautif.</div>
+<p>Le SE doit aussi assurer la <b>sécurité</b> du système et de ses utilisateurs vis-à-vis de l'extérieur, ce qui suppose la mise en œuvre d'un système d'authentification et une protection contre les attaques internes ou externes (virus, usurpation d'identité…), en particulier contre les tentatives d'accès interdits aux périphériques d'E/S.</p>
+
+<h3>L'authentification</h3>
+<p>Phase de connexion (<i>logging</i>) :</p>
+<ul>
+<li>les utilisateurs autorisés sont enregistrés dans une base de données ;</li>
+<li>chaque utilisateur est identifié par un <b>nom d'utilisateur</b>, qui détermine un <b>numéro d'utilisateur</b> utilisé par la suite au sein du système ;</li>
+<li>l'utilisateur qui se connecte est <b>authentifié</b>, généralement par un mot de passe ;</li>
+<li>la connexion permet aussi de garder une trace des utilisateurs connectés et des ressources utilisées : lesquelles, combien, durée, coût…</li>
+</ul>
+<p>Le SE peut également gérer la notion de <b>groupe</b> d'utilisateurs, pour accorder des droits particuliers aux membres d'un même groupe : il permet de créer des groupes (association d'un nom de groupe — <code>sys</code>, <code>UE_BAS</code>… — et d'un numéro unique) et d'affecter chaque utilisateur à un groupe.</p>
+
+<h3>L'accès aux ressources du SE</h3>
+<p>Chaque processus et chaque ressource (fichier, répertoire, segment de mémoire…) appartient à un utilisateur, qui appartient lui-même à un groupe. Deux règles en découlent.</p>
+<div class="thm"><b>Règle 1 (action sur un processus) —</b> lorsqu'un processus P1 appartenant à l'utilisateur U1 demande une action sur un processus P2 appartenant à U2, le SE contrôle que cette action est autorisée : <b>U1 == U2</b>, ou <b>U1 est un administrateur</b> du système.</div>
+<div class="thm"><b>Règle 2 (accès à une ressource) —</b> lorsqu'un processus P appartenant à U1 demande à accéder à une ressource R appartenant à U2, le SE contrôle l'accès en utilisant :
+<ul>
+<li>les <b>droits d'accès</b> de la ressource R et les identifications de U1 et de U2 (numéros d'utilisateur et de groupe) ;</li>
+<li>ou une <b>liste de contrôle d'accès</b> (<i>Access Control List</i>, <b>ACL</b>) qui liste, pour la ressource R, quels utilisateurs sont autorisés ou interdits pour tel accès (read, delete…).</li>
+</ul></div>
+<div class="ex"><b>Exemple d'ACL —</b> si un fichier a pour ACL <code>(Alice : read, write ; Bob : read)</code>, cela accorde à Alice le droit de lire et d'écrire le fichier, et à Bob uniquement celui de le lire.</div>
+
+<h3>L'autorisation temporaire</h3>
+<p>Le système doit permettre à un utilisateur d'autoriser <b>temporairement</b> un autre utilisateur à accéder à une ressource lui appartenant. « Temporairement » signifie ici : pendant l'exécution d'un code fourni par le propriétaire de la ressource accédée.</p>
+<div class="ex"><b>Exemple canonique —</b> le SE doit autoriser un utilisateur à modifier la base de données des mots de passe, qui appartient au SE, lorsque cet utilisateur exécute la commande « changer mot de passe » — commande qui est fournie par le SE, donc lui appartient. L'utilisateur n'obtient pas le droit d'écrire n'importe quoi dans le fichier : il l'obtient seulement à travers le code de confiance du propriétaire.</div>
+
+<h2>10. Comment les services du SE sont activés</h2>
+<p>Un SE ne fait rien spontanément. Ses fonctionnalités sont activées à la demande d'un utilisateur, ou à la suite d'une interruption matérielle, ou à cause d'une exception (panne ou erreur dans le code). Cette partie détaille la première voie : celle qui part de l'utilisateur et descend jusqu'au noyau.</p>
+
+<pre><code>   programmes des utilisateurs et du système
+   ---------------------------------------------------------
+   interfaces utilisateur : GUI | écran tactile | ligne de commande
+   ---------------------------------------------------------
+                       APPELS SYSTÈME     (frontière user / kernel)
+   ---------------------------------------------------------
+   services du SE : exécution | E/S | fichiers | communication
+                    | ressources | comptabilité
+                    | détection d'erreurs | protection et sécurité
+   ---------------------------------------------------------
+   matériel</code></pre>
+<p>Tout ce qui vient d'en haut doit traverser la ligne des appels système pour atteindre les services, puis le matériel. Cette ligne est la frontière entre le mode user et le mode kernel.</p>
+
+<h3>Trois portes d'entrée pour l'utilisateur</h3>
+<p>L'utilisateur peut activer les services (le noyau) de trois façons : <b>directement</b> (depuis un programme), via un <b>interpréteur de commandes</b>, ou via une <b>interface graphique</b>. Le noyau enveloppe le matériel : personne ne l'atteint sans passer par lui. Le shell et la GUI ne sont que des programmes ordinaires qui traduisent une action humaine en appels système.</p>
+
+<h4>Par un interpréteur de commandes</h4>
+<p>Un <b>interpréteur de commandes</b> est un programme qui lit des lignes de commandes et les analyse avant que les commandes ne soient exécutées. Le SE en offre plusieurs : <code>sh</code>, <code>csh</code>, Bourne shell, etc.</p>
+
+<h4>Par une interface graphique</h4>
+<p>Les <b>GUI</b> (<i>Graphics User Interface</i>) ont été inventées par le Xerox Palo Alto Research Center. Le principe : clavier + écran avec plusieurs fenêtres + souris.</p>
+<ul>
+<li>les icônes représentent des fichiers (exécutables ou textes), des dossiers/répertoires ou des périphériques (disque, clef USB…) ;</li>
+<li>les boutons de la souris déclenchent diverses actions : exécuter, ouvrir un fichier ou un dossier, information, options…</li>
+</ul>
+
+<h4>Depuis un programme</h4>
+<p>À partir d'un programme (C/C++, Java, Python…), l'utilisateur passe par :</p>
+<ul>
+<li>une <b>bibliothèque standard</b> ou un module du langage utilisé — par exemple <code>printf</code> en C, <code>print</code> en Python. Dans leur code, ces bibliothèques ou modules font, au final, appel à la bibliothèque système ;</li>
+<li>ou directement la <b>bibliothèque système</b> du SE, parce que la fonctionnalité est spécifique à ce système (<code>fork</code> par exemple) ou par souci d'efficacité — éviter l'intermédiaire de la bibliothèque standard.</li>
+</ul>
+
+<h3>Ce qui se passe derrière un <code>printf</code></h3>
+<pre><code>programme C de l'utilisateur :  printf("Greetings");
+            |
+            v
+bibliothèque C standard
+------------------------------------------ mode user
+------------------------------------------ mode kernel
+            |
+            v
+appel système write()
+            |
+            v
+noyau -&gt; pilote de l'écran</code></pre>
+<p>Le programme n'écrit pas sur l'écran : il appelle une fonction de bibliothèque, qui finit par déclencher l'appel système <code>write</code> — le seul à franchir la frontière user/kernel.</p>
+
+<h3>Ce que fait exactement un appel système</h3>
+<p>La bibliothèque système fournit des <b>primitives</b>, implémentées à l'aide de fonctions générant une <b>interruption logicielle</b> qui déclenche l'entrée dans le SE. Ce dernier exécute alors trois étapes, toujours les mêmes :</p>
+<ol>
+<li><b>sauvegarder le contexte</b> du processus demandeur ;</li>
+<li><b>exécuter, en mode kernel</b>, la tâche demandée ;</li>
+<li><b>redonner le contrôle</b> au processus demandeur en restaurant son contexte.</li>
+</ol>
+<pre><code>mode user   (bit = 1) : processus en cours ---- appel système ----+          +--- retour au processus
+                                                    trap          |          | return
+mode kernel (bit = 0) :                                           +-- exécution du service --+</code></pre>
+<p>L'instruction spéciale (<code>trap</code>) fait basculer le <b>bit de mode</b> à 0 : le processeur exécute alors du code du noyau. Au retour, le bit repasse à 1 et le processus reprend exactement là où il s'était arrêté. Même chemin pour <code>open</code>, <code>read</code> ou <code>fork</code>.</p>
+<div class="note"><b>Bilan —</b> l'appel système est le <b>seul point de passage légal</b> du monde utilisateur vers le noyau, et le mécanisme qui l'implémente est l'interruption logicielle vue en partie 5. C'est la réponse à la question « comment un programme sans privilèges obtient-il un service privilégié ? ».</div>
+
+<h2>11. Unix : généralités et structure</h2>
+
+<h3>Origine</h3>
+<ul>
+<li>Début du développement : <b>1969</b>, laboratoire Bell AT&amp;T.</li>
+<li>Première version diffusée : la <b>version 6, en 1975</b>, écrite en <b>langage C</b> — un langage développé en même temps qu'Unix, précisément pour en assurer la portabilité.</li>
+</ul>
+<p>Unix fait référence à une <b>famille de SE</b> aux fonctionnalités similaires, tous multi-utilisateur et multitâche :</p>
+<table>
+<thead><tr><th>Système</th><th>Constructeur</th></tr></thead>
+<tbody>
+<tr><td>AIX</td><td>IBM</td></tr>
+<tr><td>HP/UX</td><td>Hewlett-Packard</td></tr>
+<tr><td>Solaris</td><td>Sun Microsystems</td></tr>
+<tr><td>SunOs</td><td>Sun Microsystems</td></tr>
+<tr><td>Mac OS</td><td>Apple</td></tr>
+<tr><td>Linux</td><td>PC</td></tr>
+</tbody>
+</table>
+
+<h3>Les raisons de son succès</h3>
+<ul>
+<li>écrit dans un <b>langage de haut niveau</b> (portabilité) ;</li>
+<li><b>interface utilisateur simple</b> ;</li>
+<li><b>appels système réutilisables</b> pour l'écriture de nouvelles commandes ;</li>
+<li><b>système de gestion de fichiers performant</b> ;</li>
+<li><b>multi-utilisateur et multitâche</b>.</li>
+</ul>
+<div class="note"><b>Philosophie Unix —</b> le troisième point explique la philosophie : une commande n'est pas un morceau du système, c'est un programme ordinaire écrit avec les mêmes appels système que les vôtres. Vous pouvez donc écrire vos commandes, qui auront exactement le même statut que <code>ls</code> ou <code>cp</code>.</div>
+
+<h3>Structure générale d'Unix (« pelure d'oignon »)</h3>
+<pre><code>+-----------------------------------------------------------+
+| Shells : sh, csh, ...        Commandes : ls, cat, cp, ...   |
+| Utilitaires : gcc, vi, make  X Window : xterm, ...          |
+| Bibliothèques : stdio, math                                 |
+|   +-----------------------------------------------------+   |
+|   | NOYAU (appels système : open, read, fork, ...)        |   |
+|   |   table des fichiers ouverts | table des processus    |   |
+|   |   +-----------------------------------------------+   |   |
+|   |   |                   MATÉRIEL                    |   |   |
+|   |   +-----------------------------------------------+   |   |
+|   +-----------------------------------------------------+   |
++-----------------------------------------------------------+</code></pre>
+<p>Au centre le matériel ; autour, le noyau, qui tient la <b>table des fichiers ouverts</b> et la <b>table des processus</b>, et n'est atteignable que par les appels système ; à l'extérieur, tout ce que l'utilisateur manipule — commandes, shells, utilitaires, bibliothèques, fenêtrage.</p>
+
+<h2>12. Le shell et la syntaxe des commandes</h2>
+<div class="def"><b>Définition —</b> Un <b>shell</b> est un <b>interpréteur de commandes</b>, c'est-à-dire un programme qui lit une commande, l'exécute et attend la commande suivante.</div>
+<ul>
+<li>Sous Unix, c'est l'interface que l'on utilise couramment pour communiquer avec le système.</li>
+<li>Il est possible de regrouper plusieurs commandes dans un fichier : ce sont les <b>scripts shell</b>.</li>
+</ul>
+<p>Il existe plusieurs shells : la famille des <b>Bourne shells</b> (<code>sh</code>, <code>ksh</code>, <code>bash</code>, <code>zsh</code>) et la famille des <b>C-shells</b> (<code>csh</code>, <code>tcsh</code>).</p>
+
+<h3>Format général d'une commande</h3>
+<pre><code>nom_commande   options   arguments</code></pre>
+<ul>
+<li>les <b>options</b> se situent juste après le nom de la commande ;</li>
+<li>elles se caractérisent par le signe <code>-</code> suivi d'une lettre ;</li>
+<li>les <b>arguments</b> se situent après les options (s'il y en a) ;</li>
+<li>options et arguments forment les <b>paramètres</b> de la commande.</li>
+</ul>
+<div class="ex"><b>Exemple —</b> une commande avec 2 options et 3 arguments :
+<pre><code>ls -a -l fichier1 fichier2 fichier3</code></pre></div>
+<ul>
+<li>plusieurs options peuvent être regroupées, dans n'importe quel ordre : <code>ls -a -l</code> ⟺ <code>ls -al</code> ;</li>
+<li>certaines options peuvent être suivies d'un argument associé à cette option.</li>
+</ul>
+
+<h3>Lire une description de commande : <code>man</code></h3>
+<p>La commande <code>man nom_commande</code> donne la description d'une commande. Les règles qui définissent la syntaxe affichée sont les suivantes :</p>
+<table>
+<thead><tr><th>Notation</th><th>Signification</th></tr></thead>
+<tbody>
+<tr><td><code>[ … ]</code></td><td>terme facultatif</td></tr>
+<tr><td>hors crochets</td><td>terme obligatoire</td></tr>
+<tr><td>gras (ou normal)</td><td>à taper tel quel</td></tr>
+<tr><td>italique (ou souligné)</td><td>à remplacer par la valeur adéquate</td></tr>
+<tr><td><code>|</code></td><td>sépare 2 éléments qui ne peuvent pas être utilisés simultanément</td></tr>
+<tr><td><code>…</code></td><td>l'argument précédent peut être répété autant de fois que nécessaire</td></tr>
+</tbody>
+</table>
+<p>Ainsi <code>[-a|-b]</code> signifie que l'on peut n'utiliser ni <code>a</code> ni <code>b</code>, que l'on peut utiliser <code>-a</code>, que l'on peut utiliser <code>-b</code>, mais que l'on <b>ne peut pas</b> utiliser <code>-ab</code>. De même, <code>nom_fichier …</code> désigne une liste <b>non vide</b> de fichiers, alors que <code>[nom_fichier …]</code> désigne une liste éventuellement vide.</p>
+
+<h4>Deux exemples réels</h4>
+<pre><code>cat [-belnstuv] [file ...]
+
+tr [-Ccu] -d string1
+tr [-Ccu] -s string1</code></pre>
+<p>Pour <code>cat</code> : toutes les options sont facultatives et la liste de fichiers peut être vide. Pour <code>tr</code> : les options entre crochets sont facultatives, mais <code>-d</code> (ou <code>-s</code>) et <code>string1</code> sont obligatoires — et les deux formes correspondent à deux usages distincts de la commande.</p>
+
+<h3>Le code de retour</h3>
+<p>Les différentes valeurs que peut prendre le <b>code de retour</b> (<i>EXIT STATUS</i>) sont précisées dans la description de la commande. En général, lorsque l'exécution d'une commande s'est déroulée normalement, elle retourne le code <b>0</b> ; dans les autres cas, elle retourne un entier strictement positif.</p>
+
+<h2>13. Le système de gestion de fichiers d'Unix</h2>
+<div class="def"><b>Définition —</b> Un <b>fichier</b> est une source de données qui peuvent être lues, ou une destination dans laquelle des données peuvent être écrites.</div>
+<p>C'est donc non seulement un fichier sur disque, mais aussi tout dispositif physique : le clavier est un fichier (source), l'écran est un fichier (destination), l'imprimante est un fichier (destination). C'est l'un des principes les plus caractéristiques d'Unix : <b>une seule abstraction, le fichier</b>, pour tout ce qui produit ou consomme des données.</p>
+
+<h3>Les types de fichiers</h3>
+<table>
+<thead><tr><th>Lettre</th><th>Type</th><th>Contenu</th></tr></thead>
+<tbody>
+<tr><td><code>-</code></td><td>Fichiers ordinaires</td><td>contiennent des données (dont les programmes) et sont sur le disque</td></tr>
+<tr><td><code>l</code></td><td>Liens symboliques</td><td>« raccourcis » vers d'autres fichiers</td></tr>
+<tr><td><code>b</code></td><td>Fichiers spéciaux (bloc)</td><td>représentent un dispositif physique ; échanges par blocs</td></tr>
+<tr><td><code>c</code></td><td>Fichiers spéciaux (caractère)</td><td>représentent un dispositif physique ; échanges par caractères</td></tr>
+<tr><td><code>p</code></td><td>Tubes nommés</td><td>appelés aussi fichiers FIFO</td></tr>
+<tr><td><code>d</code></td><td>Répertoires</td><td>stockés sur disque, contiennent les informations utilisées pour organiser l'accès à d'autres fichiers ; un répertoire « contient » d'autres fichiers, donc éventuellement d'autres répertoires</td></tr>
+</tbody>
+</table>
+
+<h3>Le modèle hiérarchique</h3>
+<p>Les fichiers sont organisés en <b>arbre</b>, dont la racine est notée <code>/</code>. Le schéma ci-dessous sert de référence pour toute la suite du cours : désignation, droits et liens s'y rapportent.</p>
+<pre><code>/
++-- bin
++-- usr
++-- etc
++-- users
+|   +-- linfg
+|       +-- l2inf201
+|       |   +-- f5   (lien symbolique vers REP1/f2)
+|       |   +-- REP1
+|       |   |   +-- f1   (lien physique : même fichier que f4)
+|       |   |   +-- f2
+|       |   +-- REP2
+|       |       +-- f3
+|       |       +-- f4   (lien physique : même fichier que f1)
+|       +-- l2inf202
++-- dev
++-- tmp</code></pre>
+<p>Le fichier <code>f5</code> est un <b>lien symbolique</b> vers <code>f2</code> ; <code>f1</code> et <code>f4</code> sont deux noms du <b>même fichier physique</b>. Les deux mécanismes sont détaillés en partie 14.</p>
+
+<h4>Que contiennent les répertoires standard</h4>
+<table>
+<thead><tr><th>Répertoire</th><th>Contenu</th></tr></thead>
+<tbody>
+<tr><td><code>/</code></td><td>la racine</td></tr>
+<tr><td><code>/bin</code></td><td>les commandes Unix (<code>cat</code>, <code>chmod</code>…)</td></tr>
+<tr><td><code>/usr/bin</code></td><td>les commandes Unix également</td></tr>
+<tr><td><code>/usr/local/bin</code></td><td>les commandes particulières à un site (<code>gcc</code>…)</td></tr>
+<tr><td><code>/tmp</code></td><td>les fichiers temporaires</td></tr>
+<tr><td><code>/etc</code></td><td>commandes et données nécessaires à l'administration du système (<code>passwd</code>…)</td></tr>
+<tr><td><code>/dev</code></td><td>la gestion des périphériques</td></tr>
+<tr><td><code>/users</code></td><td>(ou <code>/home</code> sur certains systèmes) les répertoires d'accueil des utilisateurs</td></tr>
+</tbody>
+</table>
+
+<h3>Désigner un fichier</h3>
+<p>Chaque répertoire contient deux répertoires particuliers :</p>
+<ul>
+<li><code>.</code> désigne le répertoire <b>lui-même</b> ;</li>
+<li><code>..</code> désigne le répertoire <b>supérieur</b> (le « père »).</li>
+</ul>
+<p>Chaque utilisateur dispose d'un <b>répertoire d'accueil</b> (<i>home directory</i>), appelé parfois répertoire principal — par exemple <code>/users/linfg/l2inf201</code>. À chaque instant, un utilisateur se trouve dans l'un des répertoires du système de fichiers : c'est le <b>répertoire courant</b> (<i>working directory</i>).</p>
+
+<div class="def"><b>Désignation relative —</b> on désigne un fichier en donnant le <b>chemin</b> (suite de noms de répertoires séparés par le caractère <code>/</code>) qui mène à ce fichier <b>en partant du répertoire courant</b>.</div>
+<div class="ex"><b>Exemple —</b> si le répertoire courant est <code>/users/linfg/l2inf201/REP1</code>, la désignation relative du fichier <code>f3</code> est <code>../REP2/f3</code> : on remonte au père (<code>..</code>), puis on redescend dans <code>REP2</code>.</div>
+<div class="def"><b>Désignation absolue —</b> on désigne un fichier en donnant le chemin qui mène à ce fichier <b>en partant du répertoire racine</b> : elle commence donc <b>toujours par <code>/</code></b>. Exemple : <code>/users/linfg/l2inf201/REP2/f3</code>.</div>
+<div class="note"><b>Comment choisir ? —</b> la désignation absolue est toujours valable, où que vous soyez : c'est celle à utiliser dans un script ou une configuration. La désignation relative est plus courte, mais dépend du répertoire courant — la même chaîne peut désigner deux fichiers différents selon l'endroit d'où on la tape.</div>
+
+<h2>14. Droits d'accès, liens et occupation disque</h2>
+
+<h3>Les trois classes d'utilisateurs</h3>
+<p>Tout utilisateur a un nom (<i>login</i>) et un groupe. À chaque fichier sont associées trois classes d'utilisateurs :</p>
+<ul>
+<li>le <b>propriétaire</b> (<i>user</i> : <code>u</code>) ;</li>
+<li>les membres du <b>groupe</b> du propriétaire (<i>group</i> : <code>g</code>) ;</li>
+<li>les <b>autres</b> utilisateurs (<i>others</i> : <code>o</code>).</li>
+</ul>
+<p>Chaque classe peut avoir, sur un fichier, les droits de lecture (<code>r</code>), d'écriture (<code>w</code>) et d'exécution (<code>x</code>). Attention : ces trois lettres ne signifient pas la même chose selon le type de fichier.</p>
+<table>
+<thead><tr><th>Droit</th><th>Sur un fichier ordinaire</th><th>Sur un répertoire</th></tr></thead>
+<tbody>
+<tr><td><code>r</code></td><td>lire le fichier</td><td>afficher le contenu du répertoire</td></tr>
+<tr><td><code>w</code></td><td>modifier le fichier</td><td>ajouter ou supprimer des fichiers dans le répertoire</td></tr>
+<tr><td><code>x</code></td><td>exécuter le fichier (programme binaire ou script shell)</td><td>« traverser » le répertoire</td></tr>
+</tbody>
+</table>
+<div class="warn"><b>Piège classique —</b> supprimer un fichier ne dépend pas des droits sur le fichier, mais du droit <code>w</code> sur le <b>répertoire qui le contient</b> — puisque c'est le répertoire, et non le fichier, qui est modifié par la suppression.</div>
+
+<h3>Lire une ligne de <code>ls -l</code></h3>
+<p>La commande <code>ls -l</code> affiche des informations, dont les droits d'accès, sur un ou plusieurs fichiers. Chaque colonne se décode ainsi :</p>
+<pre><code>-rw-r--r-- 1 l2inf201 licence 8032 Nov 29 13:15 prog.c
+|\_/\_/\_/
+| |  |  |  | |        |       |    |            |
+| |  |  |  | |        |       |    |            +-- (10) nom du fichier
+| |  |  |  | |        |       |    +-- (9) date et heure de dernière modification
+| |  |  |  | |        |       +-- (8) taille en octets
+| |  |  |  | |        +-- (7) groupe
+| |  |  |  | +-- (6) propriétaire
+| |  |  |  +-- (5) nombre de liens
+| |  |  +-- (4) droits des autres
+| |  +-- (3) droits du groupe
+| +-- (2) droits du propriétaire
++-- (1) type de fichier</code></pre>
+<p><b>Lecture de l'exemple :</b> <code>prog.c</code> est un fichier ordinaire (<code>-</code>) de 8032 octets, appartenant à <code>l2inf201</code> et au groupe <code>licence</code>. Son propriétaire peut le lire et le modifier (<code>rw-</code>) ; le groupe et les autres peuvent seulement le lire (<code>r--</code>) ; personne ne peut l'exécuter — ce qui est normal pour un fichier source.</p>
+
+<h3>Les liens</h3>
+<div class="def"><b>Liens physiques —</b> on peut accéder à un même fichier physique par plusieurs chemins, éventuellement avec un nom différent, <b>dans le même système de fichiers</b>. Ils se créent avec la commande <code>ln</code>.</div>
+<p>Exemple, depuis le répertoire courant <code>/users/linfg/l2inf201</code> :</p>
+<pre><code>ln REP1/f1 REP2/f4</code></pre>
+<p><code>REP1/f1</code> est la source, <code>REP2/f4</code> la destination : <code>f1</code> et <code>f4</code> désignent désormais le <b>même fichier</b>. Le nombre de liens (visible avec <code>ls -l</code>, colonne 5) de <code>f1</code> et de <code>f4</code> est maintenant <b>2</b>.</p>
+
+<div class="def"><b>Liens symboliques —</b> ce sont des <b>raccourcis</b> pour désigner un fichier. Ils peuvent exister entre plusieurs systèmes de fichiers (partitions qui peuvent être « montées » dans la hiérarchie des fichiers). Ils se créent avec <code>ln -s</code>.</div>
+<pre><code>ln -s REP1/f2 f5</code></pre>
+<p>Le type de <code>f5</code>, visible avec <code>ls -l</code>, est alors <code>l</code>. Sa taille correspond au nombre de caractères de la désignation du fichier sur lequel porte le lien. On peut effacer le lien symbolique <code>f5</code> sans effacer le fichier <code>f2</code>.</p>
+<pre><code>$ ls -l f5
+lrwxrwxrwx 1 root root 7 Sep 29 01:59 f5 -&gt; REP1/f2</code></pre>
+<div class="note"><b>Précision vérifiée —</b> la fiche parle de la « désignation absolue » du fichier visé. En réalité la taille du lien est la longueur du chemin <b>tel qu'il a été écrit</b> à la création : ici <code>REP1/f2</code>, soit 7 caractères (et non celle du chemin absolu <code>/users/linfg/l2inf201/REP1/f2</code>).</div>
+
+<table>
+<thead><tr><th></th><th>Lien physique (<code>ln</code>)</th><th>Lien symbolique (<code>ln -s</code>)</th></tr></thead>
+<tbody>
+<tr><td>Type dans <code>ls -l</code></td><td><code>-</code></td><td><code>l</code></td></tr>
+<tr><td>Portée</td><td>un seul système de fichiers</td><td>peut traverser les systèmes de fichiers</td></tr>
+<tr><td>Nature</td><td>un autre nom du même fichier</td><td>un fichier qui contient un chemin</td></tr>
+<tr><td>Compteur de liens</td><td>incrémenté (passe à 2)</td><td>inchangé</td></tr>
+<tr><td>Si on efface l'autre nom</td><td>le fichier survit</td><td>le lien pointe dans le vide</td></tr>
+</tbody>
+</table>
+
+<h3>Occupation disque</h3>
+<ul>
+<li><code>df -k</code> donne des informations sur l'occupation en Ko (utilisés, disponibles) des <b>systèmes de fichiers</b> accessibles ;</li>
+<li><code>du -k répertoire</code> donne le nombre de Ko occupés par <b>chaque répertoire de la sous-arborescence</b> de racine <i>répertoire</i>.</li>
+</ul>
+<p>Moyen mnémotechnique : <code>df</code> = <i>disk free</i>, on regarde les disques ; <code>du</code> = <i>disk usage</i>, on regarde une arborescence.</p>
+
+<h2>15. Pour réviser : glossaire, chaînes à savoir dérouler, question d'examen</h2>
+
+<h3>Glossaire des définitions à connaître</h3>
+<p>Ces définitions sont celles qui peuvent être demandées telles quelles. Les trois premières sont les définitions encadrées du support.</p>
+<table>
+<thead><tr><th>Terme</th><th>Définition</th></tr></thead>
+<tbody>
+<tr><td>Système d'exploitation</td><td>Logiciel destiné à faciliter et simplifier l'utilisation d'un ordinateur ; il permet d'exploiter les capacités du matériel en mettant à la disposition de l'utilisateur un ensemble de services.</td></tr>
+<tr><td>Processus</td><td>Une exécution d'un code sous le contrôle du SE.</td></tr>
+<tr><td>Shell</td><td>Un interpréteur de commandes : un programme qui lit une commande, l'exécute et attend la commande suivante.</td></tr>
+<tr><td>Fichier</td><td>Une source de données qui peuvent être lues, ou une destination dans laquelle des données peuvent être écrites — y compris un dispositif physique (clavier, écran, imprimante).</td></tr>
+<tr><td>Machine virtuelle</td><td>L'environnement de travail simplifié que le SE présente à l'utilisateur : une abstraction de l'architecture matérielle.</td></tr>
+<tr><td>Bootstrap</td><td>Code exécuté automatiquement au démarrage : il charge le noyau en mémoire centrale depuis un disque, puis initialise le système.</td></tr>
+<tr><td>Noyau (kernel)</td><td>Partie du SE chargée en mémoire qui attend les événements et exécute les traitements associés.</td></tr>
+<tr><td>Mode user / mode kernel</td><td>Les deux modes d'exécution de l'UC : en mode user certaines instructions privilégiées sont interdites ; en mode kernel toutes les instructions sont exécutables.</td></tr>
+<tr><td>Interruption matérielle</td><td>Événement déclenché par un périphérique : fin d'E/S, caractère disponible, timer.</td></tr>
+<tr><td>Exception (déroutement)</td><td>Événement correspondant à une erreur dans le code exécuté (division par 0, instruction illégale) ou à une panne matérielle.</td></tr>
+<tr><td>Interruption logicielle</td><td>Événement déclenché volontairement par une instruction particulière : le programme demande un service au SE (appel système).</td></tr>
+<tr><td>Appel système</td><td>Primitive de la bibliothèque système ; elle génère une interruption logicielle, qui sauvegarde le contexte du demandeur, exécute la tâche en mode kernel, puis restaure le contexte.</td></tr>
+<tr><td>Pilote (device driver)</td><td>Code spécialisé du SE dédié à la gestion d'un type de périphérique.</td></tr>
+<tr><td>Ordonnancement</td><td>Algorithme qui décide, à un instant donné, lequel des programmes présents reçoit le contrôle du CPU.</td></tr>
+<tr><td>MMU</td><td><i>Memory Management Unit</i> : mécanisme matériel d'accès à la mémoire qui déclenche une erreur en cas d'accès interdit aux pages d'un processus ou du système.</td></tr>
+<tr><td>ACL</td><td><i>Access Control List</i> : liste indiquant, pour une ressource, quels utilisateurs sont autorisés ou interdits pour tel type d'accès.</td></tr>
+<tr><td>Répertoire courant</td><td>Le répertoire dans lequel l'utilisateur se trouve à un instant donné (<i>working directory</i>).</td></tr>
+<tr><td>Désignation relative / absolue</td><td>Chemin partant du répertoire courant / chemin partant de la racine, commençant toujours par <code>/</code>.</td></tr>
+<tr><td>Lien physique / symbolique</td><td>Second nom du même fichier dans le même système de fichiers (<code>ln</code>) / raccourci contenant un chemin, possiblement vers un autre système de fichiers (<code>ln -s</code>).</td></tr>
+<tr><td>Code de retour</td><td><i>EXIT STATUS</i> : 0 si la commande s'est déroulée normalement, entier strictement positif sinon.</td></tr>
+</tbody>
+</table>
+
+<h3>Synthèse</h3>
+<p>Le fil des 64 diapositives tient en une phrase : <b>le SE est une couche d'abstraction qui transforme un matériel complexe et partagé en une machine virtuelle simple pour chaque utilisateur</b>, et Unix en est l'illustration concrète — un noyau atteint uniquement par des appels système, entouré de commandes, de shells et d'un système de fichiers unifié.</p>
+
+<table>
+<thead><tr><th>Chaîne à savoir dérouler</th><th>Étapes</th></tr></thead>
+<tbody>
+<tr><td>D'un <code>printf</code> à l'écran</td><td>programme → bibliothèque standard → bibliothèque système → interruption logicielle → mode kernel → pilote → matériel</td></tr>
+<tr><td>D'une frappe clavier au programme</td><td>périphérique → interruption matérielle → traitement dans le noyau → réveil du processus en attente</td></tr>
+<tr><td>D'une commande tapée à son exécution</td><td>shell lit et analyse la ligne → recherche la commande (<code>/bin</code>, <code>/usr/bin</code>) → appels système de création de processus → exécution → code de retour</td></tr>
+<tr><td>D'un accès fichier refusé</td><td>appel système → contrôle des droits (u/g/o ou ACL) → refus → code de retour non nul</td></tr>
+</tbody>
+</table>
+
+<div class="ex"><b>Question type d'examen —</b> « Pourquoi un programme utilisateur ne peut-il pas écrire directement sur le disque ? »<br>
+<b>Réponse :</b> parce que l'instruction d'accès au contrôleur est <b>privilégiée</b> et donc interdite en mode user. Le programme exécute une <b>interruption logicielle</b> (appel système), qui fait passer l'UC en <b>mode kernel</b> ; le noyau sauvegarde le contexte, réalise l'opération via le <b>pilote</b>, puis restaure le contexte et rend la main. Cette seule réponse mobilise les parties 5, 6, 10 et 11.</div>
+
+<div class="retenir"><b>À retenir —</b>
+<ul>
+<li>Le <b>SE</b> est un intermédiaire obligé entre programmes et matériel : il offre une <b>machine virtuelle</b> (abstraction) et gère processus, mémoire, fichiers, E/S, réseau. Il n'agit que sur <b>événements</b> (interruption matérielle, exception, interruption logicielle = appel système).</li>
+<li>Deux modes CPU : <b>user</b> (instructions privilégiées interdites) et <b>kernel</b>. Seul l'<b>appel système</b> (trap) fait passer légalement de user à kernel : sauvegarde du contexte, exécution en mode kernel, restauration. Le <b>timer</b> garantit que le SE reprend toujours la main ; la <b>MMU</b> protège la mémoire.</li>
+<li><b>Processus</b> = exécution d'un programme sous le contrôle du SE ; le <b>bootstrap</b> charge le noyau au démarrage.</li>
+<li>Unix (1969, version 6 en 1975 écrite en C) : multi-utilisateur, multitâche ; <b>tout est fichier</b> ; arbre à racine <code>/</code> ; chemins <b>absolus</b> (depuis <code>/</code>) ou <b>relatifs</b> (depuis le répertoire courant, avec <code>.</code> et <code>..</code>).</li>
+<li>Syntaxe : <code>commande options arguments</code> ; <code>[ ]</code> facultatif, <code>|</code> exclusif, <code>…</code> répétable ; code de retour <b>0</b> = succès.</li>
+<li>Droits <b>u/g/o</b> × <b>r/w/x</b> (sens différent sur un répertoire : supprimer un fichier dépend du <code>w</code> sur le répertoire). <code>ln</code> = lien physique (même fichier, compteur +1, même système de fichiers), <code>ln -s</code> = lien symbolique (type <code>l</code>, contient un chemin). <code>df</code> = disques, <code>du</code> = arborescence.</li>
+</ul></div>

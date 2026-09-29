@@ -1,0 +1,124 @@
+<div class="note"><b>Mode d'emploi —</b> TD 2 (commandes shell, suite). 5 exercices (dont 3 questions dans l'exercice 5), énoncés puis corrigés masqués. Commandes de référence : <code>grep</code>, <code>mail</code>, <code>cut</code>, <code>sort</code>, <code>tail</code>, <code>tr</code>, <code>find</code> (voir document de commandes) ; <code>ls</code>, <code>echo</code>, <code>cat</code>, <code>wc</code> (voir TD 1). Les commandes ont été rejouées dans un shell sur des fichiers de test.</div>
+
+<h2>1. Redirections</h2>
+
+<h3>Exercice 1</h3>
+<p>Que réalisent les deux commandes suivantes ?</p>
+<pre><code>echo "bonjour" &gt; cat
+echo "bonjour" | cat</code></pre>
+<details><summary>Voir le corrigé</summary>
+<table>
+<thead><tr><th>Commande</th><th>Effet</th></tr></thead>
+<tbody>
+<tr><td><code>echo "bonjour" &gt; cat</code></td><td>Le <code>&gt;</code> est une redirection : sa cible est <b>toujours interprétée comme un nom de fichier</b>, jamais comme une commande à exécuter. Cette commande crée (ou écrase) un fichier ordinaire nommé <code>cat</code> dans le répertoire courant, contenant le texte <code>bonjour</code>. La commande <code>cat</code> (le programme) n'est pas exécutée.</td></tr>
+<tr><td><code>echo "bonjour" | cat</code></td><td>Le <code>|</code> est un pipe : il connecte la sortie standard de <code>echo</code> à l'entrée standard de la commande <code>cat</code> (le programme, cette fois bien exécuté). <code>cat</code> recopie ce qu'il reçoit sur stdin vers stdout : le texte <code>bonjour</code> s'affiche donc simplement à l'écran. Aucun fichier n'est créé.</td></tr>
+</tbody>
+</table>
+<p>Vérifié : après <code>echo "bonjour" &gt; cat</code>, un fichier <code>cat</code> apparaît bien dans <code>ls -l</code> et contient <code>bonjour</code> ; la commande <code>cat</code> du système reste utilisable normalement juste après (elle n'a pas été remplacée). C'est uniquement si l'on exécutait ensuite <code>./cat</code> avec <code>.</code> dans le <code>PATH</code> que ce fichier local pourrait être lancé par erreur.</p>
+</details>
+
+<h3>Exercice 2</h3>
+<p>Commencer par lire la description de la commande <code>mail</code> (voir document commandes).</p>
+<p>1) En une seule ligne de commande, envoyer à l'utilisateur <code>l2inf250</code>, par courrier électronique, la liste détaillée des répertoires et fichiers contenus dans le répertoire courant.</p>
+<p>2) Soit un fichier <code>liste.txt</code>, contenant une liste d'adresses électroniques enregistrées ligne par ligne, et soit un fichier <code>lettre.txt</code> contenant un message à envoyer. Écrire la ligne de commande permettant d'envoyer ce message aux adresses de la liste.</p>
+<details><summary>Voir le corrigé</summary>
+<p><b>1)</b> <code>mail</code> lit le corps du message sur son entrée standard, donc on lui redirige (via un pipe) la sortie de <code>ls -l</code> :</p>
+<pre><code>ls -l | mail l2inf250</code></pre>
+<p><b>2)</b> Envoyer le contenu de <code>lettre.txt</code> à toutes les adresses listées (une par ligne) dans <code>liste.txt</code> :</p>
+<pre><code>mail `cat liste.txt` &lt; lettre.txt     # ou : mail $(cat liste.txt) &lt; lettre.txt</code></pre>
+<p>Même mécanisme de capture qu'au TD 1 (ex. 10) : <code>`cat liste.txt`</code> transforme le contenu du fichier (une adresse par ligne) en une liste de paramètres — les destinataires de <code>mail</code> — tandis que <code>&lt; lettre.txt</code> redirige le corps du message depuis le fichier <code>lettre.txt</code>.</p>
+<div class="note"><b>Test —</b> avec une fonction <code>mail()</code> qui affiche ses arguments et son entrée, <code>mail `cat liste.txt` &lt; lettre.txt</code> avec <code>liste.txt</code> = <code>a@x.fr</code> / <code>b@y.fr</code> donne bien les destinataires <code>a@x.fr b@y.fr</code> et le corps <code>Salut</code>.</div>
+</details>
+
+<h2>2. Expressions régulières</h2>
+
+<h3>Exercice 3</h3>
+<p>Soit le fichier texte non vide <code>texte.txt</code>. Utiliser <b>uniquement la commande <code>grep</code></b> pour afficher :</p>
+<ol>
+<li>toutes les lignes,</li>
+<li>les lignes vides,</li>
+<li>les lignes qui commencent par <code>debut</code> ou <code>Debut</code>,</li>
+<li>les lignes contenant un caractère <code>$</code> suivi de deux caractères quelconques suivis d'un caractère <code>\</code>,</li>
+<li>les lignes finissant par une lettre minuscule,</li>
+<li>les lignes commençant par dix lettres successives (la première doit être une majuscule et les neuf suivantes doivent être des minuscules) suivies d'un chiffre.</li>
+</ol>
+<details><summary>Voir le corrigé</summary>
+<table>
+<thead><tr><th>Demande</th><th>Commande</th></tr></thead>
+<tbody>
+<tr><td>Toutes les lignes</td><td><code>grep '' texte.txt</code></td></tr>
+<tr><td>Les lignes vides</td><td><code>grep '^$' texte.txt</code></td></tr>
+<tr><td>Lignes commençant par <code>debut</code> ou <code>Debut</code></td><td><code>grep '^[Dd]ebut' texte.txt</code></td></tr>
+<tr><td>Lignes avec <code>$</code> + 2 car. quelconques + <code>\</code></td><td><code>grep '\$..\\' texte.txt</code></td></tr>
+<tr><td>Lignes finissant par une minuscule</td><td><code>grep '[a-z]$' texte.txt</code></td></tr>
+<tr><td>Maj. + 9 minuscules + un chiffre, en début de ligne</td><td><code>grep '^[A-Z][a-z]\{9\}[0-9]' texte.txt</code></td></tr>
+</tbody>
+</table>
+<ul>
+<li><b>1)</b> Le motif vide <code>''</code> est présent (vide) dans toute chaîne : <code>grep</code> affiche donc chaque ligne du fichier, sans filtrage.</li>
+<li><b>4)</b> Dans une expression régulière de base (BRE), <code>$</code> n'est une ancre de fin de ligne que s'il est le <b>dernier</b> caractère du motif ; ici il est suivi d'autre chose, il est donc déjà littéral. Il est tout de même échappé (<code>\$</code>) par clarté. Le <code>\</code> final doit lui aussi être échappé (<code>\\</code>) pour désigner un unique backslash littéral, car <code>\</code> est le caractère d'échappement de <code>grep</code>.</li>
+<li><b>6)</b> <code>\{9\}</code> est la syntaxe BRE (avec <code>grep</code> classique, sans <code>-E</code>) pour répéter le motif précédent exactement 9 fois.</li>
+</ul>
+<p>Toutes ces commandes ont été testées sur un fichier <code>texte.txt</code> construit avec des cas couvrant chaque situation (lignes <code>debut</code>/<code>Debut</code>, ligne <code>$xy\</code>, ligne <code>Abcdefghij5</code>, lignes vides, etc.) et donnent exactement le résultat attendu.</p>
+</details>
+
+<h3>Exercice 4</h3>
+<p>Sans utiliser les métacaractères du shell à l'exception du métacaractère <code>|</code>, écrire la ligne de commande permettant d'afficher :</p>
+<ol>
+<li>les noms de fichiers non cachés du répertoire courant dont le nom contient le caractère <code>a</code>,</li>
+<li>les noms de fichiers non cachés du répertoire courant dont le nom comporte quatre caractères exactement,</li>
+<li>les noms de fichiers non cachés du répertoire courant dont le nom comporte au moins cinq caractères,</li>
+<li>les noms de fichiers non cachés du répertoire courant dont le nom commence par une majuscule.</li>
+</ol>
+<details><summary>Voir le corrigé</summary>
+<table>
+<thead><tr><th>Demande</th><th>Commande</th></tr></thead>
+<tbody>
+<tr><td>Nom contenant le caractère <code>a</code></td><td><code>ls | grep a</code></td></tr>
+<tr><td>Nom de exactement 4 caractères</td><td><code>ls | grep '^.\{4\}$'</code></td></tr>
+<tr><td>Nom d'au moins 5 caractères</td><td><code>ls | grep '^.\{5\}'</code></td></tr>
+<tr><td>Nom commençant par une majuscule</td><td><code>ls | grep '^[A-Z]'</code></td></tr>
+</tbody>
+</table>
+<p>Ici c'est <code>ls</code> (sans motif de sélection) qui liste les fichiers, et <code>grep</code> — seul métacaractère shell autorisé avec le pipe <code>|</code> — qui filtre le résultat avec une expression régulière : <code>^.\{4\}$</code> ancre le début et la fin pour imposer <b>exactement</b> 4 caractères, alors que <code>^.\{5\}</code> (sans ancre de fin) impose seulement <b>au moins</b> 5 caractères en début de nom. Vérifié sur un jeu de fichiers de test (<code>abc.txt</code>, <code>xyza</code>, <code>toto</code>, <code>Aaa</code>, <code>Bcd</code>, <code>four5</code>, <code>zzzz12</code>…).</p>
+<div class="note"><b>Pourquoi les fichiers cachés sont exclus —</b> <code>ls</code> sans l'option <code>-a</code> ne liste pas les noms commençant par un point ; et quand la sortie de <code>ls</code> passe dans un pipe, elle est écrite à raison d'un nom par ligne, ce qui permet à <code>grep</code> de filtrer nom par nom.</div>
+</details>
+
+<h2>3. Branchement de commandes</h2>
+<p>Commandes utiles : <code>tr</code>, <code>cut</code>, <code>sort</code>, <code>tail</code> (voir document commandes).</p>
+
+<h3>Exercice 5</h3>
+<p>Réaliser chacune des tâches suivantes à l'aide d'une seule ligne de commande.</p>
+<ol>
+<li>Écrire dans le fichier <code>exe.txt</code> les noms des fichiers ordinaires non cachés du répertoire courant ayant l'extension <code>.sh</code> et dont le propriétaire n'a pas le droit d'exécution. Si le fichier <code>exe.txt</code> existe déjà, son contenu doit être écrasé.</li>
+<li>Afficher le nom du plus gros (celui qui a la plus grande taille) fichier ordinaire non caché du répertoire courant.</li>
+<li>Afficher le nombre d'éléments du répertoire courant (fichiers ordinaires, sous-répertoires ou autres), cachés ou non, dont le nom contient au moins un caractère point.</li>
+</ol>
+<details><summary>Voir le corrigé</summary>
+<p><b>1)</b> Repérer, dans la sortie de <code>ls -l</code>, les fichiers dont le 4<sup>e</sup> caractère de la chaîne de droits (le droit d'exécution du propriétaire) est <code>-</code>, puis en extraire le nom (9<sup>e</sup> champ, en supposant les champs de <code>ls -l</code> séparés par un seul espace, convention habituelle de ce type d'exercice) :</p>
+<pre><code>ls -l *.sh | grep '^-..-' | cut -d' ' -f9 &gt; exe.txt</code></pre>
+<p>Le motif <code>^-..-</code> décompose les 4 premiers caractères de la ligne <code>ls -l</code> : <code>-</code> (type = fichier ordinaire), 2 caractères quelconques (droits de lecture/écriture du propriétaire), puis <code>-</code> (le propriétaire n'a pas le droit d'exécution). Le glob <code>*.sh</code> exclut déjà naturellement les fichiers cachés (il ne matche pas un <code>.</code> initial). <code>&gt;</code> écrase <code>exe.txt</code> s'il existait déjà (comportement par défaut de <code>&gt;</code>).</p>
+<div class="warn"><b>Version robuste (vérifiée) —</b> dans une vraie sortie de <code>ls -l</code>, les colonnes sont <b>alignées avec plusieurs espaces</b> (la taille est justifiée à droite), donc <code>cut -d' ' -f9</code> tombe parfois sur un autre champ : sur mon jeu de test il a affiché <code>Sep</code> au lieu du nom. Il faut d'abord <b>comprimer les espaces répétés</b> avec <code>tr -s ' '</code> (option <code>-s</code> de <code>tr</code> : voir la syntaxe <code>tr [-Ccu] -s string1</code> au CM 1) :
+<pre><code>ls -l *.sh | grep '^-..-' | tr -s ' ' | cut -d' ' -f9 &gt; exe.txt</code></pre>
+Avec <code>x.sh</code> (exécutable par le propriétaire), <code>y.sh</code> et <code>z.sh</code> (non exécutables), <code>exe.txt</code> contient bien <code>y.sh</code> et <code>z.sh</code> seulement.</div>
+<p>Variante équivalente avec <code>find</code> : <code>find . -maxdepth 1 -type f -name "*.sh" ! -name ".*" ! -perm -u+x</code> (le <code>! -name ".*"</code> est nécessaire ici car, contrairement au glob du shell, <code>-name</code> de <code>find</code> matche aussi les fichiers cachés par défaut).</p>
+
+<p><b>2)</b> Ne garder que les fichiers ordinaires (1<sup>er</sup> caractère <code>-</code>), les trier numériquement par taille (5<sup>e</sup> champ) et prendre le dernier (le plus gros) :</p>
+<pre><code>ls -l | grep '^-' | sort -k5 -n | tail -1 | cut -d' ' -f9</code></pre>
+<p><code>sort -k5 -n</code> trie par ordre croissant sur le 5<sup>e</sup> champ (la taille, en tri numérique) ; <code>tail -1</code> prend donc la dernière ligne, c'est-à-dire le fichier de plus grande taille. Vérifié avec plusieurs fichiers de tailles différentes (0, 5 et 5000 octets) : le fichier de 5000 octets est correctement identifié.</p>
+<div class="note"><b>Même remarque pour l'extraction du nom —</b> pour un résultat fiable, insérer <code>tr -s ' '</code> avant <code>cut</code> : <code>ls -l | grep '^-' | tr -s ' ' | sort -k5 -n | tail -1 | cut -d' ' -f9</code> (testé : donne le fichier de 5000 octets). Le tri par <code>sort</code> lui-même gère bien les espaces multiples ; c'est <code>cut -d' '</code> qui est sensible.</div>
+
+<p><b>3)</b> Compter les éléments (fichiers, répertoires ou autres, cachés ou non) dont le nom contient un point :</p>
+<pre><code>ls -a | grep '\.' | wc -l</code></pre>
+<p>Avec <code>ls -a</code>, les entrées spéciales <code>.</code> et <code>..</code> sont elles aussi listées et contiennent (littéralement) un point : elles sont donc comptées dans ce résultat, conformément à l'énoncé qui ne les exclut pas explicitement. Si l'on veut ne compter que les vrais fichiers/répertoires du répertoire (en excluant ces deux entrées spéciales), utiliser <code>ls -A</code> à la place de <code>ls -a</code> (identique, mais sans <code>.</code> ni <code>..</code>).</p>
+<p>Attention au <code>\.</code> : dans une expression régulière, un <code>.</code> seul signifie « n'importe quel caractère » ; <code>\.</code> désigne le point littéral.</p>
+</details>
+
+<div class="retenir"><b>À retenir —</b>
+<ul>
+<li><code>&gt;</code> vs <code>|</code> : <code>&gt;</code> redirige vers un <b>fichier</b> (sa cible n'est jamais interprétée comme une commande, même si elle porte le nom d'une commande existante) ; <code>|</code> connecte la sortie d'une commande à l'entrée d'une autre commande <b>réellement exécutée</b>.</li>
+<li><code>mail</code> : lit le corps du message sur stdin (d'où l'usage d'un pipe ou de <code>&lt;</code>) et prend les destinataires en paramètres — la capture <code>`cat fichier`</code> permet de transformer un fichier de contenus (adresses, noms…) en liste de paramètres pour une commande.</li>
+<li>BRE (<code>grep</code> classique) : <code>$</code> n'est une ancre que placé en fin de motif, sinon il est littéral ; les quantificateurs <code>\{n\}</code> doivent être échappés, contrairement aux expressions étendues (<code>grep -E</code>).</li>
+<li>Filtrer sans métacaractères de glob : <code>ls</code> (sans motif) puis <code>grep</code> avec une expression régulière reproduit les mêmes sélections que <code>*</code>/<code>?</code>/<code>[]</code> — <code>^.\{n\}$</code> pour une longueur exacte, <code>^.\{n\}</code> (sans ancre finale) pour une longueur minimale.</li>
+<li>Branchement <code>ls -l</code> → <code>grep</code> → <code>sort</code>/<code>cut</code> : le 1<sup>er</sup> caractère de <code>ls -l</code> donne le type (fichier/répertoire), les 9 suivants les droits (propriétaire/groupe/autres, 3 par 3) ; <code>sort -k5 -n</code> trie par taille, <code>cut -d' ' -fN</code> extrait un champ — <b>à condition de compresser d'abord les espaces multiples avec <code>tr -s ' '</code></b> (les colonnes de <code>ls -l</code> sont alignées).</li>
+</ul></div>

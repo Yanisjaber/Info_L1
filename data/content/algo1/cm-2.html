@@ -1,0 +1,270 @@
+<p>Le chapitre tient en une chaîne : on écrit ce qu'on attend (<b>spécification</b>), on l'écrit sous forme booléenne (<b>pré- et post-condition</b>), et on la fait vérifier par le programme lui-même (<b>assertions</b>). Le contrat cesse d'être une intention pour devenir du code qui se défend tout seul.</p>
+
+<h2>Partie I — Introduction</h2>
+<h2>1. Le problème posé</h2>
+<div class="def"><b>Cadre du problème —</b> le cadre d'étude est celui des <b>fonctions</b>, généralisable à tout code présentant une ou plusieurs entrées et une ou plusieurs sorties (programme principal, portion de code).</div>
+<p>On exclut les mêmes situations qu'au CM 1 : les interactions avec l'utilisateur (entrées données simultanément, sorties recueillies simultanément) et les effets de bord non testables comme l'affichage.</p>
+<h3>L'exemple fil rouge</h3><pre><code>def division_euclidienne(a,b):
+    q,r = 0,a
+    while r&gt;b:
+        q,r = q+1,r-b
+    return q,r</code></pre><p><b>Question 1.</b> a) Déterminer les valeurs de retour dans les cas donnés. b) Cette fonction effectue-t-elle bien la division euclidienne de a par b ?</p>
+<table><thead><tr><th>a</th><th>b</th><th>Retour (q, r)</th><th>Vérification</th></tr></thead><tbody>
+<tr><td>10</td><td>3</td><td><code>(3, 1)</code></td><td>10 = 3×3 + 1, et 0 ≤ 1 &lt; 3 ✓</td></tr>
+<tr><td>17</td><td>5</td><td><code>(3, 2)</code></td><td>17 = 5×3 + 2, et 0 ≤ 2 &lt; 5 ✓</td></tr>
+<tr><td>3</td><td>10</td><td><code>(0, 3)</code></td><td>3 = 10×0 + 3, et 0 ≤ 3 &lt; 10 ✓</td></tr>
+<tr><td>14</td><td>7</td><td><code>(1, 7)</code></td><td>14 = 7×1 + 7 ✓ mais 7 &lt; 7 est faux ✗</td></tr>
+<tr><td>6</td><td>0</td><td>—</td><td>boucle infinie : r ne diminue jamais ✗</td></tr>
+</tbody></table>
+<div class="warn"><b>Question 1b — Non, deux défauts distincts :</b>
+<ul><li>la condition de boucle est <code>r&gt;b</code> au lieu de <code>r&gt;=b</code> : quand b divise a, la boucle s'arrête un tour trop tôt et renvoie un reste égal à b — le cas (14, 7) ;</li>
+<li>rien n'interdit <code>b = 0</code>, pour lequel la fonction ne termine pas — le cas (6, 0).</li></ul>
+Le premier est un défaut d'<b>implémentation</b>, le second un défaut de <b>spécification</b> : personne n'a écrit que b devait être non nul. Sur (14, 7), la fonction n'a pas « planté » : elle a renvoyé tranquillement un résultat faux, c'est le pire des cas — et celui que les tests de propriété visent à rendre bruyant.</div>
+
+<h2>2. L'objectif et la démarche</h2>
+<div class="def"><b>Objectif du cours —</b> étant donnée une fonction, répondre à la question « la fonction effectue-t-elle bien ce qu'on attend qu'elle fasse ? » en deux étapes : (1) décrire précisément ce que l'on attend d'une fonction : le <b>contrat de fonction</b>, ou <b>spécification</b> ; (2) fournir un outil pour vérifier le comportement de la fonction : les <b>tests de propriété</b>.</div>
+<p>C'est la même question qu'au CM 1, mais la réponse change de nature. Les tests unitaires vérifiaient la fonction sur des exemples choisis à l'avance ; ici on écrit ce qui doit être vrai <b>à chaque appel</b>, quels que soient les paramètres, et on laisse le programme le vérifier lui-même.</p>
+
+<h2>Partie II — La spécification comme contrat</h2>
+<h2>3. Pré-condition et post-condition</h2>
+<p>Pour caractériser précisément ce que l'on attend d'une fonction, on décrit les exigences sur les paramètres et sur les valeurs de retour.</p>
+<div class="def"><b>Pré-condition —</b> condition devant être vérifiée par les <b>paramètres</b> de la fonction afin que le problème puisse être résolu.</div>
+<div class="def"><b>Post-condition —</b> condition devant être vérifiée par la (les) <b>valeur(s) de retour</b>. Cette vérification fait intervenir les paramètres de la fonction.</div>
+<p>Ces deux conditions sont écrites sous forme d'<b>expressions booléennes</b>.</p>
+<div class="warn"><b>Deux détails souvent perdus en examen —</b> (1) la post-condition fait intervenir les paramètres : « le résultat est un entier » ne dit rien, il faut relier le résultat à ce qui est entré (<code>a == q*b + r</code>) ; (2) ce sont des expressions booléennes, donc du <b>code exécutable</b>, pas du commentaire — c'est ce qui permet la partie III.</div>
+
+<h2>4. Le contrat de fonction</h2>
+<table><thead><tr><th>Code appelant (client)</th><th>Contrat</th><th>Fonction (prestataire)</th></tr></thead><tbody>
+<tr><td>« je respecte la pré-condition »</td><td>les paramètres satisfont la pré-condition &rarr;<br>&larr; les valeurs de retour satisfont la post-condition</td><td>« je garantis la post-condition »</td></tr>
+</tbody></table>
+<p>Un engagement réciproque. Le vocabulaire est celui du commerce : le <b>client</b> (l'utilisateur de la fonction) et le <b>prestataire</b> (son codeur). Chacun s'engage sur une moitié du contrat.</p>
+<div class="def"><b>Spécification —</b> donnée (1) du <b>type</b> des paramètres et de la valeur de retour ; (2) de la <b>pré-condition</b> et de la <b>post-condition</b>. Elle constitue le <b>contrat</b> qui lie le codeur (prestataire) et son utilisateur (client) : le codeur s'engage, <b>dès lors que</b> l'utilisateur respecte la pré-condition, à respecter la post-condition. On parle de <b>contrat de fonction</b>.</div>
+<div class="note"><b>La clause « dès lors que » —</b> si le client appelle <code>division_euclidienne(10, 0)</code> alors que la pré-condition exige <code>b &gt; 0</code>, le prestataire n'est plus tenu à rien : le comportement devient un problème du client, pas du codeur.</div>
+
+<h2>5. Spécification et implémentation</h2>
+<div class="def"><b>Implémentation —</b> on appelle implémentation d'une spécification donnée <b>toute</b> fonction qui respecte cette spécification.</div>
+<ul><li>la spécification précise le <b>quoi</b>, l'implémentation le <b>comment</b> ;</li><li>la spécification est la seule chose à savoir pour <b>utiliser</b> la fonction.</li></ul>
+<p>Le mot « toute » compte : une spécification admet en général plusieurs implémentations. La division euclidienne peut se calculer par soustractions successives, par l'opérateur <code>//</code>, ou par un algorithme plus rapide — trois implémentations de la même spécification, et le client n'a pas à savoir laquelle il utilise. C'est la règle de nommage du CM 1 (nom = ce qu'elle fait, pas comment) poussée jusqu'à l'exécutable.</p>
+
+<h2>6. Spécifier la division euclidienne</h2>
+<p><b>Question 2.</b> On s'intéresse à la division euclidienne de deux entiers <b>positifs</b>. a) Écrire la spécification de <code>division_euclidienne</code>. b) Écrire une implémentation.</p>
+<table><thead><tr><th>Élément</th><th>Contenu</th></tr></thead><tbody>
+<tr><td>Type des paramètres</td><td><code>a : int</code>, <code>b : int</code></td></tr>
+<tr><td>Type du retour</td><td><code>(q, r)</code> : couple d'<code>int</code></td></tr>
+<tr><td>Pré-condition</td><td><code>a &gt;= 0 and b &gt; 0</code></td></tr>
+<tr><td>Post-condition</td><td><code>a == q*b + r and 0 &lt;= r &lt; b</code></td></tr>
+</tbody></table>
+<p><code>b &gt; 0</code> et non <code>b &gt;= 0</code> : cela exclut le cas (6, 0) de la question 1, et rend la post-condition <code>0 &lt;= r &lt; b</code> satisfaisable.</p>
+<p><b>Question 2b — implémentation :</b></p><pre><code>def division_euclidienne(a, b):
+    q, r = 0, a
+    while r &gt;= b:
+        q, r = q+1, r-b
+    return q, r</code></pre><p>Une seule modification par rapport au code de départ — <code>&gt;=</code> au lieu de <code>&gt;</code> — et la boucle s'arrête exactement quand <code>r &lt; b</code>, c'est-à-dire quand la post-condition devient vraie.</p>
+<h3>Question 3 : et pour les entiers relatifs ?</h3>
+<table><thead><tr><th>Condition</th><th>Entiers positifs</th><th>Entiers relatifs</th></tr></thead><tbody>
+<tr><td>Pré-condition</td><td><code>a &gt;= 0 and b &gt; 0</code></td><td><code>b != 0</code></td></tr>
+<tr><td>Post-condition</td><td><code>a == q*b + r and 0 &lt;= r &lt; b</code></td><td><code>a == q*b + r and 0 &lt;= r &lt; abs(b)</code></td></tr>
+</tbody></table>
+<ul><li>la contrainte sur <code>a</code> disparaît : tout entier est divisible ;</li><li>celle sur <code>b</code> s'affaiblit en <code>b != 0</code> ;</li><li>dans la post-condition, <code>b</code> devient <code>abs(b)</code> : l'encadrement du reste doit rester un intervalle non vide, ce que <code>0 &lt;= r &lt; b</code> ne serait plus pour b négatif.</li></ul>
+<p>L'implémentation par soustractions successives ne convient plus telle quelle : changer la spécification oblige à revisiter l'implémentation.</p><div class="note"><b>Remarque —</b> la convention « reste positif » est la convention mathématique usuelle. Les opérateurs <code>//</code> et <code>%</code> de Python suivent une autre convention (le reste prend le signe de <code>b</code>) : deux post-conditions différentes, donc deux spécifications différentes, pour un même nom d'opération. Exemple : <code>divmod(7, -3)</code> vaut <code>(-3, -2)</code>, et le reste -2 ne vérifie pas <code>0 &lt;= r &lt; abs(b)</code>.</div>
+
+<h2>7. Qui perd au contrat ?</h2>
+<p><b>Question 4.</b> Qui est le perdant du contrat dans chacun des deux cas ?</p>
+<table><thead><tr><th>Cas</th><th>Pré-condition</th><th>Post-condition</th></tr></thead><tbody>
+<tr><td>a)</td><td><code>a&gt;=0 and b&gt;=0</code></td><td><code>a==q*b+r and 0&lt;=r&lt;b</code></td></tr>
+<tr><td>b)</td><td><code>a&gt;=0 and b&gt;0</code></td><td><code>a==q*b+r</code></td></tr>
+</tbody></table>
+<div class="ex"><b>Cas a) — le prestataire perd.</b> La pré-condition autorise <code>b = 0</code> ; or pour b = 0 la post-condition exige <code>0 &lt;= r &lt; 0</code>, impossible. Le codeur s'est engagé sur une promesse qu'aucune implémentation ne peut tenir : le client a le droit d'appeler <code>division_euclidienne(10, 0)</code> et de réclamer un résultat correct.</div>
+<div class="ex"><b>Cas b) — le client perd.</b> La post-condition est trop faible : elle ne dit rien du reste. Un prestataire paresseux peut renvoyer <code>q = 0</code> et <code>r = a</code> : <code>a == 0*b + a</code> est vrai, le contrat est honoré à la lettre, et le client reçoit un résultat inutile sans aucun recours.</div>
+<table><thead><tr><th>Pré-condition trop faible</th><th>Post-condition trop faible</th></tr></thead><tbody>
+<tr><td>pré peu exigeante, post exigeante : le codeur promet plus qu'il ne peut tenir &rarr; le <b>PRESTATAIRE</b> perd</td><td>pré exigeante, post peu exigeante : le codeur peut tenir sa promesse sans rien faire &rarr; le <b>CLIENT</b> perd</td></tr>
+</tbody></table>
+<p>Un bon contrat est un équilibre : une pré-condition assez forte pour que le problème soit résoluble, une post-condition assez forte pour que le résultat soit utile. Relâcher l'une ou l'autre fait toujours un perdant.</p>
+
+<h2>Partie III — Les tests de propriété</h2>
+<h2>8. Principe et mise en place</h2>
+<div class="def"><b>Test de propriété —</b> vérifier lors de l'<b>exécution</b> certaines propriétés requises ; la vérification est effectuée par des <b>assertions</b> (instruction <code>assert</code>). En anglais : <i>Property Based Testing</i>.</div>
+<p>Les assertions de pré- et post-condition sont placées respectivement en tout début et en toute fin de la fonction testée. <b>Structure imposée :</b></p><pre><code>def ...(...,...):
+    assert ..., 'Pre-condition'
+    ... # CODE DE LA FONCTION
+    assert ..., 'Post-condition'
+    return ...</code></pre><p><b>Question 5 : compléter le code de la question 2b.</b></p><pre><code>def division_euclidienne(a, b):
+    assert a &gt;= 0 and b &gt; 0, 'Pre-condition'
+    q, r = 0, a
+    while r &gt;= b:
+        q, r = q+1, r-b
+    assert a == q*b + r and 0 &lt;= r &lt; b, 'Post-condition'
+    return q, r</code></pre><p>Les deux conditions écrites en français à la section 6 sont recopiées telles quelles : c'est tout l'intérêt de les avoir formulées comme des expressions booléennes. Appeler <code>division_euclidienne(10, 0)</code> déclenche <code>AssertionError: Pre-condition</code> : la faute est chez l'appelant.</p>
+
+<h2>9. Deux règles d'écriture</h2>
+<h3>Règle 1 — les paramètres doivent rester constants</h3>
+<div class="def"><b>Paramètres constants —</b> les paramètres de la fonction ne doivent pas être modifiés, sinon la post-condition ne peut pas être vérifiée correctement. <i>Exception : les tableaux, vus plus tard dans le cours.</i></div>
+<p><b>Exemple incorrect :</b></p><pre><code>def division_euclidienne(a,b):
+    assert a&gt;=0 and b&gt;0, 'Pre-condition'
+    a,q,r = 0,0,0
+    assert a==q*b+r and 0&lt;=r&lt;b, 'Post-condition'
+    return q,r</code></pre><p>La dernière assertion est bien vérifiée (<code>0 == 0*b + 0</code>) mais elle n'est pas pertinente : en écrasant <code>a</code>, on a effacé la donnée à laquelle le résultat devait être comparé. La post-condition ne parle plus de la question posée (ici <code>division_euclidienne(10, 3)</code> renvoie <code>(0, 0)</code> sans erreur !).</p>
+<h3>Règle 2 — une seule instruction return</h3>
+<div class="def"><b>Return unique —</b> la fonction ne doit présenter qu'une seule instruction <code>return</code>, située directement après la post-condition.</div>
+<p><b>Exemple incorrect :</b></p><pre><code>def division_euclidienne(a,b):
+    assert a&gt;=0 and b&gt;0, 'Pre-condition'
+    q,r = 0,a
+    while True:
+        q,r = q+1,r-b
+        if r&lt;b:
+            return q,r # Post-condition non garantie
+    assert a==q*b+r and 0&lt;=r&lt;b, 'Post-condition'
+    return q,r</code></pre><p>Le <code>return</code> placé dans la boucle court-circuite l'assertion : la fonction sort sans jamais passer par la vérification. Ici <code>division_euclidienne(2, 3)</code> renvoie <code>(1, -1)</code> (faux) sans aucune <code>AssertionError</code>. La règle n'est pas une coquetterie : c'est la condition pour que le test de propriété soit réellement exécuté à chaque appel. Un seul point de sortie garantit aussi qu'un traitement de fin ne peut pas être sauté.</p>
+
+<h2>10. Précisions sur assert</h2>
+<ul>
+<li><b>Vérification statique des types :</b> elle n'est <b>pas</b> effectuée par les tests de propriété. Elle relève d'autres dispositifs (annotations de type en Python, compilation dans les langages compilés). Le type fait partie de la spécification, mais n'est pas vérifié par les assertions.</li>
+<li><b>S'il n'y a aucune pré-condition :</b> on l'écrit tout de même, pour que le lecteur sache que la question a été posée : soit <code># Pas de pre-condition</code>, soit <code>assert True, 'Pre-condition'</code>.</li>
+</ul>
+<div class="warn"><b>Rappels du CM 1 sur les assertions —</b> elles peuvent être coûteuses en temps et/ou mémoire ; elles sont exclusivement réservées au débogage ; elles sont désactivées avec <code>python3 -O fichier.py</code> ; elles doivent donc utiliser des expressions booléennes <b>sans effets de bord</b> ; elles ne doivent servir ni à valider des entrées utilisateur, ni le contenu de fichiers. Une pré-condition n'est pas une validation d'entrée : elle documente et vérifie une hypothèse entre deux morceaux de code.</div>
+
+<h2>11. Le format des examens CC3 et CC4</h2>
+<p>Si l'exercice d'examen est d'écrire la pré-condition et la post-condition d'une fonction donnée, les tests de propriété seront placés dans des fonctions dédiées. <b>Structure de l'exercice :</b></p><pre><code>def verifie_pre_condition(...,...):
+    return ... # Pre-condition
+
+def verifie_post_condition(...,...):
+    return ... # Post-condition
+
+def ...(...,...):
+    assert verifie_pre_condition(...,...), 'Pre-condition'
+    ... # CODE DE LA FONCTION
+    assert verifie_post_condition(...,...), 'Post-condition'
+    return ...</code></pre><p><b>L'exemple complet donné par le cours :</b></p><pre><code># Fonctions a completer
+def verifie_pre_condition(a,b):
+    return a&gt;=0 and b&gt;0
+
+def verifie_post_condition(a,b,q,r):
+    return a==q*b+r and 0&lt;=r&lt;b
+
+# Fonction fournie lors de l'examen
+def division_euclidienne(a,b):
+    assert verifie_pre_condition(a,b), 'Pre-condition'
+    q, r = 0, a
+    while r &gt;= b:
+        q, r = q+1, r-b
+    assert verifie_post_condition(a,b,q,r), 'Post-condition'
+    return q, r</code></pre><p>La signature de <code>verifie_post_condition</code> prend les <b>paramètres et les valeurs de retour</b> : traduction directe de la définition.</p>
+<table><thead><tr><th>Le code de la fonction…</th><th>… sera</th></tr></thead><tbody>
+<tr><td><code>verifie_pre_condition</code></td><td>à compléter</td></tr>
+<tr><td><code>verifie_post_condition</code></td><td>à compléter</td></tr>
+<tr><td><code>division_euclidienne</code></td><td>fourni</td></tr>
+<tr><td><code>test_verifie_pre_condition</code></td><td>non fourni</td></tr>
+<tr><td><code>test_verifie_post_condition</code></td><td>non fourni</td></tr>
+<tr><td><code>test_division_euclidienne</code></td><td>fourni</td></tr>
+</tbody></table>
+<p>Ce mécanisme sera travaillé en TP. À l'examen, on vous demande d'écrire les deux conditions, et ce sont les tests unitaires fournis (au sens du CM 1) qui vérifieront que vous les avez bien écrites.</p>
+
+<h2>Partie IV — Application : maximum d'une liste</h2>
+<h2>12. Maximum d'une liste</h2>
+<p>On veut écrire et valider avec des tests de propriété une fonction <code>calculer_maximum</code> qui accepte une liste d'entiers et retourne le maximum <code>m</code> de cette liste.</p>
+<h3>Question 1 : les deux fonctions auxiliaires</h3>
+<p>Elles servent aux tests de propriété ; aucune pré- ni post-condition n'est demandée pour elles.</p>
+<p><b>a) <code>est_membre</code></b> — retourne le booléen indiquant si <code>m</code> est un élément de <code>liste</code> :</p><pre><code>def est_membre(liste, m):
+    trouve = False
+    for valeur in liste:
+        if valeur == m:
+            trouve = True
+    return trouve</code></pre><p>Un seul <code>return</code>, conformément à la règle 2. L'idiome Python <code>return m in liste</code> convient tout aussi bien.</p><p><b>b) <code>est_majorant</code></b> — retourne le booléen indiquant si <code>m</code> est supérieur ou égal à tous les éléments de <code>liste</code> :</p><pre><code>def est_majorant(liste, m):
+    majorant = True
+    for valeur in liste:
+        if valeur &gt; m:
+            majorant = False
+    return majorant</code></pre><h3>Question 2 : spécification et implémentation</h3>
+<table><thead><tr><th>Élément</th><th>Contenu</th></tr></thead><tbody>
+<tr><td>Type du paramètre</td><td><code>liste</code> : liste d'<code>int</code></td></tr>
+<tr><td>Type du retour</td><td><code>m</code> : <code>int</code></td></tr>
+<tr><td>Pré-condition</td><td><code>len(liste) &gt; 0</code></td></tr>
+<tr><td>Post-condition</td><td><code>est_membre(liste, m) and est_majorant(liste, m)</code></td></tr>
+</tbody></table>
+<p>La pré-condition est indispensable : le maximum d'une liste vide n'existe pas. La post-condition dit exactement ce qu'est un maximum : un élément de la liste qui majore la liste.</p>
+<p><b>Implémentation :</b></p><pre><code>def calculer_maximum(liste):
+    assert len(liste) &gt; 0, 'Pre-condition'
+    maximum = liste[0]
+    for valeur in liste:
+        if valeur &gt; maximum:
+            maximum = valeur
+    assert est_membre(liste, maximum) and est_majorant(liste, maximum), \
+           'Post-condition'
+    return maximum</code></pre><p>Le paramètre <code>liste</code> n'est jamais modifié (règle 1), et la fonction n'a qu'un seul <code>return</code>, placé après la post-condition (règle 2). La post-condition ne <b>recalcule pas</b> le maximum : sinon on testerait un calcul par le même calcul, et un bug identique des deux côtés passerait inaperçu. Elle vérifie une <b>propriété caractéristique</b> du résultat, ce qui est tout l'art de la post-condition.</p>
+
+<h2>13. Pourquoi les deux parties sont nécessaires</h2>
+<p><b>Question 3.</b> Analyser pourquoi chaque partie de la post-condition est nécessaire, en exhibant un contre-exemple.</p>
+<h3>a) Sans <code>est_membre(liste, m)</code></h3>
+<p>Il ne reste que « m majore la liste » : n'importe quelle valeur assez grande convient.</p>
+<table><thead><tr><th>Liste</th><th>m proposé</th><th>est_majorant</th><th>est_membre</th><th>Maximum ?</th></tr></thead><tbody>
+<tr><td><code>[1, 2, 3]</code></td><td>10</td><td>True</td><td>False</td><td>non — 10 n'est pas dans la liste</td></tr></tbody></table>
+<p>C'est <code>est_membre</code> qui interdit de renvoyer un majorant arbitraire.</p>
+<h3>b) Sans <code>est_majorant(liste, m)</code></h3>
+<p>Il ne reste que « m appartient à la liste » : n'importe quel élément convient.</p>
+<table><thead><tr><th>Liste</th><th>m proposé</th><th>est_membre</th><th>est_majorant</th><th>Maximum ?</th></tr></thead><tbody>
+<tr><td><code>[1, 2, 3]</code></td><td>1</td><td>True</td><td>False</td><td>non — 2 et 3 sont plus grands</td></tr></tbody></table>
+<p>C'est <code>est_majorant</code> qui interdit de renvoyer le premier élément venu.</p>
+<div class="thm"><b>Conclusion —</b> les deux propriétés prises ensemble <b>caractérisent</b> le maximum : aucune valeur autre que le maximum ne peut satisfaire les deux à la fois. Une post-condition à laquelle il manque une clause est trop faible — et l'on retombe sur le cas b) de la section 7 : c'est le client qui perd.</div>
+<h2>Partie V — Bilan</h2>
+<h2>14. Comparaison avec les autres approches</h2>
+<h3>Face aux tests unitaires</h3>
+<table><thead><tr><th></th><th>Tests de propriété</th><th>Tests unitaires</th></tr></thead><tbody>
+<tr><td>Paramètres</td><td>quelconques, non décidés à l'avance</td><td>choisis dans les fonctions de test</td></tr>
+<tr><td>Moment</td><td>en contexte : lorsque la fonction est appelée par d'autres fonctions, dans un code volumineux</td><td>à l'exécution de la fonction de test</td></tr>
+<tr><td>Force</td><td>vérifient à chaque appel réel</td><td>peuvent cibler spécifiquement des situations : cas extrêmes, particuliers (ex. le 366e jour d'une année bissextile)</td></tr>
+<tr><td>Nom anglais</td><td><i>Property Based Testing</i></td><td><i>Example Based Testing</i></td></tr>
+</tbody></table>
+<p>Les deux sont <b>complémentaires</b> : les tests unitaires vont chercher les cas tordus auxquels personne ne pense ; les tests de propriété surveillent tout le reste, en permanence, sur des valeurs que personne n'avait prévues.</p>
+<h3>Face à la vérification formelle</h3>
+<table><thead><tr><th></th><th>Tests de propriété</th><th>Vérification formelle</th></tr></thead><tbody>
+<tr><td>Nature</td><td>vérification dynamique, lors de l'appel et de l'exécution</td><td>analyse statique du code de la fonction</td></tr>
+<tr><td>Vue sur le code</td><td>le code est une boîte noire : seul compte le résultat obtenu</td><td>on analyse le code lui-même</td></tr>
+<tr><td>Portée</td><td>nombre fini de combinaisons testées</td><td>preuve que pour toutes les valeurs possibles des paramètres, le résultat est correct</td></tr>
+<tr><td>Où ?</td><td>ce cours</td><td>UE Info2.Algo2</td></tr>
+</tbody></table>
+<div class="note"><b>Dijkstra —</b> « Program testing can be used to show the presence of bugs, but never to show their absence! » Le test montre la présence de bugs, jamais leur absence.</div>
+<h3>Face à la documentation de code</h3>
+<table><thead><tr><th></th><th>Tests de propriété</th><th>Documentation (docstring)</th></tr></thead><tbody>
+<tr><td>Nature</td><td>mise en œuvre de la description : test effectué à l'exécution, sur des valeurs réelles</td><td>description de la fonction, du module ou de la classe, ajoutée en première ligne du bloc</td></tr>
+<tr><td>Public</td><td>le programme lui-même</td><td>le développeur</td></tr>
+<tr><td>Cohérence</td><td>le code et la vérification sont cohérents : on ne peut pas changer l'un sans changer l'autre</td><td>gérée au même endroit que le code ; les exemples peuvent servir de tests unitaires via le module <code>doctest</code></td></tr>
+</tbody></table>
+<p>L'argument de cohérence est le plus fort en faveur des assertions : un commentaire peut mentir pendant des années sans que rien ne le signale, une assertion fausse arrête le programme dès le premier appel.</p>
+<h2>15. Un double objectif</h2>
+<ul>
+<li><b>Une méthode de débogage :</b> les tests de propriété identifient quelle portion de code a failli (en complément des tests unitaires). Une <code>AssertionError</code> indique la fonction, la ligne, et si c'est la pré- ou la post-condition qui a lâché — donc si le fautif est l'appelant ou l'appelé.</li>
+<li><b>Un pas vers la vérification formelle :</b> les fonctions auxiliaires de vérification reprennent en grande partie les caractérisations logiques (formules, etc.) utilisées en vérification formelle.</li>
+</ul>
+
+<h2>Glossaire des définitions</h2>
+<table><thead><tr><th>Terme</th><th>Définition</th></tr></thead><tbody>
+<tr><td>Pré-condition</td><td>Condition devant être vérifiée par les paramètres afin que le problème puisse être résolu.</td></tr>
+<tr><td>Post-condition</td><td>Condition devant être vérifiée par la ou les valeurs de retour ; elle fait intervenir les paramètres.</td></tr>
+<tr><td>Spécification</td><td>Types des paramètres et du retour, pré-condition et post-condition.</td></tr>
+<tr><td>Contrat de fonction</td><td>Autre nom de la spécification : le prestataire s'engage, dès lors que le client respecte la pré-condition, à respecter la post-condition.</td></tr>
+<tr><td>Implémentation</td><td>Toute fonction qui respecte une spécification donnée (le quoi vs le comment).</td></tr>
+<tr><td>Test de propriété</td><td>Vérification à l'exécution de propriétés requises, par assertions (<i>Property Based Testing</i>).</td></tr>
+<tr><td>Paramètres constants</td><td>Ne pas modifier les paramètres, sinon la post-condition n'est pas vérifiable (exception : tableaux).</td></tr>
+<tr><td>Return unique</td><td>Un seul <code>return</code>, directement après la post-condition.</td></tr>
+<tr><td>Vérification formelle</td><td>Analyse statique prouvant que pour toutes les valeurs des paramètres le résultat est correct (Info2.Algo2).</td></tr>
+<tr><td>Docstring</td><td>Description de la fonction en première ligne du bloc ; ses exemples peuvent servir de tests via <code>doctest</code>.</td></tr>
+</tbody></table>
+<h2>Synthèse : questions-réponses</h2>
+<table><thead><tr><th>Question</th><th>Réponse du cours</th></tr></thead><tbody>
+<tr><td>Qu'est-ce qu'une pré-condition ?</td><td>Ce que les paramètres doivent vérifier pour que le problème soit résoluble.</td></tr>
+<tr><td>Qu'est-ce qu'une post-condition ?</td><td>Ce que le résultat doit vérifier, en faisant intervenir les paramètres.</td></tr>
+<tr><td>Que contient une spécification ?</td><td>Les types, la pré-condition et la post-condition. Rien de plus, rien de moins.</td></tr>
+<tr><td>Où place-t-on les assertions ?</td><td>Pré-condition en tout début, post-condition en toute fin, juste avant l'unique <code>return</code>.</td></tr>
+<tr><td>Pré-condition trop faible ?</td><td>Le prestataire perd : il promet l'impossible.</td></tr>
+<tr><td>Post-condition trop faible ?</td><td>Le client perd : le résultat peut être inutile.</td></tr>
+<tr><td>Propriété ou unitaire ?</td><td>Paramètres quelconques en contexte / paramètres choisis pour cibler des cas particuliers. Complémentaires.</td></tr>
+</tbody></table>
+<div class="retenir"><b>À retenir —</b>
+<ul>
+<li>Spécification = types + pré-condition (sur les paramètres) + post-condition (sur le retour <b>et</b> les paramètres), toutes deux en expressions booléennes.</li>
+<li>Contrat : si le client respecte la pré, le prestataire garantit la post. Pré trop faible : le prestataire perd ; post trop faible : le client perd.</li>
+<li>Test de propriété : <code>assert pre, 'Pre-condition'</code> en début, <code>assert post, 'Post-condition'</code> juste avant l'unique <code>return</code> ; paramètres non modifiés (sauf tableaux).</li>
+<li>Exemple type : division euclidienne <code>a &gt;= 0 and b &gt; 0</code> / <code>a == q*b + r and 0 &lt;= r &lt; b</code> ; maximum : <code>len(liste) &gt; 0</code> / <code>est_membre and est_majorant</code>.</li>
+<li>Réflexe d'examen : existe-t-il une valeur fausse qui satisfait quand même ma post-condition ? Si oui, il manque une clause.</li>
+<li>Les tests de propriété montrent la présence de bugs, jamais leur absence (Dijkstra) ; ils complètent les tests unitaires et préparent la vérification formelle.</li>
+</ul></div>

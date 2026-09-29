@@ -1,0 +1,261 @@
+<p>Ce TP porte sur le <b>type abstrait Tableau</b> : on écrit tous les algorithmes avec les seules opérations autorisées (créer, longueur, lire, écrire), sans <code>append</code>, <code>sorted</code>, <code>min</code>… Cherchez d'abord seul, puis dépliez le corrigé.</p>
+<h2>Rappels — le type abstrait tableau</h2>
+<ul><li>Le nombre d'éléments d'un tableau est <b>fixe</b> (déterminé dès la création).</li><li>Tous les éléments sont de <b>même type</b>.</li><li>Chaque élément est repéré par sa position, son <b>indice</b>.</li></ul>
+<table><thead><tr><th>indices</th><th>0</th><th>1</th><th>2</th><th>3</th><th>4</th><th>…</th><th>n-2</th><th>n-1</th></tr></thead><tbody><tr><td>éléments</td><td>9</td><td>0</td><td>-13</td><td>8</td><td>5</td><td>…</td><td>-20</td><td>4</td></tr></tbody></table>
+<p>Les seules opérations autorisées :</p>
+<ul><li>Créer un tableau en précisant sa longueur et la valeur par défaut (ce qui précise aussi le type des éléments) : <code>tableau = creer_tableau(longueur,defaut)</code></li><li>Longueur : <code>len(tableau)</code></li><li>Lire un élément à un indice valide : <code>valeur = tableau[i]</code></li><li>Écrire un élément à un indice valide : <code>tableau[i] = valeur</code></li></ul>
+<p>Les indices valides vérifient <code>0 ≤ i &lt; len(tableau)</code>.</p>
+<div class="warn"><b>Interdits —</b> toutes les opérations de modification de la structure (<code>append</code>, <code>insert</code>, <code>del</code>, <code>remove</code>…) ainsi que les opérations enrichies (<code>clear</code>, <code>sorted</code>, <code>reverse</code>…) du type natif <code>list</code> sont interdites sur ce TP.</div><p>Exemple :</p><pre><code>def creer_tableau(longueur,defaut):
+    assert longueur&gt;=0, 'Pré-condition'
+    return [defaut]*longueur
+
+# Creation d'un tableau d'entiers de longueur 20 :
+tableau = creer_tableau(20,0)
+# Ecriture dans le tableau :
+tableau[0] = int(input())
+# Lecture et ecriture :
+tableau[1] = 2*tableau[0]
+# Lecture de la longueur :
+n = len(tableau)
+# Parcours des elements : i va de 0 a n-1
+for i in range(n):
+    tableau[i] = tableau[i] + 1</code></pre><h2>Exercice 1 — création et parcours (facile)</h2><p>Fichier <code>ex01_creation_parcours.py</code> :</p><pre><code>def creer_tableau(longueur,defaut):
+    assert longueur&gt;=0, 'Pré-condition'
+    ...
+
+def calculer_somme(tableau):
+    ...
+
+def calculer_moyenne(tableau):
+    ...</code></pre><ul><li>1) Écrire l'implémentation de <code>creer_tableau</code> (entier <code>longueur</code> ≥ 0 et paramètre scalaire <code>defaut</code> ; retourne un tableau de la longueur voulue dont tous les éléments valent <code>defaut</code>).</li><li>2) Compléter <code>calculer_somme</code> (somme des valeurs) et <code>calculer_moyenne</code> (moyenne, en appelant <code>calculer_somme</code>).</li></ul><details><summary>Voir le corrigé</summary><pre><code>def creer_tableau(longueur,defaut):
+    assert longueur&gt;=0, 'Pré-condition'
+    return [defaut]*longueur
+
+def calculer_somme(tableau):
+    somme = 0
+    for i in range(len(tableau)):
+        somme = somme + tableau[i]
+    return somme
+
+def calculer_moyenne(tableau):
+    return calculer_somme(tableau)/len(tableau)</code></pre><p>Les 3 fonctions de test passent. <code>calculer_moyenne</code> avec un tableau vide lèverait <code>ZeroDivisionError</code> (pré-condition implicite : tableau non vide).</p></details><h2>Exercice 2 — recherche (facile)</h2><p>Parfois on a besoin de savoir si une valeur est présente dans un tableau. Fichier <code>ex02_recherche.py</code> :</p><pre><code>def chercher_premier_indice(tableau,valeur):
+    ...
+
+def chercher_dernier_indice(tableau,valeur):
+    ...</code></pre><ul><li>1) <code>chercher_premier_indice(tableau,valeur)</code> : le premier indice où se trouve <code>valeur</code>, ou -1 si absente.</li><li>2) <code>chercher_dernier_indice(tableau,valeur)</code> : le dernier indice, ou -1 si absente.</li></ul><details><summary>Voir le corrigé</summary><pre><code>def chercher_premier_indice(tableau,valeur):
+    for i in range(len(tableau)):
+        if tableau[i]==valeur:
+            return i
+    return -1
+
+def chercher_dernier_indice(tableau,valeur):
+    for i in range(len(tableau)-1,-1,-1):
+        if tableau[i]==valeur:
+            return i
+    return -1</code></pre><p>On parcourt du début pour le premier indice, de la fin (<code>range(len(tableau)-1,-1,-1)</code>) pour le dernier : même structure, sens inversé. La valeur -1 est un indice invalide : c'est la convention « absent ». Le cas du tableau vide est couvert (la boucle ne s'exécute pas).</p></details><h2>Exercice 3 — étendue d'une série statistique (facile)</h2>
+<p>L'étendue d'une série statistique est la différence entre la valeur la plus grande et la plus petite. Exemple : l'étendue de <code>[30,20,10,20,30,40]</code> est 40 − 10 = 30. Fichier <code>ex03_etendue.py</code> : <code>calculer_etendue(tableau)</code>.</p>
+<div class="warn"><b>Contrainte —</b> il est interdit d'utiliser les fonctions <code>min</code> et <code>max</code> de Python, ou tout équivalent.</div><details><summary>Voir le corrigé</summary><pre><code>def calculer_etendue(tableau):
+    if len(tableau)==0:
+        return 0
+    mini = tableau[0]
+    maxi = tableau[0]
+    for i in range(1,len(tableau)):
+        if tableau[i]&lt;mini:
+            mini = tableau[i]
+        if tableau[i]&gt;maxi:
+            maxi = tableau[i]
+    return maxi-mini</code></pre><p>Cas particulier à ne pas oublier : le tableau vide. Le test exige 0, alors que <code>tableau[0]</code> lèverait une erreur : d'où le traitement séparé en tout début. Balayage min/max en une seule passe, sans <code>min</code>/<code>max</code>.</p></details><h2>Exercice 4 — le chat, la souris et la chaîne de caractères (facile)</h2>
+<p>Une chaîne (<code>str</code>) peut être lue (mais pas modifiée) comme un tableau de caractères, avec les deux seules opérations <code>len(chaine)</code> et <code>chaine[i]</code>. Exemple : <code>..C.....s...</code> — <code>'C'</code> est un chat, <code>'s'</code> une souris, le reste est constitué de <code>'.'</code>. Fichier <code>ex04_chats_souris.py</code> : <code>chat_attrape_souris_1(chaine)</code> et <code>chat_attrape_souris_2(chaine,saut)</code>.</p>
+<ul><li>1) <code>chaine</code> contient exactement un <code>'C'</code> et un <code>'s'</code>. Le chat saute d'au plus 4 positions (gauche ou droite) ; il attrape la souris s'il arrive exactement à sa position. <code>chat_attrape_souris_1</code> retourne <code>True</code> si le chat attrape la souris en un saut, <code>False</code> sinon. Exemples : <code>C.....s</code> → distance 6 &gt; 4 → <code>False</code> ; <code>C...s</code> → distance 4 ≤ 4 → <code>True</code>.</li>
+<li>2) Version générique <code>chat_attrape_souris_2(chaine,saut)</code> : la chaîne contient un ou zéro <code>'C'</code>, un ou zéro <code>'s'</code> (<code>False</code> si l'un des deux manque) ; <code>saut</code> précise le nombre de positions franchissables.</li></ul><details><summary>Voir le corrigé</summary><pre><code>def chat_attrape_souris_1(chaine):
+    indice_c = -1
+    indice_s = -1
+    for i in range(len(chaine)):
+        if chaine[i]=='C':
+            indice_c = i
+        if chaine[i]=='s':
+            indice_s = i
+    distance = indice_c-indice_s
+    if distance&lt;0:
+        distance = -distance
+    return distance&lt;=4
+
+def chat_attrape_souris_2(chaine,saut):
+    indice_c = -1
+    indice_s = -1
+    for i in range(len(chaine)):
+        if chaine[i]=='C':
+            indice_c = i
+        if chaine[i]=='s':
+            indice_s = i
+    if indice_c==-1 or indice_s==-1:
+        return False
+    distance = indice_c-indice_s
+    if distance&lt;0:
+        distance = -distance
+    return distance&lt;=saut</code></pre><p>On balaie une seule fois la chaîne en retenant le dernier indice vu pour <code>'C'</code> et pour <code>'s'</code>, puis on compare la distance absolue au saut. Dans la version 2, les indices restent à -1 si <code>'C'</code> ou <code>'s'</code> est absent, ce qui déclenche directement le <code>False</code> attendu.</p><div class="note"><b>Attention —</b> dans la version 1, si le contrat (exactement un C et un s) n'était pas respecté, l'indice -1 fausserait la distance : c'est bien une pré-condition.</div></details><h2>Exercice 5 — somme glissante (intermédiaire)</h2>
+<ul><li>Les fonctions doivent respecter le type abstrait tableau.</li><li>Elles ne doivent avoir <b>aucun effet</b> sur le tableau passé en paramètre.</li><li>Elles retournent un <b>nouveau</b> tableau créé exclusivement avec <code>creer_tableau</code>.</li></ul>
+<p>Fichier <code>ex05_somme_glissante.py</code> :</p><pre><code>def creer_tableau(longueur,defaut):
+    assert longueur&gt;=0, 'Pré-condition'
+    return [defaut]*longueur
+
+def somme_deux_a_deux(tableau):
+    assert len(tableau)&gt;=2, 'Pré-condition'
+    ...
+
+def somme_glissante(tableau,n):
+    assert len(tableau)&gt;=n, 'Pré-condition'
+    ...</code></pre><ul><li>1) <code>somme_deux_a_deux</code> : prend un tableau d'au moins deux éléments et retourne le tableau des sommes deux à deux. Exemple : <code>[1,2,3,4]</code> → <code>[3,5,7]</code>.</li>
+<li>2) Généraliser en <code>somme_glissante(tableau,n)</code> : le tableau des sommes de n éléments consécutifs. Exemple sur <code>[1,2,3,4]</code> : n=3 → <code>[6,9]</code> ; n=4 → <code>[10]</code>.</li>
+<li>3) Une implémentation naïve de la question 2 peut bloquer (sans erreur) sur le test de la version optimisée. Objectif : ne pas recalculer chaque somme intégralement — calculer la première somme, puis chaque somme suivante à partir de la précédente en retranchant/ajoutant les 2 nombres appropriés.</li></ul>
+<p>Exemple, fenêtre de taille 4 sur <code>[1,3,6,9,5,4,2]</code> : fenêtre [0 ; 4[ = 1, 3, 6, 9 ; fenêtre [1 ; 5[ = 3, 6, 9, 5. Plutôt que de calculer séparément 1+3+6+9 et 3+6+9+5, on retranche 1 puis on ajoute 5.</p>
+<div class="note"><b>Application —</b> en divisant chaque somme par n, on obtient une <b>moyenne glissante</b>, utile pour lisser des données à forte variation locale (température heure par heure).</div><details><summary>Voir le corrigé</summary><p><b>1)</b> et <b>3)</b> version optimisée de <code>somme_glissante</code> : première somme terme à terme, puis chaque somme suivante en retranchant l'élément qui sort et en ajoutant celui qui entre.</p><pre><code>def somme_deux_a_deux(tableau):
+    assert len(tableau)&gt;=2, 'Pré-condition'
+    resultat = creer_tableau(len(tableau)-1,0)
+    for i in range(len(resultat)):
+        resultat[i] = tableau[i]+tableau[i+1]
+    return resultat
+
+
+def somme_glissante(tableau,n):
+    assert len(tableau)&gt;=n, 'Pré-condition'
+    resultat = creer_tableau(len(tableau)-n+1,0)
+    somme = 0
+    for i in range(n):
+        somme = somme+tableau[i]
+    resultat[0] = somme
+    for i in range(1,len(resultat)):
+        somme = somme-tableau[i-1]+tableau[i+n-1]
+        resultat[i] = somme
+    return resultat</code></pre><p>Une version naïve (qui recalcule chaque somme intégralement, en O(n × longueur) au total) passe les tests de la question 2 mais bloque sur le test de performance : 199 999 éléments et fenêtre n = 100 000 donnent environ 10 milliards d'opérations. La version optimisée ne fait que deux opérations par somme (une soustraction, une addition) : complexité O(longueur). Vérifiée par exécution : ce cas se traite en une fraction de seconde. Par exemple <code>somme_glissante([1,3,6,9,5,4,2],4)</code> vaut <code>[19,23,24,20]</code>.</p><p><b>Application :</b> température synthétique (alternance jour/nuit + bruit) sur 96 h et sa moyenne glissante sur 24 h : la courbe lissée fait ressortir la tendance multi-jours en gommant l'oscillation jour/nuit.</p><img src="assets/tp3_temp_graph.png" alt="Température heure par heure sur 96 heures (oscillation jour/nuit) et sa moyenne glissante sur 24 heures, courbe lissée qui varie lentement entre 13 et 17 degrés"></details><h2>Exercice 6 — fusion de tableaux triés (intermédiaire)</h2>
+<p>Algorithme fondamental du <b>tri fusion</b> (étudié plus tard) : fusionner deux tableaux déjà triés pour obtenir un nouveau tableau trié. Les fonctions respectent le type abstrait tableau, n'ont aucun effet sur les tableaux passés en paramètres, et tout nouveau tableau est créé exclusivement avec <code>creer_tableau</code>. Fichier <code>ex06_fusionner_tableaux_tries.py</code> :</p><pre><code>def creer_tableau(longueur,defaut):
+    assert longueur&gt;=0, 'Pré-condition'
+    return [defaut]*longueur
+
+def est_croissant(tableau):
+    ...
+
+def fusionner_tableaux_tries(tableau1,tableau2):
+    assert est_croissant(tableau1) and est_croissant(tableau2), 'Pré-condition'
+    ...</code></pre><ul><li>1) <code>est_croissant(tableau)</code> : <code>True</code> si trié par ordre croissant au sens large.</li><li>2) <code>fusionner_tableaux_tries(tableau1,tableau2)</code> : retourne un tableau trié, fusion des deux. Exemple : <code>[1,3,3]</code> et <code>[-6,2,4]</code> → <code>[-6,1,2,3,3,4]</code>.</li></ul>
+<p><b>Algorithme :</b> dans une boucle principale, on parcourt simultanément <code>tableau1</code> et <code>tableau2</code> (indices <code>i1</code>/<code>i2</code>) ; à chaque étape on choisit le plus petit des deux éléments lus, on l'écrit à l'indice <code>i1+i2</code> du résultat, on incrémente l'indice correspondant. Une fois un tableau entièrement parcouru, on complète avec le tableau restant.</p>
+<table><thead><tr><th>Étape</th><th>Élément choisi</th><th>Résultat</th></tr></thead><tbody>
+<tr><td>i1=0, i2=0</td><td>-6 (de tableau2)</td><td><code>[-6]</code></td></tr>
+<tr><td>i1=0, i2=1</td><td>1 (de tableau1)</td><td><code>[-6, 1]</code></td></tr>
+<tr><td>i1=1, i2=1</td><td>2 (de tableau2)</td><td><code>[-6, 1, 2]</code></td></tr>
+<tr><td>i1=1, i2=2</td><td>3 (de tableau1)</td><td><code>[-6, 1, 2, 3]</code></td></tr>
+<tr><td>i1=2, i2=2</td><td>3 (de tableau1)</td><td><code>[-6, 1, 2, 3, 3]</code></td></tr>
+<tr><td>i1=3, i2=2</td><td>tableau1 épuisé : on complète avec 4</td><td><code>[-6, 1, 2, 3, 3, 4]</code></td></tr>
+</tbody></table><details><summary>Voir le corrigé</summary><pre><code>def est_croissant(tableau):
+    for i in range(1,len(tableau)):
+        if tableau[i]&lt;tableau[i-1]:
+            return False
+    return True
+
+def fusionner_tableaux_tries(tableau1,tableau2):
+    assert est_croissant(tableau1) and est_croissant(tableau2), 'Pré-condition'
+    n1 = len(tableau1)
+    n2 = len(tableau2)
+    resultat = creer_tableau(n1+n2,0)
+    i1, i2 = 0, 0
+    while i1&lt;n1 and i2&lt;n2:
+        if tableau1[i1]&lt;=tableau2[i2]:
+            resultat[i1+i2] = tableau1[i1]
+            i1 = i1+1
+        else:
+            resultat[i1+i2] = tableau2[i2]
+            i2 = i2+1
+    while i1&lt;n1:
+        resultat[i1+i2] = tableau1[i1]
+        i1 = i1+1
+    while i2&lt;n2:
+        resultat[i1+i2] = tableau2[i2]
+        i2 = i2+1
+    return resultat</code></pre><p>En cas d'égalité (<code>tableau1[i1]&lt;=tableau2[i2]</code>), on prend l'élément de <code>tableau1</code> en priorité. Le résultat est écrit à l'indice <code>i1+i2</code> : c'est le nombre d'éléments déjà placés. Les deux boucles finales recopient ce qui reste (une seule des deux s'exécute). Complexité O(n1 + n2) : chaque élément est copié une fois.</p></details><h2>Exercice 7 — permutation circulaire (intermédiaire)</h2>
+<p>Une permutation circulaire (ou <b>cycle</b>) est une liste d'indices tous distincts. Si le cycle <code>[2,5,1]</code> est appliqué au tableau <code>[11,12,13,14,15,16]</code> : l'élément d'indice 2 (13) est envoyé à l'indice 5, celui d'indice 5 (16) à l'indice 1, celui d'indice 1 (12) à l'indice 2. Résultat : <code>[11,16,12,14,15,13]</code>.</p>
+<p>On peut effectuer les modifications en partant de la fin du cycle :</p>
+<table><thead><tr><th>Étape</th><th>Tableau</th></tr></thead><tbody>
+<tr><td>initial</td><td>11 12 13 14 15 16</td></tr>
+<tr><td>12 sauvegardé (case 1 libérée)</td><td>11 _ 13 14 15 16</td></tr>
+<tr><td>16 → indice 1</td><td>11 16 13 14 15 _</td></tr>
+<tr><td>13 → indice 5</td><td>11 16 _ 14 15 13</td></tr>
+<tr><td>12 → indice 2</td><td>11 16 12 14 15 13</td></tr>
+</tbody></table>
+<p><b>Remarque :</b> un cycle vide, ou de longueur 1, ne modifie pas le tableau. Fichier <code>ex07_appliquer_cycle.py</code> :</p><pre><code># Fonction de permutation (Question 2)
+def permuter(tableau,i,j):
+    n = len(tableau)
+    assert 0&lt;=i&lt;n and 0&lt;=j&lt;n, 'Indices invalides'
+    tableau[i],tableau[j] = tableau[j],tableau[i]
+
+def appliquer_cycle(tableau,cycle):
+    ...</code></pre><ul><li>1) Compléter <code>appliquer_cycle(tableau,cycle)</code> qui modifie <code>tableau</code> selon ce principe (respecter le type abstrait tableau).</li><li>2) On fournit <code>permuter(tableau,i,j)</code> (échange les éléments d'indices i et j : aucun élément perdu ni dupliqué). Modifier <code>appliquer_cycle</code> pour que ses modifications soient exclusivement réalisées via <code>permuter</code>.</li></ul><details><summary>Voir le corrigé</summary><p><b>Question 1</b> — indexation directe : on sauvegarde l'élément à l'indice de fin de cycle, puis on décale en partant de la fin.</p><pre><code>def appliquer_cycle(tableau,cycle):
+    if len(cycle)&lt;=1:
+        return None
+    sauvegarde = tableau[cycle[-1]]
+    for i in range(len(cycle)-1,0,-1):
+        tableau[cycle[i]] = tableau[cycle[i-1]]
+    tableau[cycle[0]] = sauvegarde
+    return None</code></pre><p><b>Question 2</b> — même décalage, exclusivement avec <code>permuter</code> : échanger successivement <code>(cycle[i], cycle[i-1])</code> en partant de la fin produit exactement le même résultat, sans variable de sauvegarde explicite ; le cas <code>len(cycle) &lt;= 1</code> ne demande plus de traitement séparé (la boucle est vide).</p><pre><code>def permuter(tableau,i,j):
+    n = len(tableau)
+    assert 0&lt;=i&lt;n and 0&lt;=j&lt;n, 'Indices invalides'
+    tableau[i],tableau[j] = tableau[j],tableau[i]
+
+def appliquer_cycle(tableau,cycle):
+    for i in range(len(cycle)-1,0,-1):
+        permuter(tableau,cycle[i],cycle[i-1])
+    return None</code></pre><p>Vérifié sur cycle vide, longueur 1, <code>[2,5,1]</code> sur <code>[11,...,16]</code> et sur des cycles aléatoires : les deux versions donnent le même tableau. Avec <code>permuter</code>, aucun élément ne peut être perdu ni dupliqué.</p></details><h2>Exercice 8 — chapeau blanc (facile)</h2>
+<p>Objectifs : découvrir qu'une <b>interface peut cacher différentes implémentations</b> ; tester les fonctionnalités de <code>list</code> autorisées ou non par le type tableau ; s'amuser à mettre en défaut l'implémentation, en mode « white hat ». Fichier <code>ex08_creer_tableau.py</code> (donné, à ne pas modifier) :</p><pre><code>class creer_tableau():
+    def __init__(self,longueur,defaut):
+        assert longueur&gt;=0, 'Pré-condition'
+        self._longueur = longueur
+        self._elements = [defaut]*longueur
+    def __len__(self):
+        return self._longueur
+    def __getitem__(self,i):
+        assert 0&lt;=i&lt;self._longueur
+        return self._elements[i]
+    def __setitem__(self,i,valeur):
+        assert 0&lt;=i&lt;self._longueur and type(valeur)==type(self._elements[0])
+        self._elements[i] = valeur
+    def __repr__(self):
+        return repr(self._elements)
+    def __iter__(self):
+        assert False
+    def __dir__(self):
+        assert False
+    __dict__ = {}</code></pre><p>Fichier <code>ex08_chapeau_blanc.py</code> :</p><pre><code>from ex08_creer_tableau import *
+
+# PROGRAMME PRINCIPAL
+tableau = creer_tableau(10,0)
+# print(tableau)
+for i in range(len(tableau)):
+    tableau[i] = i
+# print(tableau)
+for i in range(len(tableau)//2):
+    j = len(tableau)-1-i
+    tableau[i],tableau[j] = tableau[j],tableau[i]
+# print(tableau)</code></pre><ul><li>1) a) Prédire ce qu'afficheraient les <code>print</code> s'ils étaient décommentés. b) Vérifier en les décommentant (les deux fichiers dans le même répertoire).</li><li>2) Tester d'autres fonctionnalités du type <code>list</code> natif sur <code>tableau</code> : <code>append</code>, <code>pop</code>, <code>insert</code>, <code>min</code>, <code>max</code>, l'itération…</li><li>3) (très difficile) Sans connaître les noms des membres <code>_longueur</code>/<code>_elements</code> (pas de force brute), tenter de contourner l'interface pour réaliser des opérations permises par <code>_elements</code> (un <code>list</code> natif). Si vous y parvenez, indiquez le contournement à l'encadrant·e (esprit white hat).</li></ul><details><summary>Voir le corrigé</summary><p><b>1) Prédiction puis exécution réelle</b> des 3 <code>print</code> :</p><ol><li><code>[0, 0, 0, 0, 0, 0, 0, 0, 0, 0]</code></li><li><code>[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]</code></li><li><code>[9, 8, 7, 6, 5, 4, 3, 2, 1, 0]</code></li></ol><p>La boucle 2 remplit le tableau avec ses indices ; la boucle 3 échange <code>tableau[i]</code> et <code>tableau[len-1-i]</code> pour i de 0 à len//2-1, ce qui renverse le tableau.</p>
+<p><b>2) Fonctionnalités de <code>list</code> testées sur <code>tableau</code></b> (résultat réel à l'exécution) :</p>
+<table><thead><tr><th>Essai</th><th>Résultat</th></tr></thead><tbody>
+<tr><td><code>min(tableau)</code>, <code>max(tableau)</code></td><td><code>AssertionError</code> (<code>min</code> itère via <code>__iter__</code>, qui vaut <code>assert False</code>)</td></tr>
+<tr><td><code>tableau.append(99)</code>, <code>tableau.pop()</code></td><td><code>AttributeError</code> (pas de telle méthode)</td></tr>
+<tr><td><code>for x in tableau: ...</code></td><td><code>AssertionError</code> (<code>__iter__</code> interdit)</td></tr>
+<tr><td><code>dir(tableau)</code></td><td><code>AssertionError</code> (<code>__dir__</code> interdit)</td></tr>
+<tr><td><code>vars(tableau)</code></td><td><code>{}</code> (le leurre <code>__dict__ = {}</code> masque le vrai contenu)</td></tr>
+</tbody></table><p>Toutes les opérations non prévues par l'interface échouent : la classe tient son rôle de type abstrait fermé.</p>
+<p><b>3) Contournement « white hat »</b> (sans jamais utiliser les noms <code>_longueur</code>/<code>_elements</code>) : le module standard <code>gc</code> expose <code>gc.get_referents(objet)</code>, qui retourne la liste des objets directement référencés par l'objet, en contournant tout getter/assert de la classe. La vraie liste interne est identifiable : il suffit de garder l'élément qui est une <code>list</code>.</p><pre><code>&gt;&gt;&gt; import gc
+&gt;&gt;&gt; referents = gc.get_referents(tableau)
+&gt;&gt;&gt; liste_interne = [r for r in referents if isinstance(r,list)][0]
+&gt;&gt;&gt; liste_interne.append(777)
+&gt;&gt;&gt; tableau    # la valeur 777 est bien là...
+[9, 8, 7, 6, 5, 4, 3, 2, 1, 0, 777]
+&gt;&gt;&gt; len(tableau)   # ...mais la longueur declaree n'a pas bouge
+10</code></pre><p>La longueur déclarée ne suit pas la modification : l'invariant du type est cassé. L'encapsulation Python (préfixe <code>_</code>) est une <b>convention</b>, pas une protection. Conformément à l'énoncé, ce contournement est à signaler à l'enseignant plutôt qu'exploité.</p></details><div class="retenir"><b>À retenir —</b>
+<ul>
+<li>Type abstrait avant implémentation : <code>creer_tableau</code>/<code>len</code>/lecture/écriture suffisent à tout écrire sur un tableau — s'y limiter garantit que le code marche aussi avec la classe de l'exercice 8, alors que <code>list.append</code> ou <code>list.sort</code> ne le permettraient pas.</li>
+<li>Fenêtre glissante : ne jamais resommer toute la fenêtre — retrancher l'élément sortant, ajouter l'entrant (exercice 5) fait passer un algorithme de bloquant à quasi instantané.</li>
+<li>Fusion de deux tableaux triés en un seul passage : deux indices, on avance toujours celui du plus petit élément lu (brique du tri fusion, exercice 6).</li>
+<li>Permutation circulaire : appliquer un cycle en partant de sa fin, avec des échanges successifs via <code>permuter</code>, ne perd ni ne duplique aucun élément (exercice 7).</li>
+<li>Une interface n'est pas une protection : assertions sur <code>__iter__</code>/<code>__dir__</code> et leurre <code>__dict__ = {}</code> bloquent les accès de haut niveau, mais <code>gc.get_referents()</code> atteint les objets réellement référencés (exercice 8).</li>
+<li>Traiter le cas vide séparément quand une valeur par défaut ne s'obtient pas en lisant <code>tableau[0]</code> (exercice 3).</li>
+</ul></div>

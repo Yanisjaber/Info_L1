@@ -1,0 +1,204 @@
+<p>Feuille 1 : logique et raisonnements. Chaque exercice est donné avec son énoncé, puis le corrigé rédigé (masqué : essaie d'abord seul). Conventions de la feuille : « positif » signifie \(\geq 0\), « croissante » signifie au sens large.</p>
+<div class="note"><b>Rappels utiles (CM 1 et CM 2) —</b> \(\neg(\forall x\, P) \Leftrightarrow \exists x\, \neg P\) ; \(\neg(\exists x\, P) \Leftrightarrow \forall x\, \neg P\) ; \(\neg(P \Rightarrow Q) \Leftrightarrow (P \wedge \neg Q)\) ; \(\neg(P \wedge Q) \Leftrightarrow (\neg P \vee \neg Q)\) ; \((P \Rightarrow Q) \Leftrightarrow (\neg Q \Rightarrow \neg P)\) ; récurrence = initialisation + hérédité ; absurde = supposer \(\neg P\) et chercher une contradiction ; équivalence = équivalences successives ou deux implications.</div>
+
+<h2>Exercice 1</h2>
+<p>Pour chacune des propositions suivantes, la réécrire mathématiquement, dire si elle est vraie puis écrire sa négation (en français et mathématiquement) :</p>
+<ol>
+<li>Tous les entiers naturels sont le carré d'un nombre entier relatif.</li>
+<li>Il existe un polynôme à coefficients réels dont au moins une racine est positive.</li>
+<li>Pour tout réel \(\varepsilon\) strictement positif, il existe un rationnel strictement positif qui est strictement inférieur à \(\varepsilon\).</li>
+<li>Pour tout \(x\) réel, \(x^2\) est strictement négatif.</li>
+</ol>
+<details><summary>Voir le corrigé</summary>
+<table>
+<thead><tr><th></th><th>Écriture mathématique</th><th>Valeur</th><th>Négation (français)</th><th>Négation (mathématique)</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>\(\forall n \in \mathbb{N},\ \exists m \in \mathbb{Z},\ n = m^2\)</td><td><b>Faux</b></td><td>Il existe un entier naturel qui n'est le carré d'aucun entier relatif.</td><td>\(\exists n \in \mathbb{N},\ \forall m \in \mathbb{Z},\ n \neq m^2\)</td></tr>
+<tr><td>2</td><td>\(\exists P \in \mathbb{R}[X],\ \exists x \in \mathbb{R},\ x \geq 0 \text{ et } P(x) = 0\)</td><td><b>Vrai</b></td><td>Tout polynôme réel n'a aucune racine positive (toutes ses racines réelles sont \(\lt 0\)).</td><td>\(\forall P \in \mathbb{R}[X],\ \forall x \in \mathbb{R},\ x \geq 0 \Rightarrow P(x) \neq 0\)</td></tr>
+<tr><td>3</td><td>\(\forall \varepsilon \gt 0,\ \exists q \in \mathbb{Q},\ 0 \lt q \lt \varepsilon\)</td><td><b>Vrai</b></td><td>Il existe un réel \(\varepsilon \gt 0\) tel qu'aucun rationnel strictement positif n'est strictement inférieur à \(\varepsilon\).</td><td>\(\exists \varepsilon \gt 0,\ \forall q \in \mathbb{Q},\ (q \leq 0 \text{ ou } q \geq \varepsilon)\)</td></tr>
+<tr><td>4</td><td>\(\forall x \in \mathbb{R},\ x^2 \lt 0\)</td><td><b>Faux</b></td><td>Il existe un réel dont le carré est positif ou nul.</td><td>\(\exists x \in \mathbb{R},\ x^2 \geq 0\)</td></tr>
+</tbody>
+</table>
+<ol>
+<li><b>Faux :</b> 2 est un contre-exemple. Si \(m^2 = 2\) avec \(m\) entier : \(|m| \leq 1\) donne \(m^2 \leq 1\) et \(|m| \geq 2\) donne \(m^2 \geq 4\), donc aucun entier n'a pour carré 2. Il suffit d'<i>un</i> \(n\) pour rendre le \(\forall\) faux. La négation s'obtient en échangeant \(\forall\)/\(\exists\) et en niant la fin.</li>
+<li><b>Vrai :</b> \(P = X - 1\) a pour racine \(1 \geq 0\). Un seul exemple suffit pour un \(\exists\). (Si « positive » signifiait \(\gt 0\), le même exemple convient.)</li>
+<li><b>Vrai :</b> soit \(\varepsilon \gt 0\). L'entier \(n = \lfloor 1/\varepsilon \rfloor + 1\) vérifie \(n \gt 1/\varepsilon\), donc \(0 \lt 1/n \lt \varepsilon\). Le rationnel \(q = 1/n\) convient. La négation de « \(0 \lt q \lt \varepsilon\) » est « \(q \leq 0\) ou \(q \geq \varepsilon\) » (De Morgan) ; elle est bien fausse ici.</li>
+<li><b>Faux :</b> \(x = 1\) donne \(1^2 = 1\), qui n'est pas \(\lt 0\) ; en réalité \(x^2 \geq 0\) pour tout réel, donc la négation est vraie.</li>
+</ol>
+</details>
+
+<h2>Exercice 2</h2>
+<p>Pour chacune des propositions suivantes, dire si elle est vraie puis écrire sa négation (en français ou mathématiquement) :</p>
+<ol>
+<li>Tout triangle rectangle possède un angle droit ;</li>
+<li>Dans tous les triangles, toutes les hauteurs sont plus courtes que toutes les médianes.</li>
+<li>\(\forall x \in \mathbb{Z},\ \exists y \in \mathbb{Z},\ \forall z \in \mathbb{Z},\ z \lt y \Rightarrow z \lt x + 1\).</li>
+</ol>
+<details><summary>Voir le corrigé</summary>
+<ol>
+<li><b>Vrai</b> (c'est la définition d'un triangle rectangle : un triangle qui possède un angle droit). Négation : « il existe un triangle rectangle qui ne possède pas d'angle droit », fausse.</li>
+<li><b>Faux.</b> Contre-exemple : le triangle de sommets \(A(0,0)\), \(B(3,0)\), \(C(0,4)\), rectangle en \(A\) (côtés 3, 4, 5). La hauteur issue de \(C\) mesure \(CA = 4\), alors que la médiane issue de \(A\) mesure \(AM = 5/2 = 2{,}5\) (\(M\) milieu de \([BC]\)) : la hauteur (4) est plus longue que la médiane (2,5). (Vérifié : hauteurs 2,4 ; 3 ; 4 et médianes 2,5 ; \(\sqrt{13} \approx 3{,}61\) ; \(\approx 4{,}27\).) Négation : « il existe un triangle, une de ses hauteurs \(h\) et une de ses médianes \(m\) tels que \(h \geq m\) » (ou \(h \gt m\) si « plus courte » est pris au sens large). Remarque : pour un <i>même</i> sommet la hauteur est toujours \(\leq\) la médiane ; c'est le « toutes … toutes » qui est faux.</li>
+<li><b>Vrai :</b> soit \(x \in \mathbb{Z}\) ; on prend \(y = x\). Alors, pour tout \(z \in \mathbb{Z}\), si \(z \lt y = x\), on a \(z \lt x + 1\) : l'implication est vraie. Négation : \(\exists x \in \mathbb{Z},\ \forall y \in \mathbb{Z},\ \exists z \in \mathbb{Z},\ (z \lt y \text{ et } z \geq x + 1)\) : on a nié une implication (\(P \Rightarrow Q\) devient \(P \wedge \neg Q\)) et échangé les quantificateurs. En français : il existe un entier \(x\) tel que, pour tout entier \(y\), on peut trouver un entier \(z\) strictement inférieur à \(y\) mais au moins égal à \(x + 1\) ; cette négation est fausse.</li>
+</ol>
+</details>
+
+<h2>Exercice 3</h2>
+<p>Écrire à l'aide de quantificateurs les propositions suivantes :</p>
+<ol>
+<li>Le carré de tout nombre réel est positif.</li>
+<li>Certains réels sont strictement supérieurs à leur carré.</li>
+<li>Aucun entier naturel n'est supérieur à tous les autres.</li>
+<li>Tous les réels ne sont pas des quotients d'entiers relatifs.</li>
+<li>Entre deux réels distincts, il existe un rationnel.</li>
+</ol>
+<details><summary>Voir le corrigé</summary>
+<ol>
+<li>\(\forall x \in \mathbb{R},\ x^2 \geq 0\).</li>
+<li>\(\exists x \in \mathbb{R},\ x \gt x^2\) (par exemple \(x = 1/2\)).</li>
+<li>\(\forall n \in \mathbb{N},\ \exists m \in \mathbb{N},\ m \gt n\) (autrement dit : \(\neg(\exists n \in \mathbb{N},\ \forall m \in \mathbb{N},\ m \leq n)\), il n'y a pas de plus grand entier).</li>
+<li>\(\neg(\forall x \in \mathbb{R},\ \exists p \in \mathbb{Z},\ \exists q \in \mathbb{Z}^*,\ x = p/q)\), c'est-à-dire \(\exists x \in \mathbb{R},\ \forall p \in \mathbb{Z},\ \forall q \in \mathbb{Z}^*,\ x \neq p/q\) (par exemple \(x = \sqrt{2}\)). « Tous les réels ne sont pas … » se lit « pas tous les réels sont … » ; l'autre lecture (« aucun réel n'est … ») serait fausse (\(1 = 1/1\)).</li>
+<li>\(\forall x, y \in \mathbb{R},\ x \lt y \Rightarrow \exists q \in \mathbb{Q},\ x \lt q \lt y\) (on peut toujours ordonner les deux réels distincts).</li>
+</ol>
+</details>
+
+<h2>Exercice 4</h2>
+<p>Soit \(P\) et \(Q\) des propositions. Dans chacun des cas suivants, les propositions citées sont-elles la négation l'une de l'autre ? Sont-elles équivalentes ? Une des deux implications est-elle vraie ?</p>
+<ol>
+<li>(\(P\) et \(Q\)) vs (non \(P\) et non \(Q\)) ;</li>
+<li>(\(P \Rightarrow Q\)) vs ((non \(Q\)) \(\Rightarrow\) (non \(P\))) ;</li>
+<li>(\(P\) ou \(Q\)) vs (\(P\) et \(Q\)).</li>
+</ol>
+<details><summary>Voir le corrigé</summary>
+<p>On écrit les tables de vérité (V = vrai, F = faux).</p>
+<p><b>1. (\(P\) et \(Q\)) vs (non \(P\) et non \(Q\)).</b></p>
+<table>
+<thead><tr><th>\(P\)</th><th>\(Q\)</th><th>\(P \wedge Q\)</th><th>\(\neg P \wedge \neg Q\)</th></tr></thead>
+<tbody><tr><td>V</td><td>V</td><td>V</td><td>F</td></tr><tr><td>V</td><td>F</td><td>F</td><td>F</td></tr><tr><td>F</td><td>V</td><td>F</td><td>F</td></tr><tr><td>F</td><td>F</td><td>F</td><td>V</td></tr></tbody>
+</table>
+<p>Sur la ligne (V, F) les deux propositions sont fausses : elles ne sont donc <b>pas</b> la négation l'une de l'autre. Les colonnes diffèrent : <b>pas équivalentes</b>. Ligne (V, V) : la première est vraie et pas la seconde ; ligne (F, F) : c'est l'inverse : <b>aucune des deux implications n'est vraie</b>. (La négation de \(P \wedge Q\) est \(\neg P \vee \neg Q\).)</p>
+<p><b>2. (\(P \Rightarrow Q\)) vs ((non \(Q\)) \(\Rightarrow\) (non \(P\))).</b></p>
+<table>
+<thead><tr><th>\(P\)</th><th>\(Q\)</th><th>\(P \Rightarrow Q\)</th><th>\(\neg Q\)</th><th>\(\neg P\)</th><th>\(\neg Q \Rightarrow \neg P\)</th></tr></thead>
+<tbody><tr><td>V</td><td>V</td><td>V</td><td>F</td><td>F</td><td>V</td></tr><tr><td>V</td><td>F</td><td>F</td><td>V</td><td>F</td><td>F</td></tr><tr><td>F</td><td>V</td><td>V</td><td>F</td><td>V</td><td>V</td></tr><tr><td>F</td><td>F</td><td>V</td><td>V</td><td>V</td><td>V</td></tr></tbody>
+</table>
+<p>Colonnes identiques : les deux propositions sont <b>équivalentes</b> (c'est la contraposée), donc les <b>deux implications sont vraies</b>, et elles ne sont évidemment pas la négation l'une de l'autre.</p>
+<p><b>3. (\(P\) ou \(Q\)) vs (\(P\) et \(Q\)).</b></p>
+<table>
+<thead><tr><th>\(P\)</th><th>\(Q\)</th><th>\(P \vee Q\)</th><th>\(P \wedge Q\)</th></tr></thead>
+<tbody><tr><td>V</td><td>V</td><td>V</td><td>V</td></tr><tr><td>V</td><td>F</td><td>V</td><td>F</td></tr><tr><td>F</td><td>V</td><td>V</td><td>F</td></tr><tr><td>F</td><td>F</td><td>F</td><td>F</td></tr></tbody>
+</table>
+<p>Pas la négation (les deux sont vraies en (V, V) et fausses en (F, F)) ; <b>pas équivalentes</b>. Seule l'implication <b>(\(P\) et \(Q\)) \(\Rightarrow\) (\(P\) ou \(Q\))</b> est vraie ; la réciproque est fausse (ligne (V, F)).</p>
+</details>
+
+<h2>Exercice 5</h2>
+<p>Dans chaque exemple, y a-t-il équivalence entre la proposition A et la proposition B ? Donner l'implication vraie, s'il y en a une.</p>
+<ol>
+<li>Proposition A : \(\forall x \in \mathbb{R},\ \exists y \in \mathbb{R},\ y \lt x\).<br>Proposition B : \(\exists y \in \mathbb{R},\ \forall x \in \mathbb{R},\ y \lt x\).</li>
+<li>Soit \(f\) une fonction à valeurs réelles définie sur \(\mathbb{R}\).<br>Proposition A : \(\forall x, y \in \mathbb{R},\ f(x) \lt f(y) \Rightarrow x \lt y\).<br>Proposition B : \(\forall x, y \in \mathbb{R},\ x \lt y \Rightarrow f(x) \lt f(y)\).</li>
+<li>Soit \(f\) une fonction à valeurs réelles définie sur un sous-ensemble \(D\) de \(\mathbb{R}\). On suppose \(f\) dérivable.<br>Proposition A : \(f\) est croissante sur \(D\).<br>Proposition B : \(f'\) est positive sur \(D\).<br>On pourra considérer successivement les fonctions \(f_1 : x \mapsto x^2\), \(f_2 : x \mapsto -1/x\) et \(f_3 : x \mapsto x^3\) avant de faire une démonstration rigoureuse.</li>
+</ol>
+<details><summary>Voir le corrigé</summary>
+<ol>
+<li><b>A est vraie</b> : pour tout \(x\), \(y = x - 1\) vérifie \(y \lt x\). <b>B est fausse</b> : pour un \(y\) donné, \(x = y\) donne \(y \lt y\), faux. Donc pas d'équivalence. L'implication vraie est <b>B \(\Rightarrow\) A</b> (en général \(\exists y\, \forall x\, P \Rightarrow \forall x\, \exists y\, P\)) ; A \(\Rightarrow\) B est fausse.</li>
+<li>Écrivons les hypothèses autrement. La contraposée de A est : \(\forall x, y,\ x \geq y \Rightarrow f(x) \geq f(y)\), c'est-à-dire <b>A \(\Leftrightarrow\) \(f\) est croissante</b> (au sens large). B dit que <b>\(f\) est strictement croissante</b>.<br>
+<b>B \(\Rightarrow\) A :</b> supposons B, et soient \(x, y\) avec \(f(x) \lt f(y)\). Si \(x = y\), alors \(f(x) = f(y)\), absurde. Si \(x \gt y\), B donne \(f(y) \lt f(x)\), absurde. Donc \(x \lt y\).<br>
+<b>A \(\Rightarrow\) B est fausse :</b> pour \(f\) constante, A est vraie (la prémisse \(f(x) \lt f(y)\) n'a jamais lieu) et B est fausse dès que \(x \lt y\). Seule l'implication B \(\Rightarrow\) A est vraie.</li>
+<li>Ici « \(f'\) positive » signifie \(f' \geq 0\). Observations avec les trois fonctions :
+<table>
+<thead><tr><th>Fonction</th><th>Domaine</th><th>\(f'\)</th><th>\(f\) croissante ? (A)</th><th>\(f' \geq 0\) ? (B)</th></tr></thead>
+<tbody>
+<tr><td>\(f_1(x) = x^2\)</td><td>\(\mathbb{R}\)</td><td>\(2x\)</td><td>non</td><td>non</td></tr>
+<tr><td>\(f_1(x) = x^2\)</td><td>\([0, +\infty[\)</td><td>\(2x\)</td><td>oui</td><td>oui</td></tr>
+<tr><td>\(f_3(x) = x^3\)</td><td>\(\mathbb{R}\)</td><td>\(3x^2\) (nulle en 0)</td><td>oui</td><td>oui : « positive » \(\neq\) « strictement positive »</td></tr>
+<tr><td>\(f_2(x) = -1/x\)</td><td>\(\mathbb{R}^*\)</td><td>\(1/x^2 \gt 0\)</td><td><b>non</b> : \(f_2(-1) = 1 \gt -1 = f_2(1)\)</td><td>oui</td></tr>
+</tbody>
+</table>
+<p><b>Conclusion.</b> Pour \(D\) un intervalle ouvert : <b>A \(\Leftrightarrow\) B</b>. <i>A \(\Rightarrow\) B :</i> soit \(x \in D\) ; pour \(h \neq 0\) assez petit \(x + h \in D\) et \(\frac{f(x+h) - f(x)}{h} \geq 0\) (\(f\) croissante : numérateur et \(h\) ont le même signe) ; en passant à la limite \(h \to 0\), \(f'(x) \geq 0\). <i>B \(\Rightarrow\) A :</i> pour \(x \lt y\) dans \(D\), le théorème des accroissements finis donne \(c \in\, ]x, y[\, \subset D\) avec \(f(y) - f(x) = f'(c)(y - x) \geq 0\). Mais si \(D\) n'est pas un intervalle, seule <b>A \(\Rightarrow\) B</b> subsiste : \(f_2\) sur \(\mathbb{R}^*\) vérifie B sans vérifier A.</p></li>
+</ol>
+</details>
+
+<h2>Exercice 6</h2>
+<p>Démontrer les énoncés suivants par récurrence :</p>
+<ol>
+<li>Pour tout entier naturel \(n\), on a \(\displaystyle\sum_{k=0}^{n} 2^k = 2^{n+1} - 1\).</li>
+<li>Pour tout entier naturel \(n\), on a \(\displaystyle\sum_{k=0}^{n} k^3 = \left(\frac{n(n+1)}{2}\right)^2\).</li>
+<li>Soit \((u_n)\) la suite définie par \(u_0 = 1\) et \(\forall n \in \mathbb{N},\ u_{n+1} = \displaystyle\sum_{k=0}^{n} u_k\). Montrer que \(\forall n \in \mathbb{N}^*,\ u_n = 2^{n-1}\).</li>
+<li>Soit \(x\) un réel non nul tel que \(x + 1/x\) est un entier. Montrer que pour tout \(n \in \mathbb{Z}\), \(x^n + 1/x^n\) est un entier.</li>
+</ol>
+<details><summary>Voir le corrigé</summary>
+<ol>
+<li><b>Initialisation (\(n = 0\)) :</b> \(\sum = 2^0 = 1\) et \(2^1 - 1 = 1\). <b>Hérédité :</b> si \(\sum_{k=0}^{n} 2^k = 2^{n+1} - 1\), alors \(\sum_{k=0}^{n+1} 2^k = (2^{n+1} - 1) + 2^{n+1} = 2 \cdot 2^{n+1} - 1 = 2^{n+2} - 1\). Donc la propriété est vraie pour tout \(n \in \mathbb{N}\).</li>
+<li><b>Initialisation :</b> pour \(n = 0\), \(0 = (0 \cdot 1/2)^2 = 0\). <b>Hérédité :</b> si \(\sum_{k=0}^{n} k^3 = \left(\frac{n(n+1)}{2}\right)^2\), alors
+\[ \sum_{k=0}^{n+1} k^3 = \left(\frac{n(n+1)}{2}\right)^2 + (n+1)^3 = (n+1)^2 \left[\frac{n^2}{4} + (n+1)\right] = \frac{(n+1)^2 (n+2)^2}{4} = \left(\frac{(n+1)(n+2)}{2}\right)^2. \]</li>
+<li>On a \(u_1 = \sum_{k=0}^{0} u_k = u_0 = 1 = 2^0\) : initialisation pour \(n = 1\). <b>Hérédité :</b> soit \(n \geq 1\) avec \(u_n = 2^{n-1}\). Comme \(u_n = \sum_{k=0}^{n-1} u_k\), on a \(u_{n+1} = \sum_{k=0}^{n} u_k = u_n + \sum_{k=0}^{n-1} u_k = 2u_n = 2 \cdot 2^{n-1} = 2^n\).</li>
+<li>Posons \(s_n = x^n + x^{-n}\) (\(n \in \mathbb{Z}\)). On a \(s_0 = 2\) et \(s_1 = x + 1/x \in \mathbb{Z}\) par hypothèse. En développant \((x + x^{-1})(x^n + x^{-n}) = x^{n+1} + x^{1-n} + x^{n-1} + x^{-n-1}\), on obtient <b>\(s_{n+1} = s_1 \cdot s_n - s_{n-1}\)</b>. <i>Récurrence sur \(P(n)\) : « \(s_n \in \mathbb{Z}\) et \(s_{n+1} \in \mathbb{Z}\) ».</i> Initialisation : \(s_0, s_1 \in \mathbb{Z}\). Hérédité : \(s_{n+2} = s_1 \cdot s_{n+1} - s_n\) est entier comme produit et différence d'entiers. Donc \(s_n \in \mathbb{Z}\) pour tout \(n \in \mathbb{N}\). Pour \(n \lt 0\), \(s_n = s_{-n}\) (l'expression est symétrique en \(n \leftrightarrow -n\)), donc \(s_n \in \mathbb{Z}\) pour tout \(n \in \mathbb{Z}\). (Vérifié avec \(x = (3 + \sqrt{5})/2\), où \(x + 1/x = 3\).)</li>
+</ol>
+</details>
+
+<h2>Exercice 7</h2>
+<p>Soit \(f : \mathbb{R} \to \mathbb{R}\) une fonction définie sur \(\mathbb{R}\), croissante. On définit par récurrence la suite \((u_n)\) par \(u_0 \in \mathbb{R}\) et \(\forall n \in \mathbb{N},\ u_{n+1} = f(u_n)\). Montrer que la suite est monotone.</p>
+<details><summary>Voir le corrigé</summary>
+<p>Deux cas, car deux réels sont toujours comparables : \(u_0 \leq u_1\) ou \(u_0 \geq u_1\).</p>
+<p><b>Cas \(u_0 \leq u_1\).</b> Montrons par récurrence « \(u_n \leq u_{n+1}\) ». Initialisation : c'est l'hypothèse. Hérédité : si \(u_n \leq u_{n+1}\), comme \(f\) est croissante, \(f(u_n) \leq f(u_{n+1})\), c'est-à-dire \(u_{n+1} \leq u_{n+2}\). La suite est croissante.</p>
+<p><b>Cas \(u_0 \geq u_1\).</b> Même raisonnement avec les inégalités renversées (\(f\) croissante conserve le sens) : \(u_n \geq u_{n+1} \Rightarrow f(u_n) \geq f(u_{n+1})\) : la suite est décroissante.</p>
+<p>Dans les deux cas la suite est monotone (croissante ou décroissante selon le signe de \(u_1 - u_0\)).</p>
+</details>
+
+<h2>Exercice 8</h2>
+<p>En utilisant un raisonnement par l'absurde, démontrer que :</p>
+<ol>
+<li>La somme et le produit d'un nombre rationnel (non nul pour le cas du produit) et d'un nombre irrationnel sont des nombres irrationnels.</li>
+<li>La racine carrée d'un nombre irrationnel positif est un nombre irrationnel.</li>
+<li>Si \(n\) est le carré d'un nombre entier non nul alors \(2n\) n'est pas le carré d'un nombre entier.</li>
+</ol>
+<details><summary>Voir le corrigé</summary>
+<ol>
+<li>Soit \(r \in \mathbb{Q}\) et \(a\) irrationnel. <i>Somme :</i> supposons par l'absurde \(r + a \in \mathbb{Q}\), égal à un rationnel \(q\). Alors \(a = q - r \in \mathbb{Q}\) (différence de rationnels) : contradiction. <i>Produit (\(r \neq 0\)) :</i> supposons \(r \cdot a = q \in \mathbb{Q}\). Alors \(a = q/r \in \mathbb{Q}\) (quotient de rationnels, \(r \neq 0\)) : contradiction. Donc \(r + a\) et \(r \cdot a\) sont irrationnels.</li>
+<li>Soit \(a \gt 0\) irrationnel et supposons par l'absurde \(\sqrt{a} \in \mathbb{Q}\), égal à \(q\). Alors \(a = q^2 \in \mathbb{Q}\) (produit de rationnels) : contradiction. Donc \(\sqrt{a}\) est irrationnel.</li>
+<li>Soit \(n = m^2\) avec \(m\) entier non nul, et supposons par l'absurde \(2n = k^2\) avec \(k\) entier. Alors \(2m^2 = k^2\), donc \((k/m)^2 = 2\) et \(\sqrt{2} = |k|/|m|\) serait rationnel : contradiction avec l'irrationalité de \(\sqrt{2}\) (CM 2). <i>Preuve autonome :</i> notons \(v(N)\) l'exposant de 2 dans la décomposition de \(N \geq 1\). Alors \(v(2m^2) = 1 + 2v(m)\) est <b>impair</b> alors que \(v(k^2) = 2v(k)\) est <b>pair</b> : ils ne peuvent pas être égaux (\(k \neq 0\) car \(2n \neq 0\)). Donc \(2n\) n'est pas un carré.</li>
+</ol>
+</details>
+
+<h2>Exercice 9</h2>
+<p>À l'aide d'un raisonnement par contraposée, démontrer que :</p>
+<ol>
+<li>Si \(n \in \mathbb{N}\) est un entier tel que \(n^2\) est impair alors \(n\) est impair.</li>
+<li>Soit \(a\) un réel. Si \(\forall \varepsilon \gt 0\) on a \(a \leq \varepsilon\), alors \(a \leq 0\).</li>
+<li>Si un rectangle a une aire au moins égale à 170 cm² son plus grand côté est strictement supérieur à 13 cm.</li>
+</ol>
+<details><summary>Voir le corrigé</summary>
+<ol>
+<li>Contraposée : « si \(n\) est pair alors \(n^2\) est pair ». En effet \(n = 2k\) donne \(n^2 = 4k^2 = 2(2k^2)\), pair. Donc si \(n^2\) est impair, \(n\) est impair.</li>
+<li>Contraposée : « si \(a \gt 0\) alors \(\exists \varepsilon \gt 0,\ a \gt \varepsilon\) » (la négation de « \(\forall \varepsilon \gt 0,\ a \leq \varepsilon\) » est « \(\exists \varepsilon \gt 0,\ a \gt \varepsilon\) » ; la négation de « \(a \leq 0\) » est « \(a \gt 0\) »). Si \(a \gt 0\), on prend \(\varepsilon = a/2 \gt 0\) : \(a \gt a/2 = \varepsilon\). La contraposée est démontrée, donc l'énoncé aussi.</li>
+<li>Contraposée : « si le plus grand côté est \(\leq 13\) cm, alors l'aire est \(\lt 170\) cm² ». Soient \(L \geq l\) les côtés : \(l \leq L \leq 13\), donc l'aire \(L \cdot l \leq 13 \cdot 13 = 169 \lt 170\). Donc un rectangle d'aire \(\geq 170\) cm² a un plus grand côté \(\gt 13\) cm.</li>
+</ol>
+</details>
+
+<h2>Exercice 10</h2>
+<p>On veut déterminer les solutions réelles de l'équation \(x = \sqrt{2 - x}\).</p>
+<ol>
+<li>Raisonnement par condition nécessaire et condition suffisante :
+<ul>
+<li><b>(a)</b> On suppose que \(x\) est une solution. Montrer que \(x\) est une solution de l'équation \(x^2 + x - 2 = 0\). En déduire que \(x \in \{1, -2\}\).</li>
+<li><b>(b)</b> La condition \(x \in \{1, -2\}\) est-elle suffisante pour assurer que \(x\) est une solution du problème initial ? Donner les solutions de l'équation initiale en rédigeant une démonstration.</li>
+</ul></li>
+<li>Reprendre la rédaction de la résolution de cette équation en procédant par équivalences successives.</li>
+</ol>
+<details><summary>Voir le corrigé</summary>
+<p>Rappel : \(\sqrt{2 - x}\) n'a de sens que pour \(x \leq 2\), et \(\sqrt{\ }\) est toujours \(\geq 0\) ; on résout donc dans \(]-\infty, 2]\).</p>
+<p><b>1. Condition nécessaire et condition suffisante.</b></p>
+<p><b>(a)</b> Soit \(x\) une solution. Comme \(x = \sqrt{2 - x}\), on a \(x \geq 0\) et, en élevant au carré, \(x^2 = 2 - x\), donc \(x^2 + x - 2 = 0\). On factorise : \((x - 1)(x + 2) = 0\) (\(x^2 + x - 2 = x^2 + 2x - x - 2\)), donc \(x \in \{1, -2\}\). Ainsi \(S \subset \{1, -2\}\).</p>
+<p><b>(b) Non</b>, ce n'est qu'une condition nécessaire : l'élévation au carré a pu créer des solutions. On teste (réciproque) : \(x = -2\) donne \(\sqrt{2 - (-2)} = \sqrt{4} = 2 \neq -2\), donc \(-2\) <b>n'est pas</b> solution ; \(x = 1\) donne \(\sqrt{2 - 1} = 1 = x\), donc 1 est solution. <b>\(S = \{1\}\).</b></p>
+<p><b>2. Par équivalences successives.</b> Soit \(x \in\, ]-\infty, 2]\). On a :</p>
+<table>
+<tbody>
+<tr><td>\(x = \sqrt{2 - x}\)</td><td>\(\Leftrightarrow\)</td><td>\(x^2 = 2 - x\) <b>et</b> \(x \geq 0\)</td></tr>
+<tr><td></td><td>\(\Leftrightarrow\)</td><td>\(x^2 + x - 2 = 0\) <b>et</b> \(x \geq 0\)</td></tr>
+<tr><td></td><td>\(\Leftrightarrow\)</td><td>(\(x = 1\) ou \(x = -2\)) <b>et</b> \(x \geq 0\)</td></tr>
+<tr><td></td><td>\(\Leftrightarrow\)</td><td>\(x = 1\)</td></tr>
+</tbody>
+</table>
+<p>Donc \(S = \{1\}\). La condition \(x \geq 0\) est essentielle : \(x = \sqrt{y} \Leftrightarrow (x^2 = y \text{ et } x \geq 0)\). Sans elle, la première ligne ne serait qu'une implication et \(-2\) passerait à tort. (Vérifié : sur une grille de rationnels, \(x = 1\) est la seule solution.)</p>
+</details>
+
+<div class="retenir"><b>À retenir —</b> Nier : on échange \(\forall\) et \(\exists\) et on nie la fin (\(\neg(P \Rightarrow Q)\) devient \(P \wedge \neg Q\) ; \(\neg(P \wedge Q)\) devient \(\neg P \vee \neg Q\)). Pour réfuter un « \(\forall\) » ou un « pour tous… toutes… », un seul contre-exemple suffit ; pour prouver un « \(\exists\) », un seul exemple. \(\exists y\, \forall x \Rightarrow \forall x\, \exists y\), jamais l'inverse. Contraposée : \((P \Rightarrow Q) \Leftrightarrow (\neg Q \Rightarrow \neg P)\) ; absurde : on suppose le contraire et on contredit un fait connu (\(\mathbb{Q}\) stable par \(+\), \(\times\), quotient ; \(\sqrt{2}\) irrationnel). Récurrence : initialisation + hérédité, parfois avec deux termes consécutifs (Ex 6.4). Équation avec racine : condition nécessaire (élever au carré) puis vérification de la réciproque, ou équivalences avec \(x \geq 0\).</div>

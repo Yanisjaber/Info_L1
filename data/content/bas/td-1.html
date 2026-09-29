@@ -1,0 +1,155 @@
+<div class="note"><b>Mode d'emploi —</b> TD 1 (SGF et commandes shell). 10 exercices, énoncés puis corrigés masqués : essaie d'abord, ouvre ensuite « Voir le corrigé ». Commandes de référence : <code>ls</code>, <code>echo</code>, <code>cat</code>, <code>grep</code>, <code>wc</code> (voir CM). Les commandes du corrigé ont été testées dans un shell sur un jeu de fichiers de test.</div>
+
+<h2>1. Syntaxe de description d'une commande Unix</h2>
+
+<h3>Exercice 1</h3>
+<p>La syntaxe de <code>cut</code> est décrite par :</p>
+<pre><code>cut -c list [file ...]
+cut -f list [-d delim] [-s] [file ...]</code></pre>
+<p>Les appels suivants sont-ils corrects ?</p>
+<ol type="a">
+<li><code>cut -d : -f 1,7 fichier</code></li>
+<li><code>cut -c 1-16,26-38</code></li>
+<li><code>cut -s fich1 fich2</code></li>
+<li><code>cut -f 2 -c 1,3,5 fichier</code></li>
+</ol>
+<details><summary>Voir le corrigé</summary>
+<table>
+<thead><tr><th>Appel</th><th>Réponse</th></tr></thead>
+<tbody>
+<tr><td><code>cut -d : -f 1,7 fichier</code></td><td><b>Correct.</b> Utilise la 2e syntaxe : <code>-f 1,7</code> (list), <code>-d :</code> (délimiteur), <code>fichier</code>. L'ordre des options n'a pas à respecter l'ordre de la description (les crochets et l'absence de crochets décrivent ce qui est obligatoire/facultatif, pas un ordre à la frappe).</td></tr>
+<tr><td><code>cut -c 1-16,26-38</code></td><td><b>Correct.</b> Utilise la 1re syntaxe : <code>-c</code> avec list = <code>1-16,26-38</code>. Le fichier est facultatif (<code>[file ...]</code>), donc son absence est valide (lecture sur stdin).</td></tr>
+<tr><td><code>cut -s fich1 fich2</code></td><td><b>Incorrect.</b> <code>-s</code> n'existe que dans la 2e syntaxe, qui impose <code>-f list</code> (non entre crochets = obligatoire). Ici <code>-f list</code> est absent.</td></tr>
+<tr><td><code>cut -f 2 -c 1,3,5 fichier</code></td><td><b>Incorrect.</b> <code>-f</code> et <code>-c</code> appartiennent à deux syntaxes distinctes et exclusives (deux façons alternatives d'appeler <code>cut</code>) : on ne peut pas les combiner dans le même appel.</td></tr>
+</tbody>
+</table>
+<p>Vérifié dans un shell : <code>cut -d : -f 1,7</code> sur <code>a:b:c:d:e:f:g</code> donne <code>a:g</code> ; <code>cut -s fich1 fich2</code> répond « you must specify a list of bytes, characters, or fields » ; <code>cut -f 2 -c 1,3,5</code> répond « only one list may be specified ».</p>
+</details>
+
+<h3>Exercice 2</h3>
+<p>Commande <code>truc</code> à 3 options <code>f</code>, <code>c</code>, <code>d</code> : <code>c</code> et <code>d</code> facultatives mais exclusives entre elles, <code>f</code> obligatoire ; appel avec une liste non vide de fichiers. Écrire la syntaxe d'appel.</p>
+<details><summary>Voir le corrigé</summary>
+<pre><code>truc -f [-c|-d] file [file ...]</code></pre>
+<p><code>-f</code> est écrit sans crochets (obligatoire). <code>[-c|-d]</code> : crochets = facultatif, <code>|</code> = choix exclusif entre les deux. <code>file [file ...]</code> : un premier fichier obligatoire (liste non vide), suivi éventuellement d'autres fichiers (répétition facultative).</p>
+</details>
+
+<h2>2. Désignation d'un fichier</h2>
+
+<h3>Exercice 3</h3>
+<p>Dans une désignation, tous les caractères <code>/</code> ont-ils la même signification ?</p>
+<details><summary>Voir le corrigé</summary>
+<p><b>Non.</b> La plupart des <code>/</code> jouent le rôle de <b>séparateurs</b> entre noms de répertoires successifs. Mais le <code>/</code> placé tout au début d'une désignation absolue a un sens différent : il désigne <b>la racine elle-même</b> de l'arborescence, pas un simple séparateur.</p>
+</details>
+
+<h3>Exercice 4</h3>
+<p>1) La désignation relative et la désignation absolue d'un fichier sont-elles uniques ? 2) Laquelle est la plus courte (en nombre de répertoires) pour désigner un même élément ?</p>
+<details><summary>Voir le corrigé</summary>
+<ul>
+<li><b>Désignation absolue : unique</b> (à formulation canonique) — l'arborescence étant un arbre, il n'existe qu'un seul chemin depuis la racine jusqu'à un fichier donné.</li>
+<li><b>Désignation relative : pas unique</b> — elle dépend du répertoire courant, qui peut changer ; et même pour un répertoire courant fixé, plusieurs écritures différentes (utilisant <code>.</code> et <code>..</code>) peuvent désigner le même fichier.</li>
+<li><b>La plus courte :</b> la désignation relative est en général plus courte (ou égale) que l'absolue, car elle part du répertoire courant au lieu de la racine — l'absolue doit en plus traverser tous les répertoires intermédiaires entre la racine et le répertoire courant.</li>
+</ul>
+<div class="note"><b>Nuance —</b> « en général » seulement : pour un fichier situé loin du répertoire courant, la relative peut être plus longue. Exemple : depuis <code>/users/linfg/l2inf201/REP1</code>, le fichier <code>/tmp/x</code> s'écrit <code>../../../../tmp/x</code> en relatif (4 remontées) contre <code>/tmp/x</code> en absolu.</div>
+</details>
+
+<h3>Exercice 5</h3>
+<p>Répertoire courant : <code>/users/linfg/l2inf201/REP1</code>. Donner la désignation relative du fichier <code>/users/linfg/l2inf201/REP1/f1</code>.</p>
+<details><summary>Voir le corrigé</summary>
+<pre><code>f1</code></pre>
+<p>Le fichier <code>f1</code> est directement dans le répertoire courant <code>REP1</code> : sa désignation relative est donc simplement son nom, <code>f1</code> (pas besoin de préfixer par <code>./</code>, bien que ce soit équivalent).</p>
+</details>
+
+<h2>3. Métacaractères du shell</h2>
+
+<h3>Exercice 6</h3>
+<p>1) Décrire le modèle <code>REP/*.???</code>. 2) Écrire, avec les métacaractères du shell, les modèles décrivant :</p>
+<ol type="a">
+<li>le caractère <code>a</code> ou <code>b</code> ou <code>c</code> ou <code>d</code> ou <code>e</code></li>
+<li>le caractère <code>a</code> suivi d'un chiffre ou du caractère <code>b</code></li>
+<li>une minuscule ou une majuscule</li>
+<li>une minuscule suivie d'un chiffre</li>
+</ol>
+<details><summary>Voir le corrigé</summary>
+<p><b>1)</b> <code>REP/*.???</code> décrit les fichiers du répertoire <code>REP</code> dont le nom se termine par un point suivi d'<b>exactement 3 caractères</b> (une extension de 3 caractères quelconques) — par exemple <code>toto.txt</code> ou <code>a.png</code>, mais pas <code>a.c</code> (extension d'1 caractère) ni <code>a.html</code> (4 caractères). (Comme <code>*</code> ne matche pas un <code>.</code> initial, les fichiers cachés sont exclus.)</p>
+<table>
+<thead><tr><th>Description</th><th>Modèle</th></tr></thead>
+<tbody>
+<tr><td>le caractère a ou b ou c ou d ou e</td><td><code>[abcde]</code> (ou <code>[a-e]</code>)</td></tr>
+<tr><td>le caractère a suivi d'un chiffre ou du caractère b</td><td><code>a[0-9b]</code></td></tr>
+<tr><td>une minuscule ou une majuscule</td><td><code>[a-zA-Z]</code></td></tr>
+<tr><td>une minuscule suivie d'un chiffre</td><td><code>[a-z][0-9]</code></td></tr>
+</tbody>
+</table>
+<div class="note"><b>Pour <code>a[0-9b]</code> —</b> à lire comme « <code>a</code>, suivi d'un chiffre ou de <code>b</code> » (et non « <code>a</code> suivi d'un chiffre, OU simplement <code>b</code> seul », qui ne pourrait pas s'écrire comme un modèle unique de longueur fixe avec <code>*</code>/<code>?</code>/<code>[]</code>). Vérifié : matche <code>a1</code>, <code>ab</code>, <code>a9</code> mais pas <code>az</code> ni <code>bb</code>.</div>
+</details>
+
+<h3>Exercice 7</h3>
+<p>On suppose qu'il n'y a pas de sous-répertoire dans le répertoire courant. Écrire, en une seule commande à chaque fois :</p>
+<ol type="a">
+<li>afficher les noms de fichiers non cachés dont le nom contient le caractère <code>a</code></li>
+<li>afficher la liste détaillée des fichiers non cachés dont le nom comporte 4 caractères exactement</li>
+<li>afficher le contenu des fichiers non cachés dont le nom comporte au moins 5 caractères</li>
+<li>afficher le nombre de lignes de chacun des fichiers non cachés dont le nom commence par une majuscule</li>
+</ol>
+<details><summary>Voir le corrigé</summary>
+<table>
+<thead><tr><th>Demande</th><th>Commande</th></tr></thead>
+<tbody>
+<tr><td>Noms de fichiers non cachés dont le nom contient le caractère <code>a</code></td><td><code>ls *a*</code></td></tr>
+<tr><td>Liste détaillée des fichiers non cachés dont le nom comporte 4 caractères exactement</td><td><code>ls -l ????</code></td></tr>
+<tr><td>Contenu des fichiers non cachés dont le nom comporte au moins 5 caractères</td><td><code>cat ?????*</code></td></tr>
+<tr><td>Nombre de lignes de chacun des fichiers non cachés dont le nom commence par une majuscule</td><td><code>wc -l [A-Z]*</code></td></tr>
+</tbody>
+</table>
+<p>Dans chaque cas, l'exclusion des fichiers cachés est automatique : <code>*</code> et <code>?</code> ne correspondent pas à un <code>.</code> initial quand ils sont en début de modèle, et <code>[A-Z]</code> ne contient de toute façon pas le caractère <code>.</code>. Toutes ces commandes ont été testées sur un jeu de fichiers de test et matchent exactement l'ensemble attendu.</p>
+<div class="note"><b>Détail —</b> <code>?????*</code> = 5 caractères quelconques puis n'importe quelle suite (éventuellement vide) : « au moins 5 ». Et <code>wc -l</code> sur plusieurs fichiers ajoute une ligne <code>total</code>.</div>
+</details>
+
+<h3>Exercice 8</h3>
+<p>Les répertoires <code>REP1</code> et <code>REP1/SREP1</code> sont dans le répertoire courant. 1) Avec <code>ls</code> une seule fois, afficher le contenu de <code>REP1</code> et <code>REP1/SREP1</code>. 2) Même question avec <code>echo</code>. 3) Même résultat ?</p>
+<details><summary>Voir le corrigé</summary>
+<pre><code>ls REP1 REP1/SREP1</code></pre>
+<p>→ affiche, avec un en-tête par répertoire :</p>
+<pre><code>REP1:
+SREP1
+f1
+f2
+
+REP1/SREP1:
+g1
+g2</code></pre>
+<pre><code>echo REP1/* REP1/SREP1/*</code></pre>
+<p>→ affiche (une fois les métacaractères interprétés par le shell) :</p>
+<pre><code>REP1/SREP1 REP1/f1 REP1/f2 REP1/SREP1/g1 REP1/SREP1/g2</code></pre>
+<p><b>3) Non, pas le même résultat.</b> Les deux solutions listent globalement les mêmes fichiers, mais pas de la même façon : <code>ls</code> affiche chaque répertoire séparément, précédé de son nom en en-tête ; <code>echo</code> affiche tous les noms (avec leur chemin complet, puisqu'ils viennent du remplacement de <code>REP1/*</code> et <code>REP1/SREP1/*</code>) à la suite les uns des autres, sur une seule ligne, sans aucune distinction entre les deux répertoires d'origine.</p>
+</details>
+
+<h2>4. Redirections</h2>
+
+<h3>Exercice 9</h3>
+<p>1) Donner trois manières différentes d'afficher les lignes du fichier <code>truc.txt</code> contenant au moins un <code>e</code>. 2) Qu'est-ce qui change lors de l'exécution ?</p>
+<details><summary>Voir le corrigé</summary>
+<pre><code>grep e truc.txt          # grep ouvre lui-même le fichier
+grep e &lt; truc.txt        # le shell connecte stdin de grep au fichier
+cat truc.txt | grep e    # cat lit le fichier, le pipe vers grep</code></pre>
+<p><b>2)</b> Le résultat affiché à l'écran est <b>identique</b> dans les trois cas. Ce qui change, c'est le <b>mécanisme</b> : dans le 1er cas, <code>grep</code> ouvre lui-même le fichier passé en paramètre ; dans le 2e, c'est le shell qui connecte l'entrée standard de <code>grep</code> au fichier (<code>grep</code> ne sait pas qu'il lit un fichier particulier, il lit stdin) ; dans le 3e, un processus supplémentaire (<code>cat</code>) est lancé, qui lit le fichier et écrit son contenu sur stdout, connecté par le pipe à l'entrée standard de <code>grep</code> — donc <b>deux processus au lieu d'un seul</b>.</p>
+</details>
+
+<h3>Exercice 10</h3>
+<p>1) Commande qui enregistre dans <code>liste.txt</code> les noms de tous les fichiers et sous-répertoires du répertoire courant. 2) Commande affichant les lignes des fichiers dont les noms sont dans <code>liste.txt</code> et qui contiennent au moins un <code>e</code>.</p>
+<details><summary>Voir le corrigé</summary>
+<pre><code>ls &gt; liste.txt</code></pre>
+<p><code>ls</code> affiche un nom par ligne (fichiers et sous-répertoires), la redirection <code>&gt;</code> écrit ce résultat dans <code>liste.txt</code>.</p>
+<pre><code>grep e `cat liste.txt`     # ou : grep e $(cat liste.txt)</code></pre>
+<p>La capture <code>`cat liste.txt`</code> transforme le contenu de <code>liste.txt</code> (un nom de fichier par ligne) en une liste de paramètres pour <code>grep</code> (sauts de ligne remplacés par des espaces) — exactement le mécanisme de capture vu en cours (<code>grep 'e' `ls`</code>).</p>
+<div class="note"><b>Détail vérifié —</b> <code>liste.txt</code> est créé <i>avant</i> l'exécution de <code>ls</code> (la redirection est faite par le shell d'abord) : il figure donc lui-même dans la liste, et <code>grep</code> le lit aussi (il contient des <code>e</code> dans son propre nom, donc ses lignes s'affichent). Si la liste contient des sous-répertoires, <code>grep</code> répond « Is a directory » pour ceux-ci.</div>
+</details>
+
+<div class="retenir"><b>À retenir —</b>
+<ul>
+<li>Syntaxe de commande : pas de crochets = <b>obligatoire</b>, <code>[...]</code> = facultatif, <code>...</code> = répétable, <code>|</code> = choix exclusif ; deux lignes de syntaxe séparées = deux formes exclusives, on ne mélange pas leurs options.</li>
+<li>Désignations : l'<b>absolue</b> (depuis la racine <code>/</code>) est unique mais plus longue ; la <b>relative</b> (depuis le répertoire courant) est en général plus courte mais dépend du contexte, donc pas unique.</li>
+<li>Métacaractères : <code>*</code>/<code>?</code> excluent automatiquement les fichiers cachés en début de modèle ; <code>[a-zA-Z]</code>, <code>[0-9]</code> pour des classes de caractères ; combiner plusieurs <code>[]</code>/<code>?</code> pour des positions successives (ex. <code>a[0-9b]</code>, <code>[a-z][0-9]</code>).</li>
+<li><code>ls</code> vs <code>echo</code> sur un glob : <code>ls</code> liste un nom par ligne avec en-tête par répertoire ; <code>echo</code> écrit tout sur une seule ligne, sans distinction — mêmes fichiers, présentation différente.</li>
+<li>Redirections : fichier en paramètre, <code>&lt;</code> ou pipe donnent le même résultat affiché mais pas le même nombre de processus lancés. La capture <code>`cat fichier`</code> transforme le contenu d'un fichier de noms en liste de paramètres pour une autre commande.</li>
+</ul></div>

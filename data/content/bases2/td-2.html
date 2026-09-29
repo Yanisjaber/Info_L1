@@ -1,0 +1,175 @@
+<p>Feuille 2 : ensembles. Énoncés puis corrigés masqués. Notation : \(\overline{X} = E \setminus X\) est le complémentaire de \(X\) dans \(E\) ; \(A \oplus B\) est la différence symétrique.</p>
+<div class="note"><b>Rappels utiles (CM 3) —</b> \(A \subset B \Leftrightarrow (x \in A \Rightarrow x \in B)\) ; \(A = B \Leftrightarrow (A \subset B \text{ et } B \subset A)\) ; \(\mathcal{P}(E)\) = ensemble des parties de \(E\) ; \(A \cup B\) \(\leftrightarrow\) « ou », \(A \cap B\) \(\leftrightarrow\) « et », \(A \setminus B = \{x \in A \mid x \notin B\}\) ; lois de Morgan ; produit cartésien \(A \times B\) = ensemble des couples.</div>
+
+<h2>Exercice 1</h2>
+<ol>
+<li>Écrire les ensembles suivants en compréhension (i.e. en donnant un critère d'appartenance à l'ensemble) : \(X = \{3n,\ n \in \mathbb{Z}\}\) ; \(Y = \{n^2,\ n \in \mathbb{Z}\}\) ; \(Z = \{1, 2\}\).</li>
+<li>Écrire les ensembles suivants en extension (i.e. donner la liste des éléments) : \(X = \{n \in \mathbb{Z},\ \exists k \in \mathbb{Z},\ n = k^3\}\) ; \(Y = \{x \in \mathbb{R},\ x^2 - 3x + 2 = 0\}\) ; \(Z = \{x \in \mathbb{R},\ \exists \theta \in \mathbb{R},\ x = \cos\theta\}\).</li>
+<li>Identifier et représenter graphiquement les sous-ensembles suivants de \(\mathbb{R}^2\) : \(X = \{(x,y) \in \mathbb{R}^2,\ 3x + 2y - 5 \geq 0\}\) ; \(Y = \{(x,y) \in \mathbb{R}^2,\ x^2 + 6x + 4y^2 - 8y + 6 = 0\}\) ; \(Z = \{(x,y) \in \mathbb{R}^2,\ x^2 - y^2 = 0\}\) ; \(U = \{(x,y) \in \mathbb{R}^2,\ xy \leq 1\}\).</li>
+</ol>
+<details><summary>Voir le corrigé</summary>
+<ol>
+<li>\(X = \{x \in \mathbb{Z},\ \exists n \in \mathbb{Z},\ x = 3n\} = \{x \in \mathbb{Z},\ 3 \text{ divise } x\}\) : les multiples de 3. \(Y = \{m \in \mathbb{N},\ \exists n \in \mathbb{Z},\ m = n^2\}\) : les carrés parfaits (entiers dont la racine carrée est un entier). \(Z = \{x \in \mathbb{R},\ x^2 - 3x + 2 = 0\}\) (car \(x^2 - 3x + 2 = (x-1)(x-2)\)), ou encore \(\{n \in \mathbb{N}^*,\ n \leq 2\}\).</li>
+<li>\(X = \{\dots, -27, -8, -1, 0, 1, 8, 27, \dots\}\) (les cubes d'entiers ; la liste est infinie). \(Y\) : \(x^2 - 3x + 2 = (x-1)(x-2) = 0 \Leftrightarrow x = 1\) ou \(x = 2\), donc \(Y = \{1, 2\}\). \(Z = [-1, 1]\) : c'est un intervalle, pas une liste finie. (\(\subset\)) \(\cos\theta \in [-1, 1]\) pour tout \(\theta\). (\(\supset\)) si \(x \in [-1, 1]\), \(\theta = \arccos x\) vérifie \(\cos\theta = x\).</li>
+<li><b>\(X\)</b> : la droite \(d : 3x + 2y = 5\) (soit \(y = (5 - 3x)/2\)) borde le <b>demi-plan fermé situé au-dessus de \(d\)</b> (\(y \geq (5 - 3x)/2\)), droite incluse.<br>
+<b>\(Y\)</b> : on complète les carrés : \(x^2 + 6x + 4y^2 - 8y + 6 = (x+3)^2 - 9 + 4[(y-1)^2 - 1] + 6 = (x+3)^2 + 4(y-1)^2 - 7\). Donc \(Y = \{(x+3)^2 + 4(y-1)^2 = 7\}\) : <b>l'ellipse</b> (courbe seulement) de centre \((-3, 1)\), de demi-axes \(\sqrt{7} \approx 2{,}65\) (horizontal) et \(\sqrt{7}/2 \approx 1{,}32\) (vertical).<br>
+<b>\(Z\)</b> : \(x^2 - y^2 = (x-y)(x+y) = 0 \Leftrightarrow y = x\) ou \(y = -x\) : <b>les deux bissectrices</b>.<br>
+<b>\(U\)</b> : si \(x \gt 0\), \(xy \leq 1 \Leftrightarrow y \leq 1/x\) ; si \(x \lt 0\), \(xy \leq 1 \Leftrightarrow y \geq 1/x\) ; si \(x = 0\), tout \(y\) convient. C'est le plan privé des deux zones \(\{xy \gt 1\}\) (au-dessus de la branche de l'hyperbole \(xy = 1\) dans le quadrant \(x \gt 0\), et en dessous dans le quadrant \(x \lt 0\)), hyperbole incluse.
+<p><img src="assets/td2_ex1.png" alt="Représentations de X (demi-plan), Y (ellipse), Z (deux droites) et U (région sous et autour de l'hyperbole xy=1)"></p>
+<p>Zones colorées = ensembles ; la courbe de \(Y\) et les droites de \(Z\) sont l'ensemble lui-même.</p></li>
+</ol>
+</details>
+
+<h2>Exercice 2</h2>
+<p>Pour chacun des sous-ensembles suivants de \(\mathbb{R}^2\), les réécrire sous la forme \(\{(x,y) \in \mathbb{R}^2,\ a \leq x \leq b,\ f_-(x) \leq y \leq f_+(x)\}\) puis sous la forme \(\{(x,y) \in \mathbb{R}^2,\ c \leq y \leq d,\ g_-(y) \leq x \leq g_+(y)\}\) où \(a, b, c, d \in \mathbb{R}\) et \(f_-, f_+, g_-, g_+\) sont des fonctions à valeurs réelles d'une variable réelle.</p>
+<ol>
+<li>\(A = \{(x,y) \in \mathbb{R}^2,\ |x| \leq y \leq 1\}\) ;</li>
+<li>\(B = \{(\rho\cos\theta, \rho\sin\theta) \in \mathbb{R}^2,\ 0 \leq \rho \leq 2,\ \pi/2 \leq \theta \leq \pi\}\) ;</li>
+<li>\(C = \{(x,y) \in \mathbb{R}^2,\ x^2 - 1 \leq y \text{ et } x \geq \tfrac{1}{8}(y+1)^2\}\).</li>
+</ol>
+<details><summary>Voir le corrigé</summary>
+<ol>
+<li>\(A\) est le triangle de sommets \((-1, 1)\), \((1, 1)\), \((0, 0)\). Forme « \(x\) d'abord » : \(-1 \leq x \leq 1\) et \(|x| \leq y \leq 1\), donc <b>\(A = \{-1 \leq x \leq 1,\ |x| \leq y \leq 1\}\)</b> (\(f_-(x) = |x|\), \(f_+(x) = 1\)). Forme « \(y\) d'abord » : \(|x| \leq y \Leftrightarrow -y \leq x \leq y\) (avec \(y \geq 0\)), et \(y \leq 1\), donc <b>\(A = \{0 \leq y \leq 1,\ -y \leq x \leq y\}\)</b> (\(g_-(y) = -y\), \(g_+(y) = y\)).</li>
+<li>Les points \((\rho\cos\theta, \rho\sin\theta)\) avec \(0 \leq \rho \leq 2\) et \(\pi/2 \leq \theta \leq \pi\) forment le <b>quart de disque de rayon 2</b> situé dans le quadrant \(x \leq 0\), \(y \geq 0\) : \(B = \{x \leq 0,\ y \geq 0,\ x^2 + y^2 \leq 4\}\). Forme « \(x\) d'abord » : <b>\(B = \{-2 \leq x \leq 0,\ 0 \leq y \leq \sqrt{4 - x^2}\}\)</b>. Forme « \(y\) d'abord » : <b>\(B = \{0 \leq y \leq 2,\ -\sqrt{4 - y^2} \leq x \leq 0\}\)</b>.</li>
+<li>Les deux frontières sont la parabole \(y = x^2 - 1\) (\(C\) est au-dessus) et la parabole d'axe horizontal \(x = (y+1)^2/8\) (\(C\) est à sa droite, donc \(x \geq 0\)). Intersection : \(y + 1 = x^2\) donne \(x = x^4/8\), soit \(x(x^3 - 8) = 0\), donc \(x = 0\) ou \(x = 2\) : points \((0, -1)\) et \((2, 3)\). Posons \(u = y + 1\) : la condition est \(x^2 \leq u\) et \(u^2 \leq 8x\) ; comme \(x \geq 0\) et \(u \geq x^2 \geq 0\), cela s'écrit \(x^2 \leq u \leq \sqrt{8x}\), ce qui exige \(x^4 \leq 8x\), c'est-à-dire \(0 \leq x \leq 2\).<br>
+Forme « \(x\) d'abord » : <b>\(C = \{0 \leq x \leq 2,\ x^2 - 1 \leq y \leq \sqrt{8x} - 1\}\)</b>.<br>
+Forme « \(y\) d'abord » : \(u^2/8 \leq x \leq \sqrt{u}\) avec \(0 \leq u \leq 4\) (car \(u^4 \leq 64u \Leftrightarrow u \leq 4\)), soit <b>\(C = \{-1 \leq y \leq 3,\ (y+1)^2/8 \leq x \leq \sqrt{y+1}\}\)</b>.
+<p><img src="assets/td2_ex2.png" alt="Représentations de A (triangle), B (quart de disque) et C (lentille entre deux paraboles, de (0,-1) à (2,3))"></p></li>
+</ol>
+</details>
+
+<h2>Exercice 3</h2>
+<p>Soit \(n \in \mathbb{N}\) avec \(n \geq 2\). On pose \(A = \{(i,j) \in \mathbb{N}^2,\ 1 \leq i \lt j \leq n\}\).</p>
+<ol>
+<li>Écrire \(A\) sous la forme \(\{(i,j) \in \mathbb{N}^2,\ a \leq i \leq b,\ f_-(i) \leq j \leq f_+(i)\}\) puis sous la forme \(\{(i,j) \in \mathbb{N}^2,\ c \leq j \leq d,\ g_-(j) \leq i \leq g_+(j)\}\) où \(a, b, c, d \in \mathbb{N}\) et \(f_-, f_+, g_-, g_+\) sont des fonctions à valeurs entières d'une variable entière.</li>
+<li>Calculer \(\displaystyle\sum_{(i,j) \in A} \frac{i}{j}\).</li>
+</ol>
+<details><summary>Voir le corrigé</summary>
+<ol>
+<li>Avec \(1 \leq i \lt j \leq n\) : \(i\) varie de 1 à \(n - 1\) (car \(j \geq i + 1\) et \(j \leq n\)), puis \(j\) de \(i + 1\) à \(n\) : <b>\(A = \{1 \leq i \leq n-1,\ i+1 \leq j \leq n\}\)</b> (\(a = 1\), \(b = n-1\), \(f_-(i) = i+1\), \(f_+(i) = n\)). Dans l'autre ordre : \(j\) varie de 2 à \(n\), puis \(i\) de 1 à \(j - 1\) : <b>\(A = \{2 \leq j \leq n,\ 1 \leq i \leq j-1\}\)</b> (\(c = 2\), \(d = n\), \(g_-(j) = 1\), \(g_+(j) = j - 1\)).</li>
+<li>On somme d'abord sur \(i\) à \(j\) fixé :
+\[ \sum_{(i,j) \in A} \frac{i}{j} = \sum_{j=2}^{n} \frac{1}{j} \sum_{i=1}^{j-1} i = \sum_{j=2}^{n} \frac{1}{j} \cdot \frac{(j-1)j}{2} = \sum_{j=2}^{n} \frac{j-1}{2} = \frac{1}{2}\sum_{m=1}^{n-1} m = \frac{1}{2} \cdot \frac{(n-1)n}{2} = \frac{n(n-1)}{4}. \]
+(Vérifié en fractions exactes pour \(n = 2\) à 8 ; ex. \(n = 3\) : \(1/2 + 1/3 + 2/3 = 3/2 = 3 \cdot 2/4\).)</li>
+</ol>
+</details>
+
+<h2>Exercice 4</h2>
+<ol>
+<li>Montrer les équivalences : (a) \(E \subset F \Leftrightarrow E = E \cap F\) ; (b) \(E \subset F \Leftrightarrow F = E \cup F\). À quelle condition a-t-on \(E \cup F = E \cap F\) ?</li>
+<li>Montrer l'implication : \((A \cup B \subset A \cup C \text{ et } A \cap B \subset A \cap C) \Rightarrow B \subset C\).</li>
+<li>Que dire des inclusions relatives de \(A, B, C \subset E\) si \(A \cup B = B \cap C\) ?</li>
+</ol>
+<details><summary>Voir le corrigé</summary>
+<ol>
+<li><b>(a)</b> (\(\Rightarrow\)) Supposons \(E \subset F\). Toujours \(E \cap F \subset E\). Réciproquement si \(x \in E\), alors \(x \in F\) par hypothèse, donc \(x \in E \cap F\) : \(E \subset E \cap F\). D'où \(E = E \cap F\). (\(\Leftarrow\)) Si \(E = E \cap F\), alors \(E = E \cap F \subset F\).<br>
+<b>(b)</b> (\(\Rightarrow\)) Supposons \(E \subset F\). Toujours \(F \subset E \cup F\). Réciproquement \(x \in E \cup F\) : si \(x \in F\) c'est fini, si \(x \in E\) alors \(x \in F\) par hypothèse ; donc \(E \cup F \subset F\). D'où \(F = E \cup F\). (\(\Leftarrow\)) Si \(F = E \cup F\), alors \(E \subset E \cup F = F\).<br>
+<b>Condition pour \(E \cup F = E \cap F\) :</b> c'est <b>\(E = F\)</b>. Si \(E = F\), les deux membres valent \(E\). Réciproquement, si \(E \cup F = E \cap F\), alors \(E \subset E \cup F = E \cap F \subset F\) et \(F \subset E \cup F = E \cap F \subset E\), donc \(E = F\).</li>
+<li>Supposons \(A \cup B \subset A \cup C\) et \(A \cap B \subset A \cap C\), et soit \(x \in B\). <i>Cas \(x \in A\) :</i> alors \(x \in A \cap B \subset A \cap C\), donc \(x \in C\). <i>Cas \(x \notin A\) :</i> \(x \in B \subset A \cup B \subset A \cup C\), et comme \(x \notin A\), on a \(x \in C\). Dans les deux cas \(x \in C\) : \(B \subset C\).</li>
+<li>On a en fait l'équivalence <b>\(A \cup B = B \cap C \Leftrightarrow A \subset B \subset C\)</b>. (\(\Rightarrow\)) \(A \subset A \cup B = B \cap C \subset B\), donc \(A \subset B\) ; et \(B \subset A \cup B = B \cap C \subset C\), donc \(B \subset C\). (\(\Leftarrow\)) Si \(A \subset B\) alors \(A \cup B = B\) ; si \(B \subset C\) alors \(B \cap C = B\) ; les deux ensembles valent \(B\). Conclusion : \(A \subset B \subset C\) (et alors les deux membres sont égaux à \(B\)).</li>
+</ol>
+</details>
+
+<h2>Exercice 5</h2>
+<p>Soit \(A, B\) deux sous-ensembles d'un ensemble \(E\). On note \(\overline{X} = E \setminus X\) le complémentaire d'un sous-ensemble \(X\) dans \(E\). Montrer \(E \setminus (A \cup B) = \overline{A} \cap \overline{B}\) et \(E \setminus (A \cap B) = \overline{A} \cup \overline{B}\).</p>
+<details><summary>Voir le corrigé</summary>
+<p>Par équivalences successives : \(x \in E \setminus (A \cup B)\) \(\Leftrightarrow\) \(x \in E\) et non (\(x \in A\) ou \(x \in B\)) \(\Leftrightarrow\) \(x \in E\) et \(x \notin A\) et \(x \notin B\) (De Morgan logique) \(\Leftrightarrow\) \(x \in \overline{A}\) et \(x \in \overline{B}\) \(\Leftrightarrow\) \(x \in \overline{A} \cap \overline{B}\). De même \(x \in E \setminus (A \cap B)\) \(\Leftrightarrow\) \(x \in E\) et non (\(x \in A\) et \(x \in B\)) \(\Leftrightarrow\) \(x \in E\) et (\(x \notin A\) ou \(x \notin B\)) \(\Leftrightarrow\) \(x \in \overline{A}\) ou \(x \in \overline{B}\) \(\Leftrightarrow\) \(x \in \overline{A} \cup \overline{B}\).</p>
+<p>Les lois de Morgan pour les ensembles sont exactement celles de la logique (\(\cup\) \(\leftrightarrow\) ou, \(\cap\) \(\leftrightarrow\) et, complémentaire \(\leftrightarrow\) non).</p>
+</details>
+
+<h2>Exercice 6</h2>
+<p>Soit \(A\) une partie de \(E\), on appelle fonction caractéristique de \(A\) l'application \(\mathbf{1}_A\) de \(E\) dans l'ensemble à deux éléments \(\{0, 1\}\), telle que \(\mathbf{1}_A(x) = 0\) si \(x \notin A\), et \(\mathbf{1}_A(x) = 1\) si \(x \in A\).</p>
+<ol>
+<li>Soit \(A\) et \(B\) deux parties de \(E\). Exprimer les fonctions caractéristiques de \(E \setminus A\), \(A \cap B\), \(A \cup B\) en fonction de celles de \(A\) et \(B\).</li>
+<li>Démontrer les relations suivantes : \(A \cup (B \cap C) = (A \cup B) \cap (A \cup C)\) et \(A \cap (B \cup C) = (A \cap B) \cup (A \cap C)\).</li>
+<li>On définit la différence symétrique par \(F \oplus G := (F \setminus G) \cup (G \setminus F) = (F \cup G) \setminus (F \cap G)\).
+<ul>
+<li><b>(a)</b> Vérifier la deuxième égalité.</li>
+<li><b>(b)</b> Étudier l'associativité, la commutativité, l'existence d'éléments neutres et d'opposés pour cette « loi de composition interne » (ou « opération ») sur \(\mathcal{P}(E)\).</li>
+</ul></li>
+</ol>
+<details><summary>Voir le corrigé</summary>
+<ol>
+<li>\(\mathbf{1}_{E \setminus A} = 1 - \mathbf{1}_A\) ; \(\mathbf{1}_{A \cap B} = \mathbf{1}_A \cdot \mathbf{1}_B\) ; \(\mathbf{1}_{A \cup B} = \mathbf{1}_A + \mathbf{1}_B - \mathbf{1}_A \mathbf{1}_B\). Justification : \(x \in A \cap B \Leftrightarrow \mathbf{1}_A(x) = 1\) et \(\mathbf{1}_B(x) = 1\) \(\Leftrightarrow\) le produit vaut 1 ; pour la réunion, \(\mathbf{1}_A + \mathbf{1}_B - \mathbf{1}_A \mathbf{1}_B\) vaut 0 si les deux sont 0, et 1 dans les autres cas (\(1 + 0 - 0\), \(0 + 1 - 0\), \(1 + 1 - 1\)).</li>
+<li>Deux parties sont égales si et seulement si elles ont la même fonction caractéristique. Notons \(a, b, c\) les valeurs de \(\mathbf{1}_A, \mathbf{1}_B, \mathbf{1}_C\) en un point \(x\) (elles valent 0 ou 1, donc \(a^2 = a\)).
+<ul>
+<li>\(\mathbf{1}_{A \cup (B \cap C)} = a + bc - abc\). \(\mathbf{1}_{(A \cup B) \cap (A \cup C)} = (a + b - ab)(a + c - ac) = a + bc - abc\) (en développant et en utilisant \(a^2 = a\)). Égaux.</li>
+<li>\(\mathbf{1}_{A \cap (B \cup C)} = a(b + c - bc) = ab + ac - abc\) ; \(\mathbf{1}_{(A \cap B) \cup (A \cap C)} = ab + ac - ab \cdot ac = ab + ac - abc\). Égaux.</li>
+</ul>
+Donc les deux relations sont vraies (distributivité).</li>
+<li><b>(a)</b> \(x \in (F \setminus G) \cup (G \setminus F)\) \(\Leftrightarrow\) (\(x \in F\) et \(x \notin G\)) ou (\(x \in G\) et \(x \notin F\)) \(\Leftrightarrow\) \(x\) appartient à <i>exactement un</i> des deux ensembles \(\Leftrightarrow\) \(x \in F \cup G\) et \(x \notin F \cap G\) \(\Leftrightarrow\) \(x \in (F \cup G) \setminus (F \cap G)\). (Avec les fonctions caractéristiques, \(f = \mathbf{1}_F\), \(g = \mathbf{1}_G\) : \(f(1-g) + g(1-f) = f + g - 2fg = (f + g - fg)(1 - fg)\).)<br>
+<b>(b)</b> On utilise la caractérisation \(\mathbf{1}_{F \oplus G} = f + g - 2fg \equiv f + g \pmod 2\), avec des valeurs dans \(\{0, 1\}\) : c'est le reste de \(f + g\) modulo 2.
+<table>
+<thead><tr><th>Propriété</th><th>Résultat pour \((\mathcal{P}(E), \oplus)\)</th><th>Justification</th></tr></thead>
+<tbody>
+<tr><td>Commutativité</td><td><b>oui</b> : \(F \oplus G = G \oplus F\)</td><td>la définition \((F \setminus G) \cup (G \setminus F)\) est symétrique en \(F, G\)</td></tr>
+<tr><td>Associativité</td><td><b>oui</b> : \((F \oplus G) \oplus H = F \oplus (G \oplus H)\)</td><td>les deux ont pour fonction caractéristique le reste de \(f + g + h\) modulo 2 (\(x\) est dans l'ensemble \(\Leftrightarrow\) \(x\) est dans un nombre impair de \(F, G, H\))</td></tr>
+<tr><td>Élément neutre</td><td><b>\(\varnothing\)</b> : \(F \oplus \varnothing = F\)</td><td>\((F \setminus \varnothing) \cup (\varnothing \setminus F) = F \cup \varnothing = F\)</td></tr>
+<tr><td>Opposé</td><td><b>chaque \(F\) est son propre opposé</b> : \(F \oplus F = \varnothing\)</td><td>\((F \setminus F) \cup (F \setminus F) = \varnothing\)</td></tr>
+</tbody>
+</table>
+\((\mathcal{P}(E), \oplus)\) est un groupe commutatif (où tout élément est son propre opposé). Contraste : \(\cup\) et \(\cap\) sont associatives et commutatives, mais n'ont pas d'opposés.</li>
+</ol>
+</details>
+
+<h2>Exercice 7</h2>
+<p>Décrire \(\mathcal{P}(E)\) et \(\mathcal{P}(\mathcal{P}(E))\) pour : (a) \(E = \varnothing\) ; (b) \(E = \{a\}\) ; (c) \(E = \{1, 5\}\).</p>
+<details><summary>Voir le corrigé</summary>
+<ul>
+<li><b>(a) \(E = \varnothing\) :</b> \(\mathcal{P}(\varnothing) = \{\varnothing\}\) (une seule partie : \(\varnothing\) lui-même) ; \(\mathcal{P}(\mathcal{P}(\varnothing)) = \mathcal{P}(\{\varnothing\}) = \{\varnothing, \{\varnothing\}\}\) (2 éléments).</li>
+<li><b>(b) \(E = \{a\}\) :</b> \(\mathcal{P}(E) = \{\varnothing, \{a\}\}\) ; \(\mathcal{P}(\mathcal{P}(E)) = \{\varnothing, \{\varnothing\}, \{\{a\}\}, \{\varnothing, \{a\}\}\}\) (4 éléments).</li>
+<li><b>(c) \(E = \{1, 5\}\) :</b> \(\mathcal{P}(E) = \{\varnothing, \{1\}, \{5\}, \{1, 5\}\}\) (4 éléments) et \(\mathcal{P}(\mathcal{P}(E))\) a \(2^4 = 16\) éléments :</li>
+</ul>
+<table>
+<tbody>
+<tr><td>\(\varnothing\)</td><td>\(\{\varnothing\}\)</td></tr>
+<tr><td>\(\{\{1\}\}\)</td><td>\(\{\{5\}\}\)</td></tr>
+<tr><td>\(\{\{1, 5\}\}\)</td><td>\(\{\varnothing, \{1\}\}\)</td></tr>
+<tr><td>\(\{\varnothing, \{5\}\}\)</td><td>\(\{\varnothing, \{1, 5\}\}\)</td></tr>
+<tr><td>\(\{\{1\}, \{5\}\}\)</td><td>\(\{\{1\}, \{1, 5\}\}\)</td></tr>
+<tr><td>\(\{\{5\}, \{1, 5\}\}\)</td><td>\(\{\varnothing, \{1\}, \{5\}\}\)</td></tr>
+<tr><td>\(\{\varnothing, \{1\}, \{1, 5\}\}\)</td><td>\(\{\varnothing, \{5\}, \{1, 5\}\}\)</td></tr>
+<tr><td>\(\{\{1\}, \{5\}, \{1, 5\}\}\)</td><td>\(\{\varnothing, \{1\}, \{5\}, \{1, 5\}\}\)</td></tr>
+</tbody>
+</table>
+<p>Rappel : \(|\mathcal{P}(E)| = 2^{|E|}\) ; on a donc 1, 2, 4 éléments pour \(|E| = 0, 1, 2\) et 2, 4, 16 pour les ensembles \(\mathcal{P}(\mathcal{P}(E))\).</p>
+</details>
+
+<h2>Exercice 8</h2>
+<ol>
+<li>Comparer : (a) \(\mathcal{P}(E \cap F)\) et \(\mathcal{P}(E) \cap \mathcal{P}(F)\) ; (b) \(\mathcal{P}(E \cup F)\) et \(\mathcal{P}(E) \cup \mathcal{P}(F)\).</li>
+<li>On se propose de comparer \(\mathcal{P}(E \times F)\) et \(\mathcal{P}(E) \times \mathcal{P}(F)\). (a) On pose \(E = \{a, b\}\) et \(F = \{1, 2\}\). Décrire \(E \times F\) puis \(\mathcal{P}(E \times F)\) et \(\mathcal{P}(E) \times \mathcal{P}(F)\). (b) Conclure.</li>
+</ol>
+<details><summary>Voir le corrigé</summary>
+<ol>
+<li><b>(a)</b> \(X \in \mathcal{P}(E \cap F) \Leftrightarrow X \subset E \cap F \Leftrightarrow (X \subset E \text{ et } X \subset F) \Leftrightarrow X \in \mathcal{P}(E) \text{ et } X \in \mathcal{P}(F) \Leftrightarrow X \in \mathcal{P}(E) \cap \mathcal{P}(F)\). Donc <b>\(\mathcal{P}(E \cap F) = \mathcal{P}(E) \cap \mathcal{P}(F)\)</b>.<br>
+<b>(b)</b> Si \(X \in \mathcal{P}(E) \cup \mathcal{P}(F)\), alors \(X \subset E\) ou \(X \subset F\), donc \(X \subset E \cup F\) : <b>\(\mathcal{P}(E) \cup \mathcal{P}(F) \subset \mathcal{P}(E \cup F)\)</b>. La réciproque est fausse en général : avec \(E = \{1\}\) et \(F = \{2\}\), \(X = \{1, 2\}\) est une partie de \(E \cup F\) mais n'est ni dans \(\mathcal{P}(E)\) ni dans \(\mathcal{P}(F)\). Précisément, <b>l'égalité a lieu \(\Leftrightarrow\) \(E \subset F\) ou \(F \subset E\)</b> : si \(E \subset F\), \(\mathcal{P}(E \cup F) = \mathcal{P}(F) = \mathcal{P}(E) \cup \mathcal{P}(F)\) ; si ni \(E \subset F\) ni \(F \subset E\), on prend \(e \in E \setminus F\) et \(f \in F \setminus E\), et \(\{e, f\}\) est dans \(\mathcal{P}(E \cup F)\) sans être dans \(\mathcal{P}(E) \cup \mathcal{P}(F)\).</li>
+<li>Avec \(E = \{a, b\}\) et \(F = \{1, 2\}\), on décrit :
+<p><b>\(E \times F\)</b> = \(\{(a,1), (a,2), (b,1), (b,2)\}\) (4 éléments).</p>
+<p><b>\(\mathcal{P}(E \times F)\)</b> a \(2^4 = 16\) éléments (des ensembles de couples) :</p>
+<table>
+<tbody>
+<tr><td>\(\varnothing\)</td><td>\(\{(a, 1)\}\)</td></tr>
+<tr><td>\(\{(a, 2)\}\)</td><td>\(\{(b, 1)\}\)</td></tr>
+<tr><td>\(\{(b, 2)\}\)</td><td>\(\{(a, 1), (a, 2)\}\)</td></tr>
+<tr><td>\(\{(a, 1), (b, 1)\}\)</td><td>\(\{(a, 1), (b, 2)\}\)</td></tr>
+<tr><td>\(\{(a, 2), (b, 1)\}\)</td><td>\(\{(a, 2), (b, 2)\}\)</td></tr>
+<tr><td>\(\{(b, 1), (b, 2)\}\)</td><td>\(\{(a, 1), (a, 2), (b, 1)\}\)</td></tr>
+<tr><td>\(\{(a, 1), (a, 2), (b, 2)\}\)</td><td>\(\{(a, 1), (b, 1), (b, 2)\}\)</td></tr>
+<tr><td>\(\{(a, 2), (b, 1), (b, 2)\}\)</td><td>\(\{(a, 1), (a, 2), (b, 1), (b, 2)\}\)</td></tr>
+</tbody>
+</table>
+<p><b>\(\mathcal{P}(E) \times \mathcal{P}(F)\)</b> a \(4 \times 4 = 16\) éléments (des <i>couples d'ensembles</i> \((X, Y)\), \(X \subset E\), \(Y \subset F\)) :</p>
+<table>
+<tbody>
+<tr><th>\(X \backslash Y\)</th><th>\(\varnothing\)</th><th>\(\{1\}\)</th><th>\(\{2\}\)</th><th>\(\{1, 2\}\)</th></tr>
+<tr><td>\(\varnothing\)</td><td>\((\varnothing, \varnothing)\)</td><td>\((\varnothing, \{1\})\)</td><td>\((\varnothing, \{2\})\)</td><td>\((\varnothing, \{1, 2\})\)</td></tr>
+<tr><td>\(\{a\}\)</td><td>\((\{a\}, \varnothing)\)</td><td>\((\{a\}, \{1\})\)</td><td>\((\{a\}, \{2\})\)</td><td>\((\{a\}, \{1, 2\})\)</td></tr>
+<tr><td>\(\{b\}\)</td><td>\((\{b\}, \varnothing)\)</td><td>\((\{b\}, \{1\})\)</td><td>\((\{b\}, \{2\})\)</td><td>\((\{b\}, \{1, 2\})\)</td></tr>
+<tr><td>\(\{a, b\}\)</td><td>\((\{a, b\}, \varnothing)\)</td><td>\((\{a, b\}, \{1\})\)</td><td>\((\{a, b\}, \{2\})\)</td><td>\((\{a, b\}, \{1, 2\})\)</td></tr>
+</tbody>
+</table>
+<p><b>Conclusion.</b> Les deux ensembles ont 16 éléments ici, mais ce ne sont <b>pas</b> les mêmes ensembles : les éléments de \(\mathcal{P}(E \times F)\) sont des ensembles de couples, ceux de \(\mathcal{P}(E) \times \mathcal{P}(F)\) sont des couples d'ensembles. L'application \((X, Y) \mapsto X \times Y\) de \(\mathcal{P}(E) \times \mathcal{P}(F)\) vers \(\mathcal{P}(E \times F)\) n'est <b>ni injective</b> (dès que \(X = \varnothing\) ou \(Y = \varnothing\), on obtient \(\varnothing\) : 7 couples ont pour image \(\varnothing\)) <b>ni surjective</b> (elle n'atteint que 10 parties sur 16 : les « rectangles » ; \(\{(a,1), (b,2)\}\) n'en est pas un). En général \(|\mathcal{P}(E \times F)| = 2^{|E||F|}\) alors que \(|\mathcal{P}(E) \times \mathcal{P}(F)| = 2^{|E|+|F|}\) : pour \(|E| = |F| = 3\), 512 contre 64. <b>\(\mathcal{P}(E \times F) \neq \mathcal{P}(E) \times \mathcal{P}(F)\)</b> en général.</p></li>
+</ol>
+</details>
+
+<div class="retenir"><b>À retenir —</b> Écrire un ensemble : par extension (liste) ou par compréhension (critère) ; le plan \(\mathbb{R}^2\) se décrit par des inégalités : compléter les carrés donne des coniques (ellipse, hyperbole), et une région se réécrit « \(x\) d'abord » ou « \(y\) d'abord » avec des bornes qui dépendent de l'autre variable. Une égalité d'ensembles se montre par double inclusion ou par équivalences ; les fonctions caractéristiques (\(\mathbf{1}_{A \cap B} = \mathbf{1}_A \mathbf{1}_B\), \(\mathbf{1}_{A \cup B} = \mathbf{1}_A + \mathbf{1}_B - \mathbf{1}_A \mathbf{1}_B\), \(\mathbf{1}_{E \setminus A} = 1 - \mathbf{1}_A\)) ramènent tout à de l'algèbre sur \(\{0, 1\}\). \(A \subset B \Leftrightarrow A = A \cap B \Leftrightarrow B = A \cup B\). \((\mathcal{P}(E), \oplus)\) est un groupe commutatif. \(\mathcal{P}(E \cap F) = \mathcal{P}(E) \cap \mathcal{P}(F)\), mais \(\mathcal{P}(E) \cup \mathcal{P}(F)\) est en général strictement inclus dans \(\mathcal{P}(E \cup F)\) ; \(\mathcal{P}(E \times F) \neq \mathcal{P}(E) \times \mathcal{P}(F)\).</div>

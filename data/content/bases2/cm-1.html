@@ -1,0 +1,281 @@
+<p>Rudiments de logique : on apprend à combiner des affirmations avec des règles précises (tables de vérité), puis à s'en servir pour raisonner (déduction, récurrence, contraposée). Tout le reste des maths de L1 s'appuie sur ce langage.</p>
+
+<h2>Partie I — Le calcul propositionnel</h2>
+
+<h3>1. Faire des mathématiques : vocabulaire</h3>
+<p>Pour faire des mathématiques, on a besoin de <b>vérités de départ</b>, les <b>axiomes</b> (affirmations réputées vraies, qu'on ne cherche pas à justifier), et de <b>règles de logique</b> pour transformer et combiner des énoncés afin d'en obtenir de nouveaux : c'est la notion de <b>démonstration</b>. Un théorème est donc un énoncé relié aux axiomes de départ par des déductions logiques.</p>
+
+<div class="note"><b>Remarque —</b> Les mathématiques n'ont pas pour objet d'établir des vérités absolues : les « vérités » obtenues ne sont vraies que relativement aux axiomes choisis. Plus que « vrai », le discours mathématique doit être <b>cohérent</b>. Et prouver un énoncé ne sert pas qu'à s'assurer qu'il est vrai : c'est avant tout un moyen de le <b>comprendre</b>. Tant qu'on n'arrive pas à en établir une preuve, c'est que quelque chose reste mal compris.</div>
+
+<table>
+<thead><tr><th>Terme</th><th>Sens</th></tr></thead>
+<tbody>
+<tr><td><b>Axiome</b></td><td>Énoncé supposé vrai a priori, qu'on ne cherche pas à démontrer (ex. Euclide : par deux points distincts il passe une et une seule droite ; axiomes de Peano pour les entiers : successeur, récurrence…).</td></tr>
+<tr><td><b>Proposition</b> (affirmation, assertion)</td><td>Énoncé syntaxiquement correct qui peut être vrai ou faux.</td></tr>
+<tr><td><b>Théorème</b></td><td>Proposition dont on a démontré la véracité, en la reliant aux axiomes par des opérations logiques.</td></tr>
+<tr><td><b>Corollaire</b></td><td>Théorème qui est une conséquence facile d'un autre.</td></tr>
+<tr><td><b>Lemme</b></td><td>Théorème qui sert à en démontrer un plus important.</td></tr>
+<tr><td><b>Conjecture</b></td><td>Proposition qu'on pense vraie, mais dont on n'a pas encore trouvé de preuve.</td></tr>
+<tr><td><b>Définition</b></td><td>Énoncé qui décrit les particularités d'objets particuliers, auxquels on donne un nom (ex. les nombres premiers : entiers qui n'ont pas d'autre diviseur que 1 et eux-mêmes).</td></tr>
+</tbody>
+</table>
+<p>En pratique, « proposition » est parfois employé comme synonyme de « théorème » moins important ; dans ce chapitre on garde le sens « assertion ».</p>
+
+<h3>2. Proposition et assertion</h3>
+<div class="def"><b>Définition —</b> Une <b>proposition</b> (ou assertion, ou affirmation) est un énoncé syntaxiquement compréhensible qui peut être vrai ou faux.</div>
+<p>Exemples du cours : « Julien a 34 ans » ; « le carré d'un nombre réel est positif » ; « 0 est une solution de l'équation \(x^2 = 1\) ».</p>
+<p>Une proposition n'a pas besoin d'être vraie : le troisième exemple est faux (\(0^2 = 0 \neq 1\)) et c'est pourtant une proposition valable. Ce qui compte, c'est que la question « est-ce vrai ? » ait un sens et n'admette que deux réponses.</p>
+<div class="warn"><b>Piège — Ce qui n'est pas une proposition.</b> « \(x = 3\) » sans dire ce qu'est \(x\), « quelle heure est-il ? » ou « ferme la porte » ne sont pas des propositions : la première dépend d'une inconnue, les deux autres ne peuvent être ni vraies ni fausses.</div>
+
+<h4>La règle du jeu</h4>
+<p>Le programme du chapitre tient en une phrase : se doter de règles simples pour combiner des assertions, en faisant en sorte que ces règles correspondent à l'intuition de la logique. Exemple : si \(P\) et \(Q\) sont deux assertions, « \(P\) et \(Q\) » est vraie si (\(P\) est vraie et \(Q\) est vraie), et fausse dans tous les autres cas. En pratique, on donne une <b>table de vérité</b> : elle liste les valeurs de la nouvelle assertion pour chaque combinaison possible des valeurs de départ.</p>
+<table>
+<thead><tr><th>\(P\)</th><th>\(Q\)</th><th>\(P \wedge Q\)</th></tr></thead>
+<tbody>
+<tr><td>V</td><td>V</td><td>V</td></tr>
+<tr><td>V</td><td>F</td><td>F</td></tr>
+<tr><td>F</td><td>V</td><td>F</td></tr>
+<tr><td>F</td><td>F</td><td>F</td></tr>
+</tbody>
+</table>
+<p>Notation : « \(P\) et \(Q\) » se note \(P \wedge Q\). Deux propositions donnent \(2^2 = 4\) lignes ; trois en donneraient 8.</p>
+
+<h3>3. Les cinq connecteurs</h3>
+<p>On définit de la même façon, par table de vérité, les cinq opérations élémentaires de la logique.</p>
+<table>
+<thead><tr><th>Se lit</th><th>Se note</th><th>Vraie quand…</th></tr></thead>
+<tbody>
+<tr><td>la négation de \(P\), « non \(P\) »</td><td>\(\neg P\) (ou \(\overline{P}\))</td><td>\(P\) est fausse</td></tr>
+<tr><td>« \(P\) et \(Q\) »</td><td>\(P \wedge Q\)</td><td>les deux sont vraies</td></tr>
+<tr><td>« \(P\) ou \(Q\) » (ou inclusif)</td><td>\(P \vee Q\)</td><td>au moins l'une des deux est vraie</td></tr>
+<tr><td>« \(P\) implique \(Q\) »</td><td>\(P \Rightarrow Q\)</td><td>sauf si \(P\) est vraie et \(Q\) fausse</td></tr>
+<tr><td>« \(P\) équivaut à \(Q\) »</td><td>\(P \Leftrightarrow Q\)</td><td>\(P\) et \(Q\) ont la même valeur</td></tr>
+</tbody>
+</table>
+<div class="warn"><b>Piège — Le « ou » est inclusif.</b> « \(P \vee Q\) » reste vraie quand les deux le sont, contrairement au « ou » du langage courant dans « fromage ou dessert ».</div>
+
+<h4>Les tables de référence</h4>
+<table>
+<thead><tr><th>\(P\)</th><th>\(\neg P\)</th></tr></thead>
+<tbody><tr><td>V</td><td>F</td></tr><tr><td>F</td><td>V</td></tr></tbody>
+</table>
+<table>
+<thead><tr><th>\(P\)</th><th>\(Q\)</th><th>\(P \wedge Q\)</th><th>\(P \vee Q\)</th><th>\(P \Rightarrow Q\)</th><th>\(P \Leftrightarrow Q\)</th></tr></thead>
+<tbody>
+<tr><td>V</td><td>V</td><td>V</td><td>V</td><td>V</td><td>V</td></tr>
+<tr><td>V</td><td>F</td><td>F</td><td>V</td><td><b>F</b></td><td>F</td></tr>
+<tr><td>F</td><td>V</td><td>F</td><td>V</td><td>V</td><td>F</td></tr>
+<tr><td>F</td><td>F</td><td>F</td><td>F</td><td>V</td><td>V</td></tr>
+</tbody>
+</table>
+<p>C'est la table à connaître par cœur : tout le reste du chapitre s'en déduit. Repère utile : \(P \Rightarrow Q\) n'est fausse que sur une seule ligne, la deuxième.</p>
+<p>Une image pour fixer l'intuition : \(\wedge\) est l'intersection, \(\vee\) la réunion (elle garde bien la zone commune), la négation est le complémentaire. Les tables de vérité en sont la traduction ligne à ligne.</p>
+<p><img src="assets/pq_and.png" alt="Diagramme de Venn de P et Q : zone commune coloriée (P et Q)"> <img src="assets/pq_or.png" alt="Diagramme de Venn de P ou Q : les deux disques coloriés"> <img src="assets/nonP.png" alt="Diagramme de Venn de non P : tout sauf le disque P"></p>
+
+<h4>Remarques sur le langage</h4>
+<ul>
+<li><b>Négation ≠ contraire.</b> La négation de « cet objet est blanc » n'est pas « cet objet est noir » ; de même, dire qu'une fonction n'est pas la fonction nulle ne signifie pas qu'elle ne s'annule jamais. Beaucoup d'erreurs viennent des sous-entendus de la langue courante.</li>
+<li><b>« Et » en français sous-entend parfois une chronologie :</b> « éplucher les légumes et les couper en rondelles » n'est pas « couper en rondelles et éplucher ». En logique, \(P \wedge Q = Q \wedge P\) : le langage formel sépare le discours mathématique de la langue courante, et on ne mélange jamais les deux.</li>
+<li><b>Notation en accolade.</b> En plus de \(P \wedge Q\), on note aussi « \(P\) et \(Q\) » avec une accolade (les deux propositions l'une sous l'autre), comme dans un système d'équations.</li>
+<li><b>L'équivalence joue le rôle de l'égalité</b> entre propositions : \(3 + 2\) et \(5\) sont deux expressions distinctes qui sont égales ; de même, pour \(x, y\) réels, « \(x^2 + y^2 = 0\) » et « \(x = y = 0\) » sont distinctes mais équivalentes : \(x^2 + y^2 = 0 \Leftrightarrow x = y = 0\).</li>
+</ul>
+
+<h3>4. Comprendre l'implication</h3>
+<p>La définition de « \(P \Rightarrow Q\) » peut sembler contre-intuitive, notamment lorsque \(P\) est fausse : dans ce cas l'implication est déclarée vraie, quelle que soit \(Q\). <b>Une implication ne promet rien quand son hypothèse n'est pas réalisée.</b> Elle ne peut donc être prise en défaut que dans un seul cas : hypothèse vraie et conclusion fausse.</p>
+<div class="thm"><b>Propriété clé —</b> \(P \Rightarrow Q\) est fausse uniquement lorsque \(P\) est vraie et \(Q\) est fausse. Si \(P\) est fausse, on n'a aucune contrainte sur \(Q\) et l'affirmation n'est jamais mise en défaut.</div>
+
+<h4>L'exemple du cours</h4>
+<div class="ex"><b>Exemple —</b> Soient \(a, b, c, d\) des réels. \(P\) : « \(a = b\) et \(c = d\) » ; \(Q\) : « \(a + c = b + d\) ». On sait que \(P \Rightarrow Q\) (on additionne membre à membre). Trois jeux de valeurs :
+<table>
+<thead><tr><th>Valeurs</th><th>\(P\)</th><th>\(Q\)</th><th>Lecture</th></tr></thead>
+<tbody>
+<tr><td>\(a=b=c=d=1\)</td><td>V</td><td>V</td><td>l'hypothèse tient, la conclusion aussi</td></tr>
+<tr><td>\(a=b=c=1,\ d=2\)</td><td>F</td><td>F</td><td>hypothèse fausse : l'implication ne dit rien, elle reste vraie</td></tr>
+<tr><td>\(a=1,\ b=2,\ c=2,\ d=1\)</td><td>F</td><td>V</td><td>hypothèse fausse, conclusion vraie par accident : l'implication reste vraie</td></tr>
+</tbody>
+</table>
+Aucun jeu de valeurs ne donne \(P\) vraie avec \(Q\) fausse : c'est exactement ce que signifie « \(P \Rightarrow Q\) est vraie ». Les deux dernières lignes montrent que la réciproque est fausse : \(Q\) peut être vraie sans que \(P\) le soit.</div>
+
+<h4>« ⇒ » n'est pas « donc »</h4>
+<p>« Si j'ai la jambe cassée, je ne peux pas courir le 100 m » est très différent de « J'ai la jambe cassée, donc je ne peux pas courir le 100 m ». Dans le premier cas, je peux avoir la jambe cassée, ou pas ; dans le second, j'ai effectivement la jambe cassée. Le symbole « \(\Rightarrow\) » exprime l'implication, il ne faut jamais l'utiliser comme abréviation de « donc ».</p>
+<p>Exemple : le raisonnement par récurrence s'écrit \(\{\, P_0 \ ;\ \forall n \in \mathbb{N},\ (P_n \Rightarrow P_{n+1}) \,\} \Rightarrow \forall n \in \mathbb{N},\ P_n\). L'écriture \(P_n \Rightarrow P_{n+1}\) ne signifie en aucune façon que \(P_n\) est vraie, mais seulement que s'il se trouve qu'elle l'est, alors \(P_{n+1}\) l'est aussi.</p>
+
+<div class="thm"><b>Théorème — Deux formulations équivalentes à connaître.</b>
+\[ (P \Rightarrow Q) \;\Leftrightarrow\; (\neg P \vee Q) \]
+« \(P\) implique \(Q\) » revient à dire « \(P\) est fausse, ou bien \(Q\) est vraie » : c'est la traduction exacte de la colonne \(P \Rightarrow Q\) de la table.</div>
+<div class="proof"><b>Preuve (tables de vérité) —</b> les colonnes « \(\neg P \vee Q\) » et « \(P \Rightarrow Q\) » sont les mêmes.
+<table>
+<thead><tr><th>\(P\)</th><th>\(Q\)</th><th>\(\neg P\)</th><th>\(\neg P \vee Q\)</th><th>\(P \Rightarrow Q\)</th></tr></thead>
+<tbody>
+<tr><td>V</td><td>V</td><td>F</td><td>V</td><td>V</td></tr>
+<tr><td>F</td><td>V</td><td>V</td><td>V</td><td>V</td></tr>
+<tr><td>V</td><td>F</td><td>F</td><td>F</td><td>F</td></tr>
+<tr><td>F</td><td>F</td><td>V</td><td>V</td><td>V</td></tr>
+</tbody>
+</table></div>
+<div class="thm"><b>Corollaire —</b> \(\neg(P \Rightarrow Q) \Leftrightarrow (P \wedge \neg Q)\) : nier une implication, c'est affirmer \(P\) et la négation de \(Q\). (Même méthode : écrire les deux tables et constater qu'elles coïncident.)</div>
+
+<h4>Comment démontrer ou réfuter une implication</h4>
+<ul>
+<li>Pour montrer que \(P \Rightarrow Q\) est <b>vraie</b> : on suppose \(P\) vraie et on montre alors que \(Q\) est vraie ; ou bien on suppose \(Q\) fausse et on montre que \(P\) est fausse (contraposée).</li>
+<li>Pour montrer que \(P \Rightarrow Q\) <b>n'est pas vraie</b> : on montre que \(P\) est vraie <b>et</b> que \(Q\) est fausse.</li>
+</ul>
+
+<h3>5. Combiner les opérations et démontrer</h3>
+<p>On peut combiner ces opérations pour former des propositions plus élaborées et établir de nouvelles relations en construisant des tables de vérité. La méthode est toujours la même :</p>
+<ol>
+<li>lister toutes les combinaisons de valeurs des propositions de base (4 lignes pour \(P, Q\), 8 pour \(P, Q, R\)) ;</li>
+<li>calculer une colonne par morceau intermédiaire, du plus intérieur au plus extérieur ;</li>
+<li>comparer les deux colonnes finales : si elles sont identiques ligne à ligne, les deux propositions sont équivalentes.</li>
+</ol>
+
+<div class="ex"><b>Exemple 1 — La double négation.</b>
+<table>
+<thead><tr><th>\(P\)</th><th>\(\neg P\)</th><th>\(\neg(\neg P)\)</th></tr></thead>
+<tbody><tr><td>V</td><td>F</td><td>V</td></tr><tr><td>F</td><td>V</td><td>F</td></tr></tbody>
+</table>
+La première et la dernière colonne coïncident : \(P \Leftrightarrow \neg(\neg P)\).</div>
+
+<div class="ex"><b>Exemple 2 — Double implication et équivalence.</b> Montrons que \(((P \Rightarrow Q) \wedge (Q \Rightarrow P)) \Leftrightarrow (P \Leftrightarrow Q)\).
+<table>
+<thead><tr><th>\(P\)</th><th>\(Q\)</th><th>\(P \Rightarrow Q\)</th><th>\(Q \Rightarrow P\)</th><th>\((P \Rightarrow Q) \wedge (Q \Rightarrow P)\)</th><th>\(P \Leftrightarrow Q\)</th></tr></thead>
+<tbody>
+<tr><td>V</td><td>V</td><td>V</td><td>V</td><td>V</td><td>V</td></tr>
+<tr><td>V</td><td>F</td><td>F</td><td>V</td><td>F</td><td>F</td></tr>
+<tr><td>F</td><td>V</td><td>V</td><td>F</td><td>F</td><td>F</td></tr>
+<tr><td>F</td><td>F</td><td>V</td><td>V</td><td>V</td><td>V</td></tr>
+</tbody>
+</table>
+Les deux dernières colonnes sont les mêmes. Conséquence de méthode : démontrer « \(P \Leftrightarrow Q\) » revient à démontrer deux implications, « \(P \Rightarrow Q\) » puis « \(Q \Rightarrow P\) » (le fameux « sens direct » et « sens réciproque »).</div>
+
+<div class="ex"><b>Exemple 3 — La première loi de De Morgan.</b> Montrons que \(\neg(P \wedge Q) \Leftrightarrow (\neg P \vee \neg Q)\).
+<table>
+<thead><tr><th>\(P\)</th><th>\(Q\)</th><th>\(P \wedge Q\)</th><th>\(\neg(P \wedge Q)\)</th><th>\(\neg P\)</th><th>\(\neg Q\)</th><th>\(\neg P \vee \neg Q\)</th></tr></thead>
+<tbody>
+<tr><td>V</td><td>V</td><td>V</td><td>F</td><td>F</td><td>F</td><td>F</td></tr>
+<tr><td>V</td><td>F</td><td>F</td><td>V</td><td>F</td><td>V</td><td>V</td></tr>
+<tr><td>F</td><td>V</td><td>F</td><td>V</td><td>V</td><td>F</td><td>V</td></tr>
+<tr><td>F</td><td>F</td><td>F</td><td>V</td><td>V</td><td>V</td><td>V</td></tr>
+</tbody>
+</table>
+Colonnes 4 et 7 identiques : les deux propositions sont équivalentes.</div>
+
+<h3>6. Le théorème : les lois à connaître</h3>
+<div class="thm"><b>Théorème — Soient \(P, Q, R\) des assertions. Alors :</b>
+<ul>
+<li><b>Négation.</b> \(\neg(\neg P) \Leftrightarrow P\) (double négation) ; lois de De Morgan : \(\neg(P \wedge Q) \Leftrightarrow (\neg P \vee \neg Q)\) et \(\neg(P \vee Q) \Leftrightarrow (\neg P \wedge \neg Q)\).</li>
+<li><b>Idempotence.</b> \((P \vee P) \Leftrightarrow P\) et \((P \wedge P) \Leftrightarrow P\).</li>
+<li><b>Commutativité.</b> \((P \wedge Q) \Leftrightarrow (Q \wedge P)\) et \((P \vee Q) \Leftrightarrow (Q \vee P)\).</li>
+<li><b>Associativité.</b> \(((P \wedge Q) \wedge R) \Leftrightarrow (P \wedge (Q \wedge R))\), noté \(P \wedge Q \wedge R\) ; de même \(((P \vee Q) \vee R) \Leftrightarrow (P \vee (Q \vee R))\).</li>
+<li><b>Distributivité</b> (chacune sur l'autre). \(((P \wedge Q) \vee R) \Leftrightarrow ((P \vee R) \wedge (Q \vee R))\) et \(((P \vee Q) \wedge R) \Leftrightarrow ((P \wedge R) \vee (Q \wedge R))\).</li>
+<li><b>Implication.</b> \(((P \Rightarrow Q) \wedge (Q \Rightarrow P)) \Leftrightarrow (P \Leftrightarrow Q)\) ; \(((P \Rightarrow Q) \wedge (Q \Rightarrow R)) \Rightarrow (P \Rightarrow R)\) (transitivité : une implication, pas une équivalence) ; \((P \Rightarrow Q) \Leftrightarrow (\neg P \vee Q)\) ; \(\neg(P \Rightarrow Q) \Leftrightarrow (P \wedge \neg Q)\) ; \((P \Rightarrow Q) \Leftrightarrow (\neg Q \Rightarrow \neg P)\) (contraposée).</li>
+</ul></div>
+<p>Les deux distributivités sont cohérentes avec les ensembles : union et intersection se distribuent l'une sur l'autre (voir CM 3).</p>
+
+<h4>Conditions nécessaires et suffisantes</h4>
+<p>Puisque \((P \Leftrightarrow Q) \Leftrightarrow (P \Rightarrow Q \text{ et } Q \Rightarrow P)\), pour montrer une équivalence on peut montrer séparément les implications dans chaque sens. On sépare ainsi condition nécessaire et condition suffisante :</p>
+<ul>
+<li>\(P \Rightarrow Q\) signifie que \(Q\) est une condition <b>nécessaire</b> pour que \(P\) soit vraie ;</li>
+<li>\(Q \Rightarrow P\) signifie que \(Q\) est une condition <b>suffisante</b> pour que \(P\) soit vraie ;</li>
+<li>quand \(P \Leftrightarrow Q\), \(Q\) est une condition <b>nécessaire et suffisante</b> (CNS) pour \(P\).</li>
+</ul>
+
+<div class="warn"><b>Piège — Contraposée ≠ réciproque.</b> C'est l'erreur la plus fréquente. Une implication est équivalente à sa contraposée, jamais à sa réciproque.</div>
+<table>
+<thead><tr><th></th><th>Implication</th><th>Équivalente à…</th></tr></thead>
+<tbody>
+<tr><td><b>directe</b></td><td>\(P \Rightarrow Q\)</td><td>sa <b>contraposée</b> \(\neg Q \Rightarrow \neg P\)</td></tr>
+<tr><td><b>réciproque</b></td><td>\(Q \Rightarrow P\)</td><td>sa contraposée \(\neg P \Rightarrow \neg Q\)</td></tr>
+</tbody>
+</table>
+<p>Chaque ligne contient deux façons de dire la même chose ; en revanche la directe et la réciproque ne sont <b>pas</b> équivalentes entre elles (et les deux contraposées non plus). « S'il pleut, le sol est mouillé » n'a pas le même sens que « si le sol est mouillé, il pleut ».</p>
+
+<h3>7. Nier une proposition</h3>
+<p>Les lois précédentes servent surtout à écrire la négation d'un énoncé compliqué, opération demandée en permanence et indispensable pour la contraposée ou l'absurde.</p>
+<table>
+<thead><tr><th>Proposition</th><th>Sa négation</th><th>Loi utilisée</th></tr></thead>
+<tbody>
+<tr><td>\(P\)</td><td>\(\neg P\)</td><td>double négation</td></tr>
+<tr><td>\(P \wedge Q\)</td><td>\(\neg P \vee \neg Q\)</td><td>De Morgan</td></tr>
+<tr><td>\(P \vee Q\)</td><td>\(\neg P \wedge \neg Q\)</td><td>De Morgan</td></tr>
+<tr><td>\(P \Rightarrow Q\)</td><td>\(P \wedge \neg Q\)</td><td>négation de l'implication</td></tr>
+</tbody>
+</table>
+<p>La règle pratique : on nie chaque morceau et on échange « et » et « ou ». Pour l'implication, la négation n'est pas une implication : nier « si \(P\) alors \(Q\) », c'est affirmer « \(P\) est vraie et pourtant \(Q\) est fausse », exactement l'unique ligne fausse de la table.</p>
+<div class="ex"><b>Exemples —</b> Négation de « \(a = 0\) et \(b = 0\) » : « \(a \neq 0\) ou \(b \neq 0\) » (et non « \(a \neq 0\) et \(b \neq 0\) »). Négation de « si \(n\) est pair alors \(n^2\) est pair » : « \(n\) est pair et \(n^2\) est impair ».</div>
+
+<h2>Partie II — Conséquences sur le raisonnement</h2>
+
+<h3>8. Le raisonnement déductif</h3>
+<div class="thm"><b>Principe —</b> Si \(P\) est vraie et si \(P \Rightarrow Q\), alors \(Q\) est vraie.</div>
+<p>Il se prolonge en chaîne : si \(P_0\) est vraie, et si \(P_0 \Rightarrow P_1\), \(P_1 \Rightarrow P_2\), …, \(P_{k-1} \Rightarrow P_k\), alors \(P_k\) est vraie. C'est la transitivité de l'implication, appliquée autant de fois que nécessaire.</p>
+<p>\[ P_0 \Rightarrow P_1 \Rightarrow P_2 \Rightarrow \cdots \Rightarrow P_k \]</p>
+<p>La vérité se propage le long des flèches. Deux choses seulement sont à fournir : un point de départ vrai, et des implications valides. Si la première case est fausse, toute la chaîne ne prouve rien.</p>
+<p>C'est le raisonnement le plus utilisé ; le plus souvent \(P \Rightarrow Q\) est assez évidente pour être sous-entendue, et on écrit simplement « \(P\), donc \(Q\) ». Exemple : « \(n\) est divisible par 4 donc \(n\) est divisible par 2 » utilise sans le dire « être divisible par 4 implique être divisible par 2 ».</p>
+
+<h3>9. Le raisonnement par récurrence</h3>
+<p>La chaîne précédente est finie. Que faire lorsqu'il y a une infinité de propositions à démontrer, une pour chaque entier ? On utilise la récurrence.</p>
+<div class="thm"><b>Principe de récurrence —</b> Si \(P_0\) est vraie et si \(\forall k \in \mathbb{N},\ P_k \Rightarrow P_{k+1}\), alors \(\forall k \in \mathbb{N},\ P_k\) est vraie.</div>
+<ul>
+<li>l'<b>initialisation</b> (ou amorce) : vérifier que \(P_0\) est vraie ;</li>
+<li>l'<b>hérédité</b> : supposer \(P_k\) vraie pour un \(k\) quelconque, et en déduire \(P_{k+1}\).</li>
+</ul>
+<p>Une démonstration par récurrence comporte toujours ces deux étapes, et une seule ne suffit jamais.</p>
+<p>\[ P_0 \Rightarrow P_1 \Rightarrow P_2 \Rightarrow \cdots \Rightarrow P_k \Rightarrow P_{k+1} \Rightarrow \cdots \]</p>
+<p>L'image des dominos : l'hérédité garantit que chaque domino renverse le suivant, mais elle ne fait rien tomber toute seule ; l'initialisation donne la première poussée. Il faut impérativement les deux.</p>
+<div class="note"><b>Remarque —</b> Dans l'hérédité, on suppose \(P_k\) vraie : ce n'est pas de la triche, c'est justement le sens de l'implication \(P_k \Rightarrow P_{k+1}\). On ne démontre pas \(P_k\), on démontre le lien entre \(P_k\) et \(P_{k+1}\).</div>
+
+<h3>10. Le raisonnement par contraposition</h3>
+<p>Rappel de la loi qui le justifie : \((P \Rightarrow Q) \Leftrightarrow (\neg Q \Rightarrow \neg P)\). Donc, pour montrer que \(P \Rightarrow Q\), on peut à la place montrer que \(\neg Q \Rightarrow \neg P\) : on a toujours deux options, l'implication directe ou sa contraposée, et on fait le choix qui semble le plus commode. On y gagne chaque fois que \(\neg Q\) est plus maniable que \(Q\), typiquement quand \(Q\) contient un « et » : sa négation devient un « ou » par De Morgan, ce qui offre deux cas simples à traiter.</p>
+
+<div class="ex"><b>Exemple du cours —</b> Soient \(a, b \in \mathbb{N}\). Montrer que : <b>\(ab\) impair \(\Rightarrow\) (\(a\) impair et \(b\) impair)</b>.
+<p>Attaquer de front est pénible : de « \(ab\) impair » on ne tire pas directement une information sur \(a\) et sur \(b\). On montre donc la contraposée :</p>
+<ul>
+<li>négation de la conclusion : \(\neg(a \text{ impair et } b \text{ impair})\), c'est-à-dire, par De Morgan, « \(a\) pair ou \(b\) pair » ;</li>
+<li>négation de l'hypothèse : \(\neg(ab \text{ impair})\), c'est-à-dire « \(ab\) pair ».</li>
+</ul>
+<p>\[ (a \text{ pair ou } b \text{ pair}) \Rightarrow ab \text{ pair} \]</p></div>
+<div class="proof"><b>Preuve —</b> Supposons \(a\) pair ou \(b\) pair. Si \(a\) est pair, il existe \(a' \in \mathbb{N}\) tel que \(a = 2a'\), alors \(ab = 2a'b = 2(a'b)\) est pair. Si \(b\) est pair, le même calcul avec \(b = 2b'\) donne \(ab = 2(ab')\), pair. Dans les deux cas \(ab\) est pair : la contraposée est démontrée, donc l'implication de départ aussi. ∎</div>
+<div class="note"><b>Complément —</b> Deux cousins du même mécanisme : le <b>raisonnement par l'absurde</b> (pour montrer \(P\), on suppose \(\neg P\) et on aboutit à une contradiction ; traité au CM 2 avec \(\sqrt{2}\) irrationnel) et le <b>contre-exemple</b> (pour montrer qu'une propriété « pour tout \(x\), \(P(x)\) » est fausse, il suffit d'exhiber un seul \(x\) pour lequel \(P(x)\) est fausse).</div>
+
+<h2>Pour réviser — glossaire et synthèse</h2>
+<table>
+<thead><tr><th>Symbole</th><th>Se lit</th><th>Vrai quand</th></tr></thead>
+<tbody>
+<tr><td>\(\neg P\)</td><td>non \(P\)</td><td>\(P\) est faux</td></tr>
+<tr><td>\(\wedge\)</td><td>et</td><td>les deux</td></tr>
+<tr><td>\(\vee\)</td><td>ou (inclusif)</td><td>au moins un</td></tr>
+<tr><td>\(\Rightarrow\)</td><td>implique</td><td>sauf si V ⇒ F</td></tr>
+<tr><td>\(\Leftrightarrow\)</td><td>équivaut à</td><td>même valeur</td></tr>
+<tr><td>\(\forall\)</td><td>pour tout</td><td>(quantificateur, voir CM 2)</td></tr>
+<tr><td>\(\in \mathbb{N},\ \in \mathbb{R}\)</td><td>appartient aux entiers naturels, aux réels</td><td>—</td></tr>
+</tbody>
+</table>
+<table>
+<thead><tr><th>Notion</th><th>Définition</th></tr></thead>
+<tbody>
+<tr><td>Table de vérité</td><td>Tableau donnant la valeur d'une proposition composée pour chaque combinaison de valeurs des propositions de base. 2 propositions : 4 lignes ; 3 : 8 lignes.</td></tr>
+<tr><td>Équivalence</td><td>Deux propositions sont équivalentes quand leurs colonnes de vérité coïncident ligne à ligne. On l'établit par une table, ou par une double implication.</td></tr>
+<tr><td>Réciproque</td><td>La réciproque de \(P \Rightarrow Q\) est \(Q \Rightarrow P\). Elle n'est pas équivalente à l'implication de départ.</td></tr>
+<tr><td>Contraposée</td><td>La contraposée de \(P \Rightarrow Q\) est \(\neg Q \Rightarrow \neg P\). Elle est équivalente à l'implication de départ.</td></tr>
+<tr><td>Lois de De Morgan</td><td>\(\neg(P \wedge Q) \Leftrightarrow \neg P \vee \neg Q\) et \(\neg(P \vee Q) \Leftrightarrow \neg P \wedge \neg Q\) : on nie chaque morceau et on échange « et » et « ou ».</td></tr>
+<tr><td>Transitivité</td><td>\(((P \Rightarrow Q) \wedge (Q \Rightarrow R)) \Rightarrow (P \Rightarrow R)\) : autorise les chaînes de déduction.</td></tr>
+<tr><td>Condition nécessaire / suffisante</td><td>\(P \Rightarrow Q\) : \(Q\) est nécessaire pour \(P\) ; \(Q \Rightarrow P\) : \(Q\) est suffisante pour \(P\) ; \(P \Leftrightarrow Q\) : CNS.</td></tr>
+<tr><td>Initialisation / hérédité</td><td>Les deux étapes obligatoires d'une récurrence : \(P_0\) vraie, puis \(\forall k,\ P_k \Rightarrow P_{k+1}\).</td></tr>
+</tbody>
+</table>
+<p>Synthèse : tout le chapitre repose sur une seule idée, une proposition composée est entièrement décrite par sa table de vérité. Les lois du théorème ne sont que des tables qui coïncident, et les trois modes de raisonnement ne sont que des lois relues comme des méthodes.</p>
+<table>
+<thead><tr><th>Le réflexe</th><th>La loi derrière</th></tr></thead>
+<tbody>
+<tr><td>Démontrer une équivalence en deux implications</td><td>\(((P \Rightarrow Q) \wedge (Q \Rightarrow P)) \Leftrightarrow (P \Leftrightarrow Q)\)</td></tr>
+<tr><td>Enchaîner les étapes d'une démonstration</td><td>\(((P \Rightarrow Q) \wedge (Q \Rightarrow R)) \Rightarrow (P \Rightarrow R)\)</td></tr>
+<tr><td>Retourner un énoncé difficile à attaquer de front</td><td>\((P \Rightarrow Q) \Leftrightarrow (\neg Q \Rightarrow \neg P)\)</td></tr>
+<tr><td>Nier un « et » ou un « ou »</td><td>\(\neg(P \wedge Q) \Leftrightarrow \neg P \vee \neg Q\)</td></tr>
+<tr><td>Nier une implication</td><td>\(\neg(P \Rightarrow Q) \Leftrightarrow P \wedge \neg Q\)</td></tr>
+<tr><td>Démontrer une propriété pour tout entier</td><td>\(P_0\) et \((\forall k,\ P_k \Rightarrow P_{k+1})\)</td></tr>
+</tbody>
+</table>
+<div class="warn"><b>Le piège d'examen —</b> Confondre réciproque et contraposée, et écrire \(\neg(P \Rightarrow Q)\) sous la forme d'une implication. Retenez les deux réponses : la contraposée de \(P \Rightarrow Q\) est \(\neg Q \Rightarrow \neg P\), et sa négation est \(P \wedge \neg Q\), qui n'est pas une implication du tout.</div>
+
+<div class="retenir"><b>À retenir —</b> Une proposition est vraie ou fausse ; tout se lit dans la table de vérité. \(P \Rightarrow Q\) n'est fausse que si \(P\) est vraie et \(Q\) fausse ; \((P \Rightarrow Q) \Leftrightarrow (\neg P \vee Q)\). Contraposée : \((P \Rightarrow Q) \Leftrightarrow (\neg Q \Rightarrow \neg P)\), jamais la réciproque. Nier : on nie chaque morceau et on échange « et » et « ou » ; \(\neg(P \Rightarrow Q) \Leftrightarrow P \wedge \neg Q\). Une équivalence se montre en deux implications (condition nécessaire, condition suffisante). Récurrence : initialisation + hérédité, toujours les deux.</div>

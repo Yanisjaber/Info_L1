@@ -1,0 +1,923 @@
+{
+ "id": "devenir",
+ "seances": [
+  {
+   "id": "cm-1",
+   "type": "CM",
+   "numero": 1,
+   "date": "2026-09-11",
+   "titre": "Connaître son université",
+   "resume": "Présentation de l'UE (3 ECTS), services de l'UPS, règles d'évaluation M3C (seconde chance, ABJ/ABI), inscriptions, Moodle/ENT, CRL et test ELAO, lien assiduité-réussite et méthode de travail.",
+   "pdf": "pdf/devenir/CM_1_11-09.pdf",
+   "fichier": "data/content/devenir/cm-1.html"
+  },
+  {
+   "id": "cm-2",
+   "type": "CM",
+   "numero": 2,
+   "date": "2026-09-25",
+   "titre": "Étudier à l'ère de l'IA",
+   "resume": "IA générative et LLM (token, Transformer), limites (hallucinations, biais, impact environnemental), risques pour l'apprentissage, techniques de prompt, RAG, charte d'usage de l'UPS, 4 étapes D et usages à risque faible ou fort.",
+   "pdf": "pdf/devenir/CM_2_25-09.pdf",
+   "fichier": "data/content/devenir/cm-2.html"
+  },
+  {
+   "id": "td-2",
+   "type": "TD",
+   "numero": 2,
+   "date": "2026-09-22",
+   "titre": "TD 2 (sans contenu exploitable)",
+   "resume": "Séance sans support ni notes : aucune fiche de révision possible pour l'instant.",
+   "pdf": "pdf/devenir/TD_2_22-09.pdf",
+   "fichier": "data/content/devenir/td-2.html"
+  }
+ ],
+ "qcm": [
+  {
+   "id": "devenir-q001",
+   "seance": "cm-1",
+   "type": "unique",
+   "q": "Quel est le volume de l'UE « Devenir Étudiant-e » ?",
+   "choix": [
+    "3 ECTS, 10 h de CM + 18 h de TD",
+    "3 ECTS, 18 h de CM + 10 h de TD",
+    "6 ECTS, 10 h de CM + 18 h de TD",
+    "3 ECTS, 28 h de TD uniquement"
+   ],
+   "rep": [
+    0
+   ],
+   "expl": "L'UE vaut 3 ECTS avec 10 h de CM et 18 h de TD (dont 2 h SCUIO, 2 h CRL et 1 h BU inclus dans les TD).",
+   "niveau": 1
+  },
+  {
+   "id": "devenir-q002",
+   "seance": "cm-1",
+   "type": "unique",
+   "q": "D'après les chiffres du cours, quelle proportion d'étudiants ayant un projet de formation est en situation de réussite, comparée à ceux qui n'en ont pas ?",
+   "choix": [
+    "Environ 82 % contre environ 57 %",
+    "Environ 25 % contre environ 60 %",
+    "Environ 60 % contre environ 25 %",
+    "Environ 90 % contre environ 50 %"
+   ],
+   "rep": [
+    2
+   ],
+   "expl": "Environ 60 % de réussite avec un projet de formation, contre seulement environ 25 % sans. (82 % et 57 % sont des taux de réussite selon les ABI.)",
+   "niveau": 1
+  },
+  {
+   "id": "devenir-q003",
+   "seance": "cm-1",
+   "type": "unique",
+   "q": "Quel est le principe de la « seconde chance » dans le contrôle continu intégral ?",
+   "choix": [
+    "La meilleure note de l'UE remplace la plus faible",
+    "La dernière épreuve de l'UE remplace toutes les notes qui lui sont inférieures",
+    "La dernière épreuve remplace toutes les autres notes, quelles qu'elles soient",
+    "Une session de rattrapage est organisée pour toutes les UE"
+   ],
+   "rep": [
+    1
+   ],
+   "expl": "La dernière épreuve de l'UE remplace toutes les notes qui lui sont <b>inférieures</b> : les notes supérieures sont conservées, et ce n'est pas une session de rattrapage.",
+   "niveau": 1
+  },
+  {
+   "id": "devenir-q004",
+   "seance": "cm-1",
+   "type": "unique",
+   "q": "UE de 3 ECTS, 3 épreuves de coefficients 25 % / 25 % / 50 % et de notes 6, 14 et 10 (dans l'ordre). Quelle est la moyenne avec seconde chance ?",
+   "choix": [
+    "10",
+    "10,5",
+    "9",
+    "11"
+   ],
+   "rep": [
+    3
+   ],
+   "expl": "La dernière épreuve (10) remplace les notes qui lui sont inférieures : seul le 6 est remplacé. Moyenne = 0,25×10 + 0,25×14 + 0,5×10 = 2,5 + 3,5 + 5 = 11. Sans seconde chance : 1,5 + 3,5 + 5 = 10.",
+   "niveau": 2
+  },
+  {
+   "id": "devenir-q005",
+   "seance": "cm-1",
+   "type": "multiple",
+   "q": "Quelles affirmations sur les règles générales d'évaluation (M3C) sont exactes ?",
+   "choix": [
+    "Une UE de 3 ECTS comporte 4 épreuves",
+    "Aucune épreuve ne peut peser plus de 50 %",
+    "Aucune évaluation ne peut durer plus de 1h30",
+    "Une UE de 6 ECTS comporte 4 épreuves"
+   ],
+   "rep": [
+    1,
+    2,
+    3
+   ],
+   "expl": "3 épreuves pour une UE de 3 ECTS, 4 pour une UE de 6 ECTS ; une épreuve pèse au plus 50 % et une évaluation dure au plus 1h30.",
+   "niveau": 2
+  },
+  {
+   "id": "devenir-q006",
+   "seance": "cm-1",
+   "type": "unique",
+   "q": "Vous êtes absent (justifié ou non) à une seule épreuve d'un CC. Quelle est la conséquence ?",
+   "choix": [
+    "0 à cette épreuve, pas à tout le CC",
+    "0 au CC entier",
+    "La note est neutralisée et la moyenne recalculée",
+    "Une épreuve de substitution est systématiquement organisée"
+   ],
+   "rep": [
+    0
+   ],
+   "expl": "ABJ ou ABI à une épreuve d'un CC : 0 à cette épreuve seulement. Le 0 au CC entier n'arrive que si l'on est absent à toutes les épreuves du CC.",
+   "niveau": 1
+  },
+  {
+   "id": "devenir-q007",
+   "seance": "cm-1",
+   "type": "unique",
+   "q": "Absence justifiée (ABJ) au dernier CC de l'UE (celui de la seconde chance) : que se passe-t-il ?",
+   "choix": [
+    "0 au CC",
+    "Aucune conséquence : la note est ignorée",
+    "La note de l'avant-dernière épreuve est reprise",
+    "Une épreuve de substitution"
+   ],
+   "rep": [
+    3
+   ],
+   "expl": "ABJ au dernier CC : épreuve de substitution. Avec une ABI (injustifiée), c'est 0 au CC. D'où l'importance du justificatif.",
+   "niveau": 2
+  },
+  {
+   "id": "devenir-q008",
+   "seance": "cm-1",
+   "type": "unique",
+   "q": "Dans quel délai et à qui remettre un justificatif d'absence pour un CC passé en TD ou TP ?",
+   "choix": [
+    "Dans les 5 jours, au secrétariat",
+    "Dans les 5 jours, à l'enseignant",
+    "Avant la fin du semestre, au CROUS",
+    "Dans les 15 jours, à l'enseignant"
+   ],
+   "rep": [
+    1
+   ],
+   "expl": "Justificatif à amener dans les 5 jours après l'épreuve : au secrétariat pour un CC en amphi, à l'enseignant pour un CC en TP ou TD.",
+   "niveau": 1
+  },
+  {
+   "id": "devenir-q009",
+   "seance": "cm-1",
+   "type": "unique",
+   "q": "Quelle inscription permet d'être dans un groupe de TD, de passer les examens et de valider les UE et le diplôme ?",
+   "choix": [
+    "L'inscription pédagogique (IPWeb)",
+    "L'inscription administrative (IAWeb)",
+    "La création du compte ENT",
+    "L'inscription sur la page Moodle de l'UE"
+   ],
+   "rep": [
+    0
+   ],
+   "expl": "L'inscription pédagogique (semestrielle, via IPWeb) est le contrat pédagogique. L'inscription administrative (annuelle, IAWeb) donne le statut d'étudiant, la sécu, la carte étudiante, l'accès au CROUS.",
+   "niveau": 2
+  },
+  {
+   "id": "devenir-q010",
+   "seance": "cm-1",
+   "type": "unique",
+   "q": "Où passent les informations pédagogiques (cours, TD, annonces) et pourquoi faut-il s'y inscrire ?",
+   "choix": [
+    "Sur l'ENT : les enseignants y publient directement leurs annonces",
+    "Uniquement par le secrétariat pédagogique de la FSI",
+    "Sur Moodle : les enseignants n'ont pas accès à l'ENT, et il faut s'inscrire à chaque UE suivie",
+    "Sur Celcat, l'outil d'emploi du temps"
+   ],
+   "rep": [
+    2
+   ],
+   "expl": "Les enseignants et secrétariats n'ont pas accès à l'ENT : tout passe par Moodle, avec une inscription à la page de chaque UE suivie ce semestre.",
+   "niveau": 1
+  },
+  {
+   "id": "devenir-q011",
+   "seance": "cm-1",
+   "type": "multiple",
+   "q": "À propos du test ELAO, lesquelles sont vraies ?",
+   "choix": [
+    "Il se prépare en révisant avant la séance",
+    "Il détermine les modules de langues suivis en L1 et L2",
+    "Il est obligatoire pour s'inscrire ensuite aux UE de langues",
+    "Il ne se prépare pas"
+   ],
+   "rep": [
+    1,
+    2,
+    3
+   ],
+   "expl": "Le test ELAO mesure le niveau d'anglais, ne se prépare pas, et est obligatoire pour s'inscrire aux UE de langues. Penser à la carte étudiante et aux identifiants UT.",
+   "niveau": 2
+  },
+  {
+   "id": "devenir-q012",
+   "seance": "cm-1",
+   "type": "unique",
+   "q": "Un étudiant cumule 7 absences injustifiées (ABI) en L1. Quel est le taux de réussite approximatif de cette tranche d'étudiants ?",
+   "choix": [
+    "82 %",
+    "57 %",
+    "2 %",
+    "41 %"
+   ],
+   "rep": [
+    3
+   ],
+   "expl": "0 ABI : environ 82 % ; 1 à 5 ABI : 57 % ; 6 à 10 ABI : 41 % ; plus de 10 ABI : 2 %. 7 ABI est dans la tranche 6 à 10.",
+   "niveau": 2
+  },
+  {
+   "id": "devenir-q013",
+   "seance": "cm-1",
+   "type": "unique",
+   "q": "Que doit faire l'étudiant au CRL pour l'UE DVE ?",
+   "choix": [
+    "Trois séances de 2 h réparties sur tout le semestre",
+    "Une séance de 1 h consacrée au seul test ELAO",
+    "Une séance de 2 h pour 3 activités (ressources, test ELAO, atelier avec un tuteur), entre les semaines 40 et 47",
+    "Une séance de 2 h, à faire à n'importe quel moment de l'année"
+   ],
+   "rep": [
+    2
+   ],
+   "expl": "Une séance de 2 h pour 3 activités (découverte des ressources 45', test ELAO 20-45', atelier avec un tuteur 30'), à faire entre les semaines 40 et 47, avec inscription sur resatoul.utoulouse.fr.",
+   "niveau": 1
+  },
+  {
+   "id": "devenir-q014",
+   "seance": "cm-1",
+   "type": "unique",
+   "q": "Quel service s'occupe des aménagements d'études et d'examens pour les étudiants en situation de handicap ?",
+   "choix": [
+    "Le Pôle Handicap (PHE)",
+    "Le PASAE",
+    "Le SCUIO-IP",
+    "Le Service Santé Étudiante"
+   ],
+   "rep": [
+    0
+   ],
+   "expl": "Le Pôle Handicap (PHE, Forum Louis Lareng RDC). Le PASAE gère les aides sociales et financières, le SCUIO-IP l'orientation et l'insertion, le Service Santé les consultations.",
+   "niveau": 1
+  },
+  {
+   "id": "devenir-q015",
+   "seance": "cm-2",
+   "type": "unique",
+   "q": "Quelle est la bonne relation d'inclusion entre les domaines vus en cours ?",
+   "choix": [
+    "LLM ⊃ IA générative ⊃ Machine Learning ⊃ IA",
+    "Machine Learning ⊃ IA ⊃ LLM ⊃ IA générative",
+    "Ce sont quatre domaines indépendants",
+    "IA ⊃ Machine Learning ⊃ IA générative ⊃ LLM"
+   ],
+   "rep": [
+    3
+   ],
+   "expl": "Chaque sous-domaine est inclus dans le précédent : IA (1956) ⊃ Machine Learning (1959-1960s) ⊃ IA générative ⊃ LLM (2018).",
+   "niveau": 1
+  },
+  {
+   "id": "devenir-q016",
+   "seance": "cm-2",
+   "type": "unique",
+   "q": "Détecter les spams à partir de mails étiquetés à l'avance (« spam » / « pas spam ») relève de quel type d'apprentissage ?",
+   "choix": [
+    "Non-supervisé",
+    "Supervisé",
+    "Par renforcement",
+    "Génératif"
+   ],
+   "rep": [
+    1
+   ],
+   "expl": "Supervisé : les données sont étiquetées à l'avance. Non-supervisé : pas d'étiquettes, l'algorithme regroupe lui-même (ex. moteurs de recommandation). Renforcement : récompense / pénalité (jeux vidéo, robotique).",
+   "niveau": 2
+  },
+  {
+   "id": "devenir-q017",
+   "seance": "cm-2",
+   "type": "unique",
+   "q": "Que fait un LLM à chaque étape de génération ?",
+   "choix": [
+    "Il calcule le token le plus probable pour continuer le texte",
+    "Il cherche la réponse exacte dans une base de faits vérifiés",
+    "Il comprend le sens de la question comme un humain puis rédige",
+    "Il recopie un passage de son corpus d'entraînement"
+   ],
+   "rep": [
+    0
+   ],
+   "expl": "Un LLM est un prédicteur très sophistiqué : il prédit uniquement le prochain token, un token après l'autre. D'où l'absence de compréhension réelle et le risque d'inventer.",
+   "niveau": 1
+  },
+  {
+   "id": "devenir-q018",
+   "seance": "cm-2",
+   "type": "unique",
+   "q": "Qu'est-ce qu'un token ?",
+   "choix": [
+    "Un mot entier exclusivement",
+    "Une phrase complète",
+    "La plus petite unité de texte qu'un modèle comprend (mot, partie de mot ou ponctuation)",
+    "Un identifiant de connexion à l'outil d'IA"
+   ],
+   "rep": [
+    2
+   ],
+   "expl": "Un token peut être un mot (« étudiant »), une partie de mot (« intel » + « igence ») ou un signe de ponctuation. « L'IA est utile. » fait 5 tokens.",
+   "niveau": 1
+  },
+  {
+   "id": "devenir-q019",
+   "seance": "cm-2",
+   "type": "unique",
+   "q": "Sur quoi repose l'architecture Transformer (2017, « Attention is all you need ») ?",
+   "choix": [
+    "Un étiquetage manuel de tous les textes",
+    "Un mécanisme d'attention qui pondère l'importance des mots d'une phrase les uns par rapport aux autres",
+    "Une base de connaissances externe interrogée à chaque question",
+    "Une lecture strictement dans l'ordre, mot par mot"
+   ],
+   "rep": [
+    1
+   ],
+   "expl": "Le mécanisme d'attention rend l'entraînement sur d'énormes corpus plus efficace et ouvre la voie aux LLM modernes. La base externe interrogée est le principe du RAG.",
+   "niveau": 2
+  },
+  {
+   "id": "devenir-q020",
+   "seance": "cm-2",
+   "type": "multiple",
+   "q": "Parmi ces propositions, lesquelles sont des limites majeures des LLM citées en cours ?",
+   "choix": [
+    "Les biais",
+    "L'incapacité à produire du texte long",
+    "L'impact environnemental",
+    "Les hallucinations",
+    "Le manque de langues disponibles"
+   ],
+   "rep": [
+    0,
+    2,
+    3
+   ],
+   "expl": "Les cinq limites du cours : absence de compréhension réelle, hallucinations, dépendance aux données, biais, impact environnemental. Les deux autres propositions n'en font pas partie.",
+   "niveau": 2
+  },
+  {
+   "id": "devenir-q021",
+   "seance": "cm-2",
+   "type": "unique",
+   "q": "Qu'illustre l'exemple « trois citations de Shakespeare sur Beyoncé » ?",
+   "choix": [
+    "Que les LLM ne savent pas citer d'auteurs",
+    "Que les modèles récents ne font jamais d'hallucinations",
+    "Qu'un modèle ancien invente de fausses citations sans prévenir, un modèle récent signale l'anachronisme, mais le risque ne disparaît jamais complètement",
+    "Que Shakespeare a bien écrit sur des artistes contemporains"
+   ],
+   "rep": [
+    2
+   ],
+   "expl": "Shakespeare est mort en 1616 et Beyoncé est née en 1981. Les modèles progressent mais le risque d'hallucination ne disparaît jamais complètement.",
+   "niveau": 2
+  },
+  {
+   "id": "devenir-q022",
+   "seance": "cm-2",
+   "type": "unique",
+   "q": "Qui sont les « travailleurs du clic » ?",
+   "choix": [
+    "Des personnes qui étiquettent manuellement les données d'entraînement (classer, corriger, filtrer)",
+    "Des utilisateurs qui paient chaque requête envoyée",
+    "Des ingénieurs qui conçoivent les Transformers",
+    "Des modérateurs qui vérifient chaque réponse avant affichage"
+   ],
+   "rep": [
+    0
+   ],
+   "expl": "Des entreprises spécialisées emploient ces travailleurs pour étiqueter les données : un aspect peu visible mais essentiel de la chaîne de production des LLM, et un enjeu social et éthique.",
+   "niveau": 1
+  },
+  {
+   "id": "devenir-q023",
+   "seance": "cm-2",
+   "type": "unique",
+   "q": "D'après le tableau de la DRANE Versailles (1,83 Wh pour GPT-4o mini, 55 Wh pour Llama 3.1 405B, discussions comparables), Llama 3.1 405B consomme environ combien de fois plus d'énergie ?",
+   "choix": [
+    "Environ 2 fois",
+    "Environ 10 fois",
+    "Environ 400 fois",
+    "Environ 30 fois"
+   ],
+   "rep": [
+    3
+   ],
+   "expl": "55 / 1,83 ≈ 30. Le cours en tire l'intérêt de choisir un modèle adapté à la tâche plutôt que le plus gros (« IA frugale »).",
+   "niveau": 2
+  },
+  {
+   "id": "devenir-q024",
+   "seance": "cm-2",
+   "type": "unique",
+   "q": "Selon l'étude Anthropic (taxonomie de Bloom), quel niveau de compétence domine les usages étudiants de Claude ?",
+   "choix": [
+    "Se souvenir",
+    "Créer",
+    "Évaluer",
+    "Comprendre"
+   ],
+   "rep": [
+    1
+   ],
+   "expl": "Créer 39,8 %, Analyser 30,2 %, Appliquer 10,9 %, Comprendre 10,0 %, Évaluer 5,5 %, Se souvenir 1,8 %. Les usages se concentrent sur le haut niveau, ce qui pose la question du remplacement du travail de compréhension et de mémorisation.",
+   "niveau": 2
+  },
+  {
+   "id": "devenir-q025",
+   "seance": "cm-2",
+   "type": "unique",
+   "q": "Quel est le résultat de l'étude de Fan et al. (2025) sur 117 étudiants (« paresse métacognitive ») ?",
+   "choix": [
+    "Le groupe ChatGPT obtient de meilleurs scores à l'essai, mais sans gain ni transfert de connaissances significativement supérieur",
+    "Le groupe ChatGPT apprend significativement mieux que les autres groupes",
+    "Le groupe avec expert humain obtient les pires scores",
+    "Il n'y a aucune différence entre les groupes sur l'essai"
+   ],
+   "rep": [
+    0
+   ],
+   "expl": "Le résultat s'améliore mais l'apprentissage réel ne suit pas forcément : la dépendance aux outils d'IA générative peut déclencher une « paresse métacognitive ».",
+   "niveau": 2
+  },
+  {
+   "id": "devenir-q026",
+   "seance": "cm-2",
+   "type": "unique",
+   "q": "Demander au LLM de critiquer sa propre réponse (points forts / faibles, suggestions) puis de produire une version améliorée correspond à quelle technique de prompt ?",
+   "choix": [
+    "Spécifier le contexte et le résultat final",
+    "Extraction de connaissances",
+    "Critique et auto-critique",
+    "RAG"
+   ],
+   "rep": [
+    2
+   ],
+   "expl": "Technique 3 : critique et auto-critique (exemple du résumé d'Aladdin). Technique 1 : préciser forme, public, style, sources. Technique 2 : définir les caractéristiques d'une bonne réponse.",
+   "niveau": 1
+  },
+  {
+   "id": "devenir-q027",
+   "seance": "cm-2",
+   "type": "multiple",
+   "q": "Quels sont les intérêts du RAG (Retrieval-Augmented Generation) ?",
+   "choix": [
+    "Réduire les hallucinations",
+    "Actualiser les connaissances au-delà de la date d'entraînement",
+    "Expliquer les réponses avec des références fiables",
+    "Rendre inutile la vérification par l'étudiant"
+   ],
+   "rep": [
+    0,
+    1,
+    2
+   ],
+   "expl": "Le RAG cherche dans une base ou des documents externes, puis génère une réponse fondée sur des sources vérifiables. Il ne dispense pas de vérifier.",
+   "niveau": 2
+  },
+  {
+   "id": "devenir-q028",
+   "seance": "cm-2",
+   "type": "unique",
+   "q": "Quelle est la différence entre un chatbot classique et l'IA agentique ?",
+   "choix": [
+    "Le chatbot agit de façon autonome ; l'IA agentique répond à chaque requête",
+    "Il n'y a aucune différence",
+    "L'IA agentique ne fonctionne qu'avec des images",
+    "L'IA agentique poursuit des objectifs de manière autonome, en planifiant et exécutant plusieurs étapes ; le chatbot répond de façon réactive"
+   ],
+   "rep": [
+    3
+   ],
+   "expl": "On passe d'une IA qui répond à une IA qui agit, sans intervention humaine constante.",
+   "niveau": 1
+  },
+  {
+   "id": "devenir-q029",
+   "seance": "cm-2",
+   "type": "unique",
+   "q": "Lequel de ces éléments ne fait PAS partie des six principes de la Charte du bon usage des IA génératives de l'UPS ?",
+   "choix": [
+    "Transparence",
+    "Protection des données",
+    "Rapidité de production",
+    "Intégrité académique"
+   ],
+   "rep": [
+    2
+   ],
+   "expl": "Les six principes : transparence, équité et non-discrimination, responsabilité, intégrité académique, protection des données, développement de compétences.",
+   "niveau": 2
+  },
+  {
+   "id": "devenir-q030",
+   "seance": "cm-2",
+   "type": "unique",
+   "q": "Quelle étape des « quatre D » consiste à vérifier les résultats, à réfléchir avec esprit critique et à distinguer le vrai du faux ?",
+   "choix": [
+    "Discerner",
+    "Déléguer",
+    "Décrire",
+    "Diligence"
+   ],
+   "rep": [
+    0
+   ],
+   "expl": "Déléguer : choisir les tâches confiables à l'IA. Décrire : outil adapté et prompt clair. Discerner : vérifier et esprit critique. Diligence : IA comme guide, décider de ce qu'on intègre.",
+   "niveau": 1
+  },
+  {
+   "id": "devenir-q031",
+   "seance": "cm-2",
+   "type": "unique",
+   "q": "Lequel de ces usages est à risque FORT d'après le cours ?",
+   "choix": [
+    "Résumer un long rapport que l'on a déjà lu",
+    "Demander la date de la Révolution française alors qu'on la connaît",
+    "Rédiger un email professionnel en connaissant le sujet et les détails",
+    "Demander quelle position adopter sur un plan de paix international avant de l'avoir analysé"
+   ],
+   "rep": [
+    3
+   ],
+   "expl": "Le risque dépend de deux questions : suis-je à la source de l'information et puis-je vérifier facilement ? Ici, jugement sur un sujet politique sans analyse préalable : risque fort.",
+   "niveau": 2
+  },
+  {
+   "id": "devenir-q032",
+   "seance": "cm-2",
+   "type": "unique",
+   "q": "Que faut-il faire dans un travail rendu où l'on a utilisé une IA générative ?",
+   "choix": [
+    "Rien, si le texte a été relu",
+    "Déclarer l'usage (outil, tâches réalisées, relecture ou correction, objectif pédagogique)",
+    "Ne déclarer que si le texte est entièrement généré",
+    "Déclarer uniquement à l'oral"
+   ],
+   "rep": [
+    1
+   ],
+   "expl": "Transparence : déclaration d'usage obligatoire dans le travail rendu, selon le modèle de phrase du cours ; on respecte aussi les directives spécifiques de chaque cours.",
+   "niveau": 1
+  },
+  {
+   "id": "devenir-q033",
+   "seance": "cm-2",
+   "type": "unique",
+   "q": "Selon la charte, que ne peut pas faire l'IA générative sans consentement ?",
+   "choix": [
+    "Reproduire la voix ou l'image d'une personne existante",
+    "Traduire un texte",
+    "Résumer un document",
+    "Générer de la musique"
+   ],
+   "rep": [
+    0
+   ],
+   "expl": "L'IA générative n'est pas autorisée à reproduire, sans son consentement, la voix ou l'image d'une personne existante.",
+   "niveau": 2
+  }
+ ],
+ "flashcards": [
+  {
+   "id": "devenir-f001",
+   "seance": "cm-1",
+   "recto": "Volume et objectif de l'UE Devenir Étudiant-e",
+   "verso": "3 ECTS ; 10 h de CM + 18 h de TD (dont 2 h SCUIO, 2 h CRL, 1 h BU). Devise : « Pour réussir à l'université, le lycéen doit devenir étudiant »."
+  },
+  {
+   "id": "devenir-f002",
+   "seance": "cm-1",
+   "recto": "Les trois axes de l'UE",
+   "verso": "S'adapter à l'université, apprendre à s'organiser, apprendre dans un nouveau contexte (rechercher/traiter l'information, travailler en équipe, communiquer)."
+  },
+  {
+   "id": "devenir-f003",
+   "seance": "cm-1",
+   "recto": "Projet de formation et réussite",
+   "verso": "Environ 60 % de réussite avec un projet de formation, contre environ 25 % sans."
+  },
+  {
+   "id": "devenir-f004",
+   "seance": "cm-1",
+   "recto": "Contrôle Continu Intégral : nombre d'épreuves",
+   "verso": "3 épreuves pour une UE de 3 ECTS, 4 pour une UE de 6 ECTS. Aucune épreuve &gt; 50 %, aucune évaluation &gt; 1h30."
+  },
+  {
+   "id": "devenir-f005",
+   "seance": "cm-1",
+   "recto": "Principe de la seconde chance",
+   "verso": "La dernière épreuve de l'UE remplace toutes les notes qui lui sont inférieures."
+  },
+  {
+   "id": "devenir-f006",
+   "seance": "cm-1",
+   "recto": "Exemple du cours : notes 12, 8, 7, 10 (coef. 15/15/30/40 %)",
+   "verso": "Sans seconde chance : 9,1. Avec : 10 remplace 8 et 7, donc 0,15×12 + 0,15×10 + 0,3×10 + 0,4×10 = 10,3."
+  },
+  {
+   "id": "devenir-f007",
+   "seance": "cm-1",
+   "recto": "ABJ ou ABI à une épreuve d'un CC",
+   "verso": "0 à cette épreuve, pas à tout le CC. Absent à toutes les épreuves du CC : 0 au CC entier."
+  },
+  {
+   "id": "devenir-f008",
+   "seance": "cm-1",
+   "recto": "Absence au dernier CC de l'UE : ABI vs ABJ",
+   "verso": "ABI : 0 au CC. ABJ : épreuve de substitution."
+  },
+  {
+   "id": "devenir-f009",
+   "seance": "cm-1",
+   "recto": "Délai et destinataire du justificatif d'absence",
+   "verso": "5 jours après l'épreuve ; au secrétariat pour un CC en amphi, à l'enseignant pour un CC en TP ou TD."
+  },
+  {
+   "id": "devenir-f010",
+   "seance": "cm-1",
+   "recto": "Inscription administrative vs pédagogique",
+   "verso": "Administrative (annuelle, IAWeb) : droits, sécu, carte étudiante, statut, CROUS. Pédagogique (semestrielle, IPWeb) : contrat pédagogique, groupe de TD, examens, validation des UE."
+  },
+  {
+   "id": "devenir-f011",
+   "seance": "cm-1",
+   "recto": "ENT vs Moodle",
+   "verso": "L'ENT : messagerie, Moodle, EDT (Celcat), notes ; les enseignants n'y ont pas accès. Infos pédagogiques : sur Moodle, en s'inscrivant à chaque UE suivie."
+  },
+  {
+   "id": "devenir-f012",
+   "seance": "cm-1",
+   "recto": "Test ELAO : les 4 points clés",
+   "verso": "Ne se prépare pas ; mesure le niveau d'anglais (modules L1/L2) ; obligatoire pour s'inscrire aux UE de langues ; prévoir carte étudiante et identifiants UT."
+  },
+  {
+   "id": "devenir-f013",
+   "seance": "cm-1",
+   "recto": "CRL pour l'UE DVE",
+   "verso": "Séance de 2 h : ressources 45', test ELAO 20-45', atelier tuteur 30' ; semaines 40 à 47 ; bâtiment 4TP2 ; inscription sur resatoul.utoulouse.fr."
+  },
+  {
+   "id": "devenir-f014",
+   "seance": "cm-1",
+   "recto": "Taux de réussite en L1 selon les ABI",
+   "verso": "0 ABI : ≈ 82 % ; 1 à 5 : ≈ 57 % ; 6 à 10 : ≈ 41 % ; plus de 10 : ≈ 2 %."
+  },
+  {
+   "id": "devenir-f015",
+   "seance": "cm-1",
+   "recto": "Règle de l'ECTS",
+   "verso": "1 ECTS = 10 h d'enseignement + 10 h de travail personnel estimé."
+  },
+  {
+   "id": "devenir-f016",
+   "seance": "cm-1",
+   "recto": "Effet d'un travail régulier (vs dernière minute)",
+   "verso": "Réduit le taux d'échec de 20 à 30 % ; dernière minute : mémoire à court terme, oublis (≈ 60 % des étudiants), stress."
+  },
+  {
+   "id": "devenir-f017",
+   "seance": "cm-1",
+   "recto": "En cas de difficulté, qui contacter ?",
+   "verso": "Son référent en priorité, ou le tutorat (aide gratuite, 3 matières maximum, cours par des étudiants de N3/Master)."
+  },
+  {
+   "id": "devenir-f018",
+   "seance": "cm-2",
+   "recto": "Définition de l'IA (1956)",
+   "verso": "« Domaine de recherche qui vise à développer des techniques permettant aux machines de simuler des fonctions cognitives humaines : raisonnement, perception, apprentissage. » Turing (1950) : <i>Computing Machinery and Intelligence</i>."
+  },
+  {
+   "id": "devenir-f019",
+   "seance": "cm-2",
+   "recto": "Emboîtement des domaines",
+   "verso": "IA (1956) ⊃ Machine Learning (1959-60s) ⊃ IA générative (1980s-2010s) ⊃ LLM (2018)."
+  },
+  {
+   "id": "devenir-f020",
+   "seance": "cm-2",
+   "recto": "Machine Learning",
+   "verso": "Apprendre à partir des données, sans programmation explicite des règles : données en entrée → algorithme → résultat."
+  },
+  {
+   "id": "devenir-f021",
+   "seance": "cm-2",
+   "recto": "Apprentissage supervisé / non-supervisé / par renforcement",
+   "verso": "Supervisé : données étiquetées (spam). Non-supervisé : regroupements sans étiquettes (recommandation). Renforcement : récompense/pénalité (jeux, robotique)."
+  },
+  {
+   "id": "devenir-f022",
+   "seance": "cm-2",
+   "recto": "Deep Learning",
+   "verso": "Apprentissage fondé sur les réseaux de neurones artificiels (inspirés du neurone biologique) qui apprennent la distribution de probabilité des données ; socle de l'IA générative."
+  },
+  {
+   "id": "devenir-f023",
+   "seance": "cm-2",
+   "recto": "IA « classique » vs IA générative",
+   "verso": "Classique : classe, traite, recommande (Netflix, Google, reconnaissance faciale). Générative : crée du contenu nouveau (ChatGPT, DALL·E)."
+  },
+  {
+   "id": "devenir-f024",
+   "seance": "cm-2",
+   "recto": "LLM et chatbot",
+   "verso": "LLM : modèle d'IA générative qui comprend et produit du texte à partir de très grandes quantités de données. Chatbot : interface de dialogue, souvent basée sur un LLM."
+  },
+  {
+   "id": "devenir-f025",
+   "seance": "cm-2",
+   "recto": "Transformer (2017)",
+   "verso": "Architecture de « Attention is all you need » (Vaswani et al.) fondée sur un mécanisme d'attention ; premiers LLM dès 2018."
+  },
+  {
+   "id": "devenir-f026",
+   "seance": "cm-2",
+   "recto": "Fonctionnement d'un LLM en 4 étapes",
+   "verso": "Entraînement → architecture Transformer → prédiction → génération. Il prédit uniquement le prochain token."
+  },
+  {
+   "id": "devenir-f027",
+   "seance": "cm-2",
+   "recto": "Token",
+   "verso": "Plus petite unité de texte qu'un modèle comprend : mot, partie de mot ou ponctuation (« L'IA est utile. » = 5 tokens)."
+  },
+  {
+   "id": "devenir-f028",
+   "seance": "cm-2",
+   "recto": "Les 5 limites des LLM",
+   "verso": "Pas de compréhension réelle, hallucinations, dépendance aux données, biais, impact environnemental."
+  },
+  {
+   "id": "devenir-f029",
+   "seance": "cm-2",
+   "recto": "Hallucination",
+   "verso": "Le LLM complète ses manques en inventant des informations avec la même assurance que les vraies ; le risque ne disparaît jamais complètement (exemple Shakespeare / Beyoncé)."
+  },
+  {
+   "id": "devenir-f030",
+   "seance": "cm-2",
+   "recto": "Travailleurs du clic",
+   "verso": "Personnes qui étiquettent manuellement les données d'entraînement ; enjeu social et éthique, la qualité des données conditionne la performance."
+  },
+  {
+   "id": "devenir-f031",
+   "seance": "cm-2",
+   "recto": "IA frugale et impact d'une discussion",
+   "verso": "Un modèle plus grand consomme plus : Llama 3.1 405B ≈ 55 Wh contre ≈ 1,83 Wh pour GPT-4o mini (≈ 30 fois plus). Choisir un modèle adapté à la tâche."
+  },
+  {
+   "id": "devenir-f032",
+   "seance": "cm-2",
+   "recto": "Paresse métacognitive",
+   "verso": "Étude Fan et al. 2025 (117 étudiants) : ChatGPT améliore l'essai mais sans gain de connaissances ; la dépendance à l'IA peut freiner l'apprentissage réel."
+  },
+  {
+   "id": "devenir-f033",
+   "seance": "cm-2",
+   "recto": "Déficit de dialogue et illusion d'apprentissage",
+   "verso": "Déficit de dialogue : on accepte ou rejette la première réponse au lieu de collaborer. Illusion d'apprentissage : on utilise le LLM comme simple source au lieu de co-construire des connaissances."
+  },
+  {
+   "id": "devenir-f034",
+   "seance": "cm-2",
+   "recto": "Les 3 techniques de prompt",
+   "verso": "1) Spécifier contexte et résultat final (forme, public, style, sources) ; 2) Extraction de connaissances (définir les caractéristiques d'une bonne réponse) ; 3) Critique et auto-critique."
+  },
+  {
+   "id": "devenir-f035",
+   "seance": "cm-2",
+   "recto": "RAG",
+   "verso": "Retrieval-Augmented Generation : le modèle cherche dans des sources externes puis génère une réponse fondée dessus ; réduit les hallucinations, actualise les connaissances, cite des références."
+  },
+  {
+   "id": "devenir-f036",
+   "seance": "cm-2",
+   "recto": "IA agentique",
+   "verso": "IA qui agit : poursuit des objectifs de manière autonome (planification, plusieurs étapes, sans intervention humaine constante), contrairement au chatbot réactif."
+  },
+  {
+   "id": "devenir-f037",
+   "seance": "cm-2",
+   "recto": "Charte UPS : les 6 principes",
+   "verso": "Transparence, équité et non-discrimination, responsabilité, intégrité académique, protection des données, développement de compétences (CA du 2 juin 2025)."
+  },
+  {
+   "id": "devenir-f038",
+   "seance": "cm-2",
+   "recto": "Les 4 étapes d'un usage éthique",
+   "verso": "Déléguer (quelles tâches ?), Décrire (outil et prompt clair), Discerner (vérifier, esprit critique), Diligence (IA comme guide, décider de ce qu'on intègre)."
+  },
+  {
+   "id": "devenir-f039",
+   "seance": "cm-2",
+   "recto": "Phrase de déclaration d'usage",
+   "verso": "« J'ai utilisé [outils] pour [tâches]. J'ai ensuite [relu / corrigé / reformulé] les résultats afin de [objectif pédagogique]. Cet usage a été réalisé conformément au cadre institutionnel et dans le respect des principes d'éthique académique. »"
+  },
+  {
+   "id": "devenir-f040",
+   "seance": "cm-2",
+   "recto": "Risque faible vs risque fort",
+   "verso": "Faible : je suis à la source, je connais le sujet, boîte à idées. Fort : réponse inconnue ou difficilement vérifiable, jugement évaluatif, pas de réflexion préalable."
+  }
+ ],
+ "exercices": [
+  {
+   "id": "devenir-e001",
+   "seance": "cm-1",
+   "titre": "Calculs avec seconde chance",
+   "difficulte": 2,
+   "enonce": "<p>Calculer, pour chaque cas, la moyenne <b>sans</b> puis <b>avec</b> seconde chance (les notes sont dans l'ordre chronologique, la dernière est celle de la dernière épreuve de l'UE).</p><ol><li>UE de 3 ECTS, 3 épreuves, coefficients 30 % / 30 % / 40 %, notes 6, 14, 9.</li><li>UE de 6 ECTS, 4 épreuves, coefficients 15 % / 15 % / 30 % / 40 %, notes 14, 9, 12, 8.</li><li>Mêmes coefficients qu'au cas 2, notes 9, 15, 11, 13.</li></ol><p>Dans chaque cas, la seconde chance change-t-elle quelque chose ?</p>",
+   "indice": "La dernière épreuve remplace uniquement les notes <i>strictement inférieures</i> à elle.",
+   "corrige": "<ol><li>Sans : 0,3×6 + 0,3×14 + 0,4×9 = 1,8 + 4,2 + 3,6 = <b>9,6</b>. Avec : la dernière note (9) remplace le 6 (le 14 est conservé) : 0,3×9 + 0,3×14 + 0,4×9 = 2,7 + 4,2 + 3,6 = <b>10,5</b>. La seconde chance fait passer la moyenne au-dessus de 10.</li><li>Sans : 0,15×14 + 0,15×9 + 0,3×12 + 0,4×8 = 2,1 + 1,35 + 3,6 + 3,2 = <b>10,25</b>. Avec : la dernière note (8) est inférieure à toutes les autres, donc elle ne remplace rien : <b>10,25</b>. Aucun effet.</li><li>Sans : 0,15×9 + 0,15×15 + 0,3×11 + 0,4×13 = 1,35 + 2,25 + 3,3 + 5,2 = <b>12,1</b>. Avec : le 13 remplace le 9 et le 11 (pas le 15) : 0,15×13 + 0,15×15 + 0,3×13 + 0,4×13 = 1,95 + 2,25 + 3,9 + 5,2 = <b>13,3</b>. Gain de 1,2 point.</li></ol><p>La seconde chance n'aide que si la dernière note dépasse au moins une des notes précédentes.</p>"
+  },
+  {
+   "id": "devenir-e002",
+   "seance": "cm-1",
+   "titre": "Absences : quelles conséquences ?",
+   "difficulte": 1,
+   "enonce": "<p>Pour chaque situation, donner la conséquence sur la note et ce qu'il faut faire.</p><ol><li>Léa est absente (malade) à la 2e épreuve d'un CC qui en comporte 3.</li><li>Tom est absent sans justificatif au dernier CC de l'UE (celui de la seconde chance).</li><li>Sara est absente au dernier CC de l'UE avec un certificat médical valable.</li><li>Un CC se déroule en TD : Karim a été absent et a un justificatif, il a 3 jours pour le rendre. À qui doit-il le remettre ?</li></ol>",
+   "indice": "Regarder le tableau ABJ / ABI et distinguer « une épreuve », « toutes les épreuves » et « dernier CC ».",
+   "corrige": "<ol><li>ABJ ou ABI à une épreuve d'un CC : 0 à cette épreuve seulement, pas à tout le CC (à condition d'avoir passé les autres). Le justificatif reste utile pour le passage en jury.</li><li>ABI au dernier CC de l'UE : <b>0 au CC</b>.</li><li>ABJ au dernier CC de l'UE : <b>épreuve de substitution</b>.</li><li>Il doit le remettre à <b>l'enseignant</b> (CC en TD ou TP), dans les 5 jours après l'épreuve : il est dans les temps. Pour un CC en amphi, c'est au secrétariat.</li></ol>"
+  },
+  {
+   "id": "devenir-e003",
+   "seance": "cm-1",
+   "titre": "Quel service contacter ?",
+   "difficulte": 1,
+   "enonce": "<p>Indiquer le service le plus adapté (PASAE, Pôle Handicap, SCUIO-IP, BU Sciences, Service Santé Étudiante, CROUS, secrétariat pédagogique, référent, tutorat, Pôle sport, DMFI) :</p><ol><li>Besoin d'un prêt de PC et d'une aide financière.</li><li>Besoin d'un tiers-temps et d'aménagements pour les examens.</li><li>Relecture de CV et recherche de stage.</li><li>Formation à la recherche documentaire en sciences.</li><li>Consultation gratuite avec un psychologue.</li><li>Justificatif d'absence pour un CC en amphi.</li><li>Difficultés dans 3 matières, souhait de cours gratuits donnés par des étudiants plus avancés.</li><li>Candidature à une bourse Erasmus+.</li></ol>",
+   "indice": "",
+   "corrige": "<ol><li>PASAE (aides sociales et financières, prêt de PC) ; la BU Sciences prête aussi des PC.</li><li>Pôle Handicap (PHE).</li><li>SCUIO-IP (ateliers CV/stages).</li><li>BU Sciences.</li><li>Service Santé Étudiante (médecins, psychologues, sophrologie).</li><li>Secrétariat pédagogique de la FSI, dans les 5 jours.</li><li>Le tutorat (gratuit, 3 matières maximum, N3/Master) ; on peut aussi contacter son référent.</li><li>Mobilités internationales (DMFI).</li></ol>"
+  },
+  {
+   "id": "devenir-e004",
+   "seance": "cm-1",
+   "titre": "Organiser son semestre avec les ECTS",
+   "difficulte": 2,
+   "enonce": "<p>Un étudiant suit 5 UE de 6 ECTS (30 ECTS) dans un semestre.</p><ol><li>D'après la règle « 1 ECTS = 10 h d'enseignement + 10 h de travail personnel estimé », calculer le nombre d'heures d'enseignement et de travail personnel pour une UE de 6 ECTS, puis pour tout le semestre.</li><li>Il a déjà 6 ABI dans un TD de L1. À quelle tranche de réussite appartient-il, et que lui conseille le cours ?</li><li>Pourquoi une absence coûte-t-elle plus cher dans une UE de 3 ECTS que dans une UE de 6 ECTS ?</li></ol>",
+   "indice": "Multiplier les ECTS par 10 h, deux fois.",
+   "corrige": "<ol><li>Une UE de 6 ECTS : 60 h d'enseignement + 60 h de travail personnel (120 h). Pour 30 ECTS : 300 h d'enseignement + 300 h de travail personnel, soit environ 600 h au total sur le semestre.</li><li>6 ABI : tranche 6 à 10 ABI, environ 41 % de réussite (contre 82 % à 0 ABI). Le cours conseille de contacter en priorité son référent ou le tutorat, de justifier toute absence dans les 5 jours et de travailler régulièrement (-20 à 30 % d'échec).</li><li>Une UE de 3 ECTS se déroule sur un demi-semestre seulement : il y a moins de séances pour se rattraper, et une épreuve manquée pèse proportionnellement plus.</li></ol>"
+  },
+  {
+   "id": "devenir-e005",
+   "seance": "cm-2",
+   "titre": "Risque faible ou risque fort ?",
+   "difficulte": 2,
+   "enonce": "<p>Pour chacun de ces usages, dire s'il est à <b>risque faible</b> ou <b>risque fort</b> et justifier avec le critère du cours (suis-je à la source de l'information, et puis-je vérifier facilement ?).</p><ol><li>Demander à un LLM de reformuler un mail à mon enseignant, que j'ai déjà écrit et dont je connais le contenu.</li><li>Demander à un LLM de résumer un article scientifique que je n'ai pas lu, sur un sujet que je ne maîtrise pas.</li><li>Demander à un LLM une liste d'idées pour le titre de mon poster.</li><li>Demander à un chatbot lequel de deux camarades est le plus « pertinent » pour rejoindre mon groupe de projet.</li><li>Demander à un LLM la date de la Révolution française alors que je la connais.</li><li>Demander à un chatbot de me donner mon opinion sur une loi discutée en ce moment, avant d'avoir lu quoi que ce soit dessus.</li></ol>",
+   "indice": "Deux questions : suis-je à la source ? puis-je vérifier facilement ? Un jugement évaluatif est toujours à risque.",
+   "corrige": "<ol><li><b>Faible</b> : je suis à la source, le LLM ne fait que structurer et reformuler (cas n°1 du cours).</li><li><b>Fort</b> : je ne connais pas le sujet et ne peux pas vérifier le résumé ; j'aurais dû lire l'article avant (à comparer avec le cas n°4 du cours : résumer un rapport déjà lu est à risque faible).</li><li><b>Faible</b> : usage « boîte à idées », je garde le contrôle et je choisis.</li><li><b>Fort</b> : jugement évaluatif sur une personne (cas n°5 du cours : pertinence d'un candidat).</li><li><b>Faible</b> : fait précis, vérifiable, que je connais déjà (cas n°3).</li><li><b>Fort</b> : sujet d'actualité ou politique, avant d'avoir analysé le sujet moi-même (cas n°7).</li></ol>"
+  },
+  {
+   "id": "devenir-e006",
+   "seance": "cm-2",
+   "titre": "Écrire une déclaration d'usage",
+   "difficulte": 1,
+   "enonce": "<p>Pour un rapport rendu en L1, vous avez demandé à Le Chat (Mistral) de reformuler l'introduction que vous aviez écrite, puis vous avez relu et corrigé le texte pour améliorer la clarté. Rédiger la phrase de déclaration d'usage à ajouter au rapport, en suivant le modèle du cours.</p>",
+   "indice": "Modèle : « J'ai utilisé [outils] pour [tâches]. J'ai ensuite [relu / corrigé / reformulé]… afin de [objectif]. Cet usage a été réalisé conformément… »",
+   "corrige": "<p>« J'ai utilisé Le Chat (Mistral) pour reformuler l'introduction de mon rapport. J'ai ensuite relu et corrigé les résultats finaux afin d'améliorer la clarté. Cet usage a été réalisé conformément au cadre institutionnel et dans le respect des principes d'éthique académique. »</p><p>Éléments attendus : le nom de l'outil, la tâche réalisée, la relecture / correction personnelle, l'objectif pédagogique, la mention du cadre institutionnel. Ce texte relève du principe de <b>transparence</b> de la charte.</p>"
+  },
+  {
+   "id": "devenir-e007",
+   "seance": "cm-2",
+   "titre": "Améliorer un prompt",
+   "difficulte": 2,
+   "enonce": "<p>Un étudiant écrit : « Explique-moi les réseaux de neurones. »</p><ol><li>Pourquoi ce prompt est-il insuffisant ? Le réécrire avec la technique 1 (forme, public, style, sources).</li><li>Proposer une version qui utilise la technique 3 (critique et auto-critique).</li><li>Le LLM répond avec un fait chiffré que l'étudiant ne connaît pas. Quelle étape des « quatre D » s'applique, et que faire ?</li></ol>",
+   "indice": "Technique 1 : forme générale, public visé, style, éléments comme des sources à citer.",
+   "corrige": "<ol><li>Le prompt est vague : la réponse sera correcte mais générique, sans forme, public ni style. Exemple : « Explique-moi les réseaux de neurones artificiels en un paragraphe d'environ 150 mots, avec un style simple et clair, accessible à un étudiant de L1 sans base en IA. Utilise un exemple concret du quotidien et inspire-toi de cette source : [URL]. »</li><li>« Explique-moi les réseaux de neurones en un paragraphe. Critique ensuite ta réponse en indiquant les points forts et les points faibles, propose des suggestions d'amélioration, puis écris une nouvelle version qui en tient compte. »</li><li><b>Discerner</b> : vérifier le résultat avec des sources fiables, garder un esprit critique (risque d'hallucination), et décider avec <b>diligence</b> ce qu'on intègre dans son travail. Un RAG (réponse avec sources) aiderait aussi à vérifier.</li></ol>"
+  },
+  {
+   "id": "devenir-e008",
+   "seance": "cm-2",
+   "titre": "Étude de cas : un rapport « tout IA »",
+   "difficulte": 3,
+   "enonce": "<p>Un étudiant demande à un chatbot de rédiger l'intégralité de son rapport, y copie le nom de deux camarades et des informations personnelles pour « personnaliser », colle le résultat sans le relire et ne mentionne rien à l'enseignant.</p><ol><li>Quels principes de la charte de l'UPS sont mis à mal ? (citer au moins 4 principes et justifier)</li><li>Relire ce cas avec les quatre D : que fallait-il faire à chaque étape ?</li><li>Quelle limite des LLM cet étudiant risque-t-il de subir en particulier ?</li></ol>",
+   "indice": "Passer en revue les six principes un par un.",
+   "corrige": "<ol><li><b>Transparence</b> : aucune déclaration d'usage. <b>Responsabilité</b> : l'IA est utilisée comme un auteur, pas comme un assistant. <b>Intégrité académique</b> : le travail rendu ne reflète pas son propre travail. <b>Protection des données</b> : noms de camarades et informations personnelles transmis à l'outil. <b>Développement de compétences</b> : l'IA remplace l'apprentissage (il faut d'abord apprendre à penser sans les machines). Le principe d'équité et de non-discrimination est aussi concerné si le texte reproduit des biais non contrôlés.</li><li><b>Déléguer</b> : ne confier que des tâches d'apprentissage adaptées (ex. reformuler ou générer des idées), pas tout le rapport. <b>Décrire</b> : choisir l'outil adapté et un prompt précis, sans données personnelles. <b>Discerner</b> : vérifier chaque affirmation et distinguer le vrai du faux. <b>Diligence</b> : relire, décider de ce qu'on garde, l'IA restant un guide, puis déclarer l'usage.</li><li>Les <b>hallucinations</b> : contenu inventé présenté avec assurance, non vérifié car le texte est collé sans relecture. Le risque est aussi la « paresse métacognitive » : le rendu peut sembler correct sans qu'il y ait eu d'apprentissage.</li></ol>"
+  }
+ ]
+}
