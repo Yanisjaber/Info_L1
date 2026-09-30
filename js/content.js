@@ -70,6 +70,61 @@ export async function deleteSeance(mid, id) {
   if (error) throw error;
 }
 
+// ───────────────────────── Espace de travail (documents déposés par séance) ─────────────────────────
+// Bucket privé "docs" : chaque fichier vit sous <user_id>/<mid>/<sid>/<horodatage>-<nom>, protégé par
+// RLS Storage. Les URLs de téléchargement sont signées (expirent) plutôt que publiques.
+const DOC_URL_TTL = 3600;
+export async function loadSeanceDocs(mid, sid) {
+  if (!sync.client || !sync.user) return [];
+  const { data, error } = await sync.client.from("seance_docs").select("*").eq("mid", mid).eq("sid", sid).order("created_at", { ascending: true });
+  if (error) { console.warn("loadSeanceDocs", error); return []; }
+  const paths = data.map((r) => r.path);
+  let urls = {};
+  if (paths.length) {
+    const { data: signed, error: e2 } = await sync.client.storage.from("docs").createSignedUrls(paths, DOC_URL_TTL);
+    if (!e2) signed.forEach((s, i) => { urls[paths[i]] = s.signedUrl; });
+  }
+  return data.map((r) => ({ id: r.id, mid: r.mid, sid: r.sid, nom: r.nom, path: r.path, taille: r.taille, type: r.type, url: urls[r.path] || null, strokes: r.strokes || null, paper: r.paper || null }));
+}
+
+// `vector` (optionnel) = { strokes, paper } : présent uniquement pour une note manuscrite, permet
+// de la rouvrir en mode vectoriel (trait par trait) au lieu de recharger juste l'image aplatie.
+export async function uploadSeanceDoc(mid, sid, file, vector = null) {
+  const path = `${sync.user.id}/${mid}/${sid}/${Date.now()}-${file.name}`;
+  const { error: e1 } = await client().storage.from("docs").upload(path, file);
+  if (e1) throw e1;
+  const { error: e2 } = await client().from("seance_docs").insert({ user_id: sync.user.id, mid, sid, nom: file.name, path, taille: file.size, type: file.type || null, strokes: vector?.strokes || null, paper: vector?.paper || null });
+  if (e2) throw e2;
+}
+
+// Récupère un document via l'API authentifiée (pas une simple URL signée chargée en <img>) et le
+// rend comme une URL blob: locale — nécessaire pour pouvoir la redessiner sur un <canvas> sans le
+// "tainter" (une image chargée depuis un domaine externe, même avec crossOrigin, bloque toBlob()
+// silencieusement si Supabase ne renvoie pas d'en-tête CORS pour ce fichier précis).
+export async function getSeanceDocBlobUrl(path) {
+  const { data, error } = await client().storage.from("docs").download(path);
+  if (error) throw error;
+  return URL.createObjectURL(data);
+}
+
+// Remplace le contenu d'un document déjà déposé (même chemin, même ligne) — utilisé pour
+// reprendre/compléter une page manuscrite existante sans créer un doublon.
+export async function updateSeanceDoc(doc, file, vector = null) {
+  const { error: e1 } = await client().storage.from("docs").upload(doc.path, file, { upsert: true });
+  if (e1) throw e1;
+  const patch = { taille: file.size };
+  if (vector) { patch.strokes = vector.strokes; patch.paper = vector.paper; }
+  const { error: e2 } = await client().from("seance_docs").update(patch).eq("id", doc.id);
+  if (e2) throw e2;
+}
+
+export async function deleteSeanceDoc(doc) {
+  const { error: e1 } = await client().storage.from("docs").remove([doc.path]);
+  if (e1) throw e1;
+  const { error: e2 } = await client().from("seance_docs").delete().eq("id", doc.id);
+  if (e2) throw e2;
+}
+
 // ───────────────────────── QCM, cartes, exercices ─────────────────────────
 export async function loadQCM() {
   if (!sync.client || !sync.user) return [];

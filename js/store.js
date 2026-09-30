@@ -3,7 +3,7 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 const KEY = "l1s1_v1";
 const OWNER_KEY = "l1s1_owner";
-const MAPS = ["read", "qcm", "cards", "exos", "notes", "evals", "activity", "reponses", "elo"];
+const MAPS = ["read", "qcm", "cards", "exos", "notes", "evals", "activity", "reponses", "elo", "seanceNotes"];
 const listeners = new Set();
 
 function blank() {
@@ -39,10 +39,14 @@ export function commit() {
 const day = (d = new Date()) => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
 export const todayKey = day;
 
-export function bump(n = 1) {
+// `type` alimente le détail par nature d'action (lecture, qcm, carte, exercice, eval) affiché
+// dans le graphique d'activité — `n` seul reste le total utilisé pour la série et le streak.
+export function bump(n = 1, type = "autre") {
   const k = day();
-  const a = state.activity[k] || { n: 0, ts: 0 };
+  const a = state.activity[k] || { n: 0, ts: 0, by: {} };
   a.n += n; a.ts = Date.now();
+  a.by = a.by || {};
+  a.by[type] = (a.by[type] || 0) + n;
   state.activity[k] = a;
 }
 export function setEntry(map, id, entry) {
@@ -55,7 +59,11 @@ export function mergeInto(local, remote, isActivity) {
   for (const [id, r] of Object.entries(remote || {})) {
     const l = local[id];
     if (!l) local[id] = r;
-    else if (isActivity) local[id] = { n: Math.max(l.n || 0, r.n || 0), ts: Math.max(l.ts || 0, r.ts || 0) };
+    else if (isActivity) {
+      const by = { ...(l.by || {}) };
+      for (const [type, v] of Object.entries(r.by || {})) by[type] = Math.max(by[type] || 0, v);
+      local[id] = { n: Math.max(l.n || 0, r.n || 0), ts: Math.max(l.ts || 0, r.ts || 0), by };
+    }
     else if ((r.ts || 0) > (l.ts || 0)) local[id] = r;
   }
 }

@@ -1,7 +1,7 @@
 import { $, $$, esc, icon, fmtDate, fmtLong, parseDay, startOfDay, daysUntil, pct, shuffle, plural, fmtMMSS, fmt1, toast, appConfirm, renderMath, download } from "./util.js";
 import { state, commit, bump, setEntry, onChange, sync, initSync, pull, push, signIn, signUp, magicLink, signOut, exportJSON, importJSON, resetAll, todayKey } from "./store.js";
 import { CALC } from "./grades.js";
-import { loadMatieres, loadSeances, saveMatiere, deleteMatiere, saveSeance, deleteSeance, loadEdt, updateEdtEvent, analyzeIcs, commitIcsImport, loadPeriodes, savePeriode, deletePeriode, wipeAccount, loadCC, saveCCEvent, deleteCCEvent, loadQCM, saveQCM, deleteQCM, loadFlashcards, saveFlashcard, deleteFlashcard, loadExercices, saveExercice, deleteExercice } from "./content.js";
+import { loadMatieres, loadSeances, saveMatiere, deleteMatiere, saveSeance, deleteSeance, loadEdt, updateEdtEvent, analyzeIcs, commitIcsImport, loadPeriodes, savePeriode, deletePeriode, wipeAccount, loadCC, saveCCEvent, deleteCCEvent, loadQCM, saveQCM, deleteQCM, loadFlashcards, saveFlashcard, deleteFlashcard, loadExercices, saveExercice, deleteExercice, loadSeanceDocs, uploadSeanceDoc, updateSeanceDoc, deleteSeanceDoc, getSeanceDocBlobUrl } from "./content.js";
 
 const D = { matieres: [], periodes: [], cal: { evenements: [], remarques: [] }, edt: { events: [] }, content: {}, Q: [], F: [], E: [], idx: null };
 let IDS = [];
@@ -81,79 +81,61 @@ function stats(mid) {
   return { read, seances: c.seances.length, nq: c.qcm.length, answered: answered.length, right, acc: pct(ok, n), n, ok, nf: c.flashcards.length, seen: seen.length, mastered, due, wrong, ne: c.exercices.length, exoOk, prog };
 }
 const totals = () => IDS.reduce((t, id) => { const s = stats(id); for (const k of ["read", "seances", "nq", "answered", "right", "n", "ok", "nf", "seen", "mastered", "due", "wrong"]) t[k] = (t[k] || 0) + s[k]; return t; }, { read: 0, seances: 0, nq: 0, answered: 0, right: 0, n: 0, ok: 0, nf: 0, seen: 0, mastered: 0, due: 0, wrong: 0 });
-function streak() {
-  let d = startOfDay(), n = 0;
-  const key = (x) => todayKey(x);
-  if (!state.activity[key(d)]?.n) d = new Date(d.getTime() - 864e5);
-  while (state.activity[key(d)]?.n) { n++; d = new Date(d.getTime() - 864e5); }
-  return n;
-}
-function heatmap() {
+// Nature de chaque action comptée dans state.activity[jour].by — sert au détail du graphique
+// d'activité (quoi, pas seulement combien) ; l'ordre définit aussi l'ordre d'empilement.
+const ACT_TYPES = [
+  { key: "lecture", label: "Cours lus", c: "var(--navy)" },
+  { key: "qcm", label: "QCM", c: "var(--ok)" },
+  { key: "carte", label: "Flashcards", c: "var(--amber)" },
+  { key: "exercice", label: "Exercices", c: "var(--terra)" },
+  { key: "eval", label: "Éval blanche", c: "var(--violet)" },
+];
+// Graphique en barres empilées : chaque jour = une colonne, chaque couleur = un type d'action,
+// la hauteur = le volume ce jour-là — montre le quoi et le quand, pas juste un total par case.
+function activityChart(days = 30) {
   const today = startOfDay();
-  const dow = (today.getDay() + 6) % 7;
-  const start = new Date(today.getTime() - (dow + 15 * 7) * 864e5);
-  let h = "";
-  for (let i = 0; i < 16 * 7; i++) {
-    const d = new Date(start.getTime() + i * 864e5);
-    if (d > today) { h += `<i style="visibility:hidden"></i>`; continue; }
-    const n = state.activity[todayKey(d)]?.n || 0;
-    const l = n === 0 ? 0 : n < 5 ? 1 : n < 15 ? 2 : n < 30 ? 3 : 4;
-    h += `<i data-l="${l}" title="${fmtDate(todayKey(d))} : ${n} action${n > 1 ? "s" : ""}"></i>`;
-  }
-  return `<div class="heat" role="img" aria-label="Activité des 16 dernières semaines">${h}</div>`;
+  const list = [...Array(days)].map((_, i) => new Date(today.getTime() - (days - 1 - i) * 864e5));
+  const entries = list.map((d) => ({ d, a: state.activity[todayKey(d)] }));
+  if (!entries.some((x) => x.a?.n)) return `<div class="empty">Aucune activité encore.</div>`;
+  const max = Math.max(1, ...entries.map((x) => x.a?.n || 0));
+  const bars = entries.map(({ d, a }) => {
+    const n = a?.n || 0, by = a?.by || {};
+    const known = ACT_TYPES.reduce((s, t) => s + (by[t.key] || 0), 0);
+    const rest = n - known; // activité d'avant l'introduction du détail par type, ou type "autre"
+    const segs = ACT_TYPES.filter((t) => by[t.key] > 0).map((t) => `<i style="flex:${by[t.key]};background:${t.c}"></i>`).join("") + (rest > 0 ? `<i style="flex:${rest};background:var(--muted)"></i>` : "");
+    const detail = n ? [...ACT_TYPES.filter((t) => by[t.key] > 0).map((t) => `${by[t.key]} ${t.label.toLowerCase()}`), rest > 0 ? `${rest} autre` : ""].filter(Boolean).join(", ") : "rien";
+    return `<div class="actbar"><div class="actcol" style="height:${n ? Math.max(4, Math.round((n / max) * 100)) : 0}%" title="${fmtDate(todayKey(d))} : ${detail}">${segs}</div></div>`;
+  }).join("");
+  const legend = ACT_TYPES.map((t) => `<span class="tiny muted" style="display:inline-flex;align-items:center;gap:5px"><i style="width:8px;height:8px;border-radius:50%;background:${t.c};display:inline-block"></i>${t.label}</span>`).join("");
+  return `<div class="actchart" role="img" aria-label="Activité des ${days} derniers jours">${bars}</div><div class="row" style="gap:14px;flex-wrap:wrap;margin-top:12px">${legend}</div>`;
 }
 const ring = (v, c) => `<div class="ring" style="--v:${v};${c ? "--acc:" + c : ""}" data-t="${v}%"></div>`;
 
 // ───────────────────────── Elo ─────────────────────────
-// Système de niveau par matière inspiré du classement Elo des jeux à somme nulle : chaque
-// question/exercice répondu est un « match » contre un adversaire dont la force dépend de sa
-// difficulté (niveau/étoiles). Réussir un exercice difficile fait plus progresser qu'un facile ;
-// wchouer contre un exercice facile fait plus reculer. Le rang maximum est en plus conditionné à
-// une couverture quasi totale des notions du cours (§ tierFor) : un excellent score sur 3
-// questions ne suffit pas à être déclaré « Maître » d'une matière de 100 notions.
+// Score de maîtrise, pas un classement compétitif. Par matière : 0 = aucune connaissance,
+// 1000 = tout le cours de cette matière est couvert (coverage à 100 %), et jusqu'à 500 points
+// de bonus si en plus tu maîtrises aussi les QCM/exercices de niveau difficile — aller au-delà
+// de ce qui est strictement demandé. Le score global est la SOMME des matières actives (pas une
+// moyenne) : avec 6 matières, 6000 = tout le semestre connu, 9000 = le maximum absolu.
+const ELO_MAX_PER_MATIERE = 1500;
 const ELO_TIERS = [
   { name: "Débutant", min: 0, cls: "gr" },
-  { name: "Apprenti", min: 1000, cls: "gr" },
-  { name: "Confirmé", min: 1200, cls: "wa" },
-  { name: "Avancé", min: 1400, cls: "wa" },
-  { name: "Expert", min: 1650, cls: "ok" },
-  { name: "Maître", min: 1850, cls: "ok" },
+  { name: "Apprenti", min: 200, cls: "gr" },
+  { name: "Confirmé", min: 450, cls: "wa" },
+  { name: "Avancé", min: 750, cls: "wa" },
+  { name: "Cours maîtrisé", min: 1000, cls: "ok" },
+  { name: "Expert", min: 1250, cls: "ok" },
+  { name: "Maître", min: 1450, cls: "ok" },
 ];
-function eloStep(rating, niveau, correct) {
-  const oppDiff = 800 + (niveau || 1) * 300; // "force" de l'adversaire selon la difficulté (1 à 3 étoiles)
-  const E = 1 / (1 + Math.pow(10, (oppDiff - rating) / 400));
-  const K = 24;
-  return Math.max(400, Math.min(2200, Math.round(rating + K * ((correct ? 1 : 0) - E))));
+// `scale` est le maximum applicable dans ce contexte : 1500 pour une matière, 1500×n pour le
+// score global à n matières — les seuils ci-dessus sont proportionnels à ce maximum (donc le
+// seuil "Cours maîtrisé" tombe pile à 6000 pour 6 matières, comme demandé).
+function tierFor(rating, scale = ELO_MAX_PER_MATIERE) {
+  let idx = 0;
+  for (let i = 0; i < ELO_TIERS.length; i++) if (rating >= ELO_TIERS[i].min * (scale / ELO_MAX_PER_MATIERE)) idx = i;
+  return ELO_TIERS[idx];
 }
-// Initialise le rating d'une matière à partir de l'historique déjà accumulé (QCM/exercices déjà
-// faits avant l'arrivée de cette fonctionnalité), pour ne pas repartir de zéro injustement.
-// L'ordre de rejeu n'est pas le vrai ordre chronologique (non conservé) mais converge vers un
-// rating cohérent avec le niveau de réussite global.
-function seedElo(mid) {
-  const c = C(mid);
-  let rating = 1000;
-  c.qcm.forEach((q) => { const s = state.qcm[q.id]; if (s) rating = eloStep(rating, q.niveau, !!s.last); });
-  c.exercices.forEach((e) => { const s = state.exos[e.id]; if (s) rating = eloStep(rating, e.difficulte, s.v === "ok"); });
-  return rating;
-}
-function getElo(mid) {
-  const stored = state.elo[mid];
-  return stored ? stored.rating : seedElo(mid);
-}
-// Enregistre un événement noté (QCM, exercice, éval) : met à jour le rating et empile un point
-// d'historique (au plus un par jour par matière, pour garder un historique compact et lisible).
-function recordElo(mid, niveau, correct) {
-  if (!mid) return;
-  if (!state.elo[mid]) state.elo[mid] = { rating: seedElo(mid), history: [] };
-  const cur = state.elo[mid];
-  cur.rating = eloStep(cur.rating, niveau, correct);
-  const last = cur.history[cur.history.length - 1];
-  if (last && todayKey(new Date(last.ts)) === todayKey()) last.rating = cur.rating;
-  else cur.history.push({ ts: Date.now(), rating: cur.rating });
-  if (cur.history.length > 120) cur.history.shift();
-  commit();
-}
-// Part des notions du cours (QCM/exercices/cartes) effectivement maîtrisées — condition du rang max.
+// Part des notions du cours (QCM/exercices/cartes) effectivement maîtrisées → la base sur 1000.
 function coverage(mid) {
   const c = C(mid);
   const totalQ = c.qcm.length, okQ = c.qcm.filter((q) => state.qcm[q.id]?.last).length;
@@ -162,11 +144,28 @@ function coverage(mid) {
   const total = totalQ + totalE + totalF;
   return total ? (okQ + okE + okF) / total : 0;
 }
-function tierFor(rating, cov) {
-  let idx = 0;
-  for (let i = 0; i < ELO_TIERS.length; i++) if (rating >= ELO_TIERS[i].min) idx = i;
-  if (idx === ELO_TIERS.length - 1 && cov < 0.9) idx--; // rang maximum réservé à qui maîtrise (quasi) tout le cours
-  return ELO_TIERS[idx];
+// Part des QCM/exercices de niveau difficile (3 étoiles) maîtrisés → le bonus "au-delà du cours" sur 500.
+function hardMastery(mid) {
+  const c = C(mid);
+  const hq = c.qcm.filter((q) => q.niveau === 3), okQ = hq.filter((q) => state.qcm[q.id]?.last).length;
+  const he = c.exercices.filter((e) => e.difficulte === 3), okE = he.filter((e) => state.exos[e.id]?.v === "ok").length;
+  const total = hq.length + he.length;
+  return total ? (okQ + okE) / total : 0;
+}
+// Score déterministe (recalculé à la volée depuis l'état actuel, jamais stocké) : pas de dérive,
+// pas d'ordre de rejeu à gérer — la note d'aujourd'hui ne dépend que du travail réellement fait.
+function getElo(mid) { return Math.round(1000 * coverage(mid) + 500 * hardMastery(mid)); }
+// Empile un point d'historique (au plus un par jour par matière) pour tracer l'évolution dans le temps.
+function snapshotElo(mid) {
+  if (!mid) return;
+  const rating = getElo(mid);
+  if (!state.elo[mid]) state.elo[mid] = { history: [] };
+  const hist = state.elo[mid].history;
+  const last = hist[hist.length - 1];
+  if (last && todayKey(new Date(last.ts)) === todayKey()) last.rating = rating;
+  else hist.push({ ts: Date.now(), rating });
+  if (hist.length > 120) hist.shift();
+  commit();
 }
 // Petit graphique en aire, en SVG pur (pas de dépendance externe) : points = [{ts, v}].
 function sparklineSvg(points, opts = {}) {
@@ -187,15 +186,15 @@ function sparklineSvg(points, opts = {}) {
   </svg>`;
 }
 function eloCardHtml(m) {
-  const rating = getElo(m.id), cov = coverage(m.id), tier = tierFor(rating, cov);
+  const rating = getElo(m.id), cov = coverage(m.id), tier = tierFor(rating);
   const hist = (state.elo[m.id]?.history || []).slice(-24);
   const pts = hist.map((h) => ({ ts: h.ts, v: h.rating }));
   const delta = pts.length > 1 ? rating - pts[0].v : 0;
   return `<a class="card" href="#/elo/${m.id}" style="--acc:${m.couleur};display:block;text-decoration:none;color:inherit">
     <div class="row nowrap"><i class="dot" style="--c:${m.couleur}"></i><b>${esc(m.court)}</b><div class="sp"></div><span class="chip ${tier.cls}">${esc(tier.name)}</span></div>
-    <div class="row nowrap" style="margin-top:10px;align-items:baseline;gap:8px"><div style="font-size:1.9rem;font-weight:800">${rating}</div>${pts.length > 1 ? `<span class="tiny" style="color:${delta >= 0 ? "var(--ok)" : "var(--ko)"}">${delta >= 0 ? "+" : ""}${delta}</span>` : ""}</div>
-    <div class="bar" style="margin-top:10px"><i style="width:${Math.round(cov * 100)}%;background:${m.couleur}"></i></div>
-    <div class="tiny muted" style="margin-top:4px">${Math.round(cov * 100)}% des notions maîtrisées</div>
+    <div class="row nowrap" style="margin-top:10px;align-items:baseline;gap:8px"><div style="font-size:1.9rem;font-weight:800">${rating}<span class="tiny muted" style="font-weight:600"> / ${ELO_MAX_PER_MATIERE}</span></div>${pts.length > 1 ? `<span class="tiny" style="color:${delta >= 0 ? "var(--ok)" : "var(--ko)"}">${delta >= 0 ? "+" : ""}${delta}</span>` : ""}</div>
+    <div class="bar" style="margin-top:10px"><i style="width:${Math.min(100, Math.round((rating / ELO_MAX_PER_MATIERE) * 100))}%;background:${m.couleur}"></i></div>
+    <div class="tiny muted" style="margin-top:4px">${Math.round(cov * 100)}% du cours couvert</div>
     <div style="margin-top:10px">${pts.length > 1 ? sparklineSvg(pts, { w: 280, h: 46 }) : `<div class="tiny muted">Entraîne-toi pour voir ta progression.</div>`}</div>
   </a>`;
 }
@@ -203,23 +202,22 @@ function eloPage() {
   if (!sync.user) return { html: `<h1>Elo</h1><div class="empty">Connecte-toi pour voir ton niveau.</div>` };
   const ms = activeMatieres();
   if (!ms.length) return { html: `<h1>Elo</h1><div class="empty">Ajoute une matière (et entraîne-toi) pour voir ton niveau.</div>` };
-  const ratings = ms.map((m) => getElo(m.id));
-  const covs = ms.map((m) => coverage(m.id));
-  const avg = Math.round(ratings.reduce((a, r) => a + r, 0) / ratings.length);
-  const avgCov = covs.reduce((a, c) => a + c, 0) / covs.length;
-  const avgTier = tierFor(avg, avgCov);
+  const total = ms.reduce((a, m) => a + getElo(m.id), 0);
+  const scale = ELO_MAX_PER_MATIERE * ms.length;
+  const tier = tierFor(total, scale);
   return {
-    html: `<h1>Elo</h1><p class="muted">Ton niveau estimé, matière par matière — calculé comme un classement Elo à partir de tes QCM, exercices et évals blanches, pondéré par la difficulté de chaque question. Le rang maximum n'est atteint que si tu maîtrises la quasi-totalité des notions du cours.</p>
+    html: `<h1>Elo</h1><p class="muted">Ton niveau de maîtrise, matière par matière : 1000 points quand tout le cours d'une matière est couvert, jusqu'à 500 de plus si tu maîtrises aussi les QCM et exercices de niveau difficile. Le score global est la somme de tes ${ms.length} matières actives — ${ms.length * 1000} points quand tout le semestre est connu, ${scale} au maximum.</p>
     <div class="card row" style="gap:22px;margin:16px 0;align-items:center">
-      <div style="font-size:2.6rem;font-weight:800">${avg}</div>
-      <div><span class="chip ${avgTier.cls}">${esc(avgTier.name)}</span><div class="tiny muted" style="margin-top:4px">Niveau global (moyenne des matières actives)</div></div>
+      <div style="font-size:2.6rem;font-weight:800">${total}<span class="small muted" style="font-weight:600"> / ${scale}</span></div>
+      <div><span class="chip ${tier.cls}">${esc(tier.name)}</span><div class="tiny muted" style="margin-top:4px">Niveau global (somme des matières actives)</div></div>
     </div>
     <div class="grid g2" style="gap:14px">${ms.map(eloCardHtml).join("")}</div>`,
   };
 }
 function eloDetail(mid) {
   const m = M(mid); if (!m) return { html: `<div class="empty">Matière inconnue.</div>` };
-  const rating = getElo(mid), cov = coverage(mid), tier = tierFor(rating, cov);
+  const rating = getElo(mid), cov = coverage(mid), hard = hardMastery(mid), tier = tierFor(rating);
+  const base = Math.round(1000 * cov), bonus = Math.round(500 * hard);
   const hist = state.elo[mid]?.history || [];
   const pts = hist.map((h) => ({ ts: h.ts, v: h.rating }));
   const evals = Object.values(state.evals).filter((e) => e.mid === mid).sort((a, b) => a.ts - b.ts);
@@ -236,8 +234,12 @@ function eloDetail(mid) {
   return {
     html: `<div class="crumbs"><a href="#/elo">Elo</a> › ${esc(m.court)}</div>
     <h1 style="margin:0">${esc(m.nom)}</h1>
-    <div class="card row" style="gap:26px;margin:14px 0;align-items:center"><div><div style="font-size:2.6rem;font-weight:800">${rating}</div><span class="chip ${tier.cls}">${esc(tier.name)}</span></div>
-      <div class="sp"></div><div style="text-align:right"><div class="tiny muted">Notions maîtrisées</div><div style="font-size:1.5rem;font-weight:700">${Math.round(cov * 100)}%</div></div></div>
+    <div class="card row" style="gap:26px;margin:14px 0;align-items:center;flex-wrap:wrap">
+      <div><div style="font-size:2.6rem;font-weight:800">${rating}<span class="small muted" style="font-weight:600"> / ${ELO_MAX_PER_MATIERE}</span></div><span class="chip ${tier.cls}">${esc(tier.name)}</span></div>
+      <div class="sp"></div>
+      <div style="text-align:right"><div class="tiny muted">Cours couvert</div><div style="font-size:1.3rem;font-weight:700">${base} <span class="tiny muted">/ 1000</span></div></div>
+      <div style="text-align:right"><div class="tiny muted">Bonus niveau difficile</div><div style="font-size:1.3rem;font-weight:700">${bonus} <span class="tiny muted">/ 500</span></div></div>
+    </div>
     <h3>Évolution du niveau</h3>
     <div class="card">${sparklineSvg(pts, { w: 800, h: 180 })}</div>
     ${evalPts.length > 1 ? `<h3 style="margin-top:20px">Notes aux évals blanches (/20)</h3><div class="card">${sparklineSvg(evalPts, { w: 800, h: 140, min: 0, max: 20 })}</div>` : ""}
@@ -325,7 +327,7 @@ async function route() {
     else if (p[0] === "eval") ({ html, after } = p[1] === "run" && EV ? evalRunView() : evalSetup(r.q));
     else if (p[0] === "cards") ({ html, after } = p[1] === "run" && FC ? cardsView() : cardsSetup(r.q));
     else if (p[0] === "edt") ({ html, after } = edt());
-    else if (p[0] === "todo") ({ html, after } = edtDraft(r.q));
+    else if (p[0] === "todo") ({ html, after } = await edtDraft(r.q));
     else if (p[0] === "cal") ({ html, after } = calendar(r.q));
     else if (p[0] === "notes") ({ html, after } = notes());
     else if (p[0] === "elo" && !p[1]) ({ html, after } = eloPage());
@@ -362,44 +364,74 @@ function nextEvents(n = 4) {
   return D.cal.evenements.filter((e) => M(e.matiere) && daysUntil(e.date) >= 0).slice(0, n);
 }
 const cd = (e) => { const d = daysUntil(e.date); return d === 0 ? "aujourd'hui" : d === 1 ? "demain" : `dans ${d} jours`; };
+// Poids du CC en 0..1, pour évaluer l'importance d'une échéance : "20 %" ou "1/3" ; à défaut
+// (ex. "à confirmer") on suppose un poids moyen plutôt que de l'ignorer complètement.
+function parsePoidsNum(s) {
+  const m = String(s || "").match(/(\d+(?:[.,]\d+)?)\s*%/); if (m) return parseFloat(m[1].replace(",", ".")) / 100;
+  const m2 = String(s || "").match(/^(\d+)\s*\/\s*(\d+)$/); if (m2) return +m2[1] / +m2[2];
+  return 0.15;
+}
+// Affichage : une note "1/3" (une note parmi trois, pas un pourcentage du CC) se lit plus
+// naturellement en "33 %" qu'en fraction — tout le reste (poids réels, "à confirmer") est inchangé.
+function fmtPoids(s) {
+  const m = String(s || "").match(/^(\d+)\s*\/\s*(\d+)$/);
+  return m ? `${Math.round((+m[1] / +m[2]) * 100)} %` : s;
+}
+const nearestEvent = (mid) => D.cal.evenements.filter((e) => e.matiere === mid && daysUntil(e.date) >= 0).sort((a, b) => daysUntil(a.date) - daysUntil(b.date))[0];
+// Priorité = poids du CC × urgence (proche = plus urgent) × marge de progression (peu avancé = plus prioritaire).
+function prioScore(mid) {
+  const ev = nearestEvent(mid); if (!ev) return null;
+  const d = Math.max(0, daysUntil(ev.date)), prog = stats(mid).prog;
+  const urgency = Math.max(0.2, 1 - d / 45), gap = Math.max(0.2, 1 - prog / 100);
+  return { ev, score: parsePoidsNum(ev.poids) * urgency * gap };
+}
 function home() {
-  const t = totals(), ne = nextEvents(1)[0];
-  const dueTot = t.due, wrongTot = t.wrong, st = streak();
-  const hero = ne
-    ? `<div class="hero" style="--acc:${M(ne.matiere).couleur}"><div class="tiny" style="opacity:.85;text-transform:uppercase;letter-spacing:.06em">Prochaine échéance</div><h1>${esc(M(ne.matiere).court)} — ${esc(ne.titre)}</h1><p>${fmtLong(ne.date)} · <b class="count">${cd(ne)}</b> · poids ${esc(ne.poids)}</p><p class="small">${esc(ne.detail)}</p><div class="row" style="margin-top:12px"><a class="btn" href="#/eval?m=${ne.matiere}">${icon("clock")}Éval blanche ${esc(M(ne.matiere).court)}</a><a class="btn" href="#/qcm?m=${ne.matiere}">${icon("check")}QCM</a><a class="btn" href="#/cal">${icon("cal")}Calendrier</a></div></div>`
-    : `<div class="hero"><h1>${esc(periodeLabel())}</h1><p>Plus d'échéance à venir dans le calendrier.</p></div>`;
-  const subj = activeMatieres().map((m) => {
-    const s = stats(m.id);
-    return `<a class="card subj" href="#/m/${m.id}" style="--c:${m.couleur};--acc:${m.couleur}"><div class="row nowrap"><div><h3>${esc(m.court)}</h3><div class="muted small">${esc(m.ue)}</div></div><div class="sp"></div>${ring(s.prog, m.couleur)}</div>
-      <div class="muted small">${plural(s.seances, "séance")} · ${plural(s.nq, "QCM", "QCM")} · ${plural(s.nf, "carte")}</div>
-      <div class="bar"><i style="width:${s.prog}%;background:${m.couleur}"></i></div>
-      <div class="tiny muted">Lu ${s.read}/${s.seances} · QCM ${s.right}/${s.nq} maîtrisés · cartes ${s.mastered}/${s.nf}</div></a>`;
-  }).join("");
-  const up = nextEvents(5).map((e) => `<a class="item" href="#/cal"><span class="badge" style="--acc:${M(e.matiere).couleur};background:color-mix(in srgb,${M(e.matiere).couleur} 15%,var(--surface));color:${M(e.matiere).couleur}">${fmtDate(e.date).split(" ").slice(1).join(" ")}</span><div class="sp"><b>${esc(M(e.matiere).court)}</b> — ${esc(e.titre)}<div class="tiny muted">${esc(e.poids)} · ${cd(e)}${e.statut && e.poids !== "à confirmer" ? " · <span class='chip wa'>date provisoire</span>" : ""}</div></div></a>`).join("");
+  const ne = nextEvents(1)[0];
+  const ms = activeMatieres();
+  const hiddenH1 = `<h1 class="sr-only">${ne ? esc(`${M(ne.matiere).court} — ${ne.titre}`) : esc(periodeLabel())}</h1>`;
   const onboard = !sync.user
     ? `<div class="card" style="margin-bottom:16px;border-left:4px solid var(--acc)"><b>Connecte-toi pour voir tes matières et tes cours.</b><p class="small muted" style="margin:4px 0 10px">Chaque compte a ses propres matières, cours, QCM et emploi du temps.</p><a class="btn pri" href="#/compte">${icon("user")}Se connecter / créer un compte</a></div>`
-    : !activeMatieres().length
+    : !ms.length
       ? `<div class="card" style="margin-bottom:16px;border-left:4px solid var(--acc)"><b>${D.matieres.length ? "Aucune matière active." : "Aucune matière pour l'instant."}</b><p class="small muted" style="margin:4px 0 10px">${D.matieres.length ? "Toutes tes matières sont archivées — remets-en une active, ou crées-en une nouvelle." : "Ajoute ta première matière depuis les paramètres."}</p><a class="btn pri" href="#/compte">${icon("edit")}${D.matieres.length ? "Gérer mes matières" : "Ajouter une matière"}</a></div>`
       : "";
+  if (!sync.user || !ms.length) return { html: `<h1 class="sr-only">${esc(periodeLabel())}</h1>${onboard}` };
+
+  const up = nextEvents(5).map((e) => `<a class="item" href="#/cal"><span class="badge" style="--acc:${M(e.matiere).couleur};background:color-mix(in srgb,${M(e.matiere).couleur} 15%,var(--surface));color:${M(e.matiere).couleur}">${fmtDate(e.date).split(" ").slice(1).join(" ")}</span><div class="sp"><b>${esc(M(e.matiere).court)}</b> — ${esc(e.titre)}<div class="tiny muted">${esc(fmtPoids(e.poids))} · ${cd(e)}${e.statut && e.poids !== "à confirmer" ? " · <span class='chip wa'>date provisoire</span>" : ""}</div></div></a>`).join("");
+
+  const avgProg = Math.round(ms.reduce((a, m) => a + stats(m.id).prog, 0) / ms.length);
+  const totalElo = ms.reduce((a, m) => a + getElo(m.id), 0), eloScale = ELO_MAX_PER_MATIERE * ms.length;
+  const tier = tierFor(totalElo, eloScale);
+
+  const ranked = ms.map((m) => ({ m, p: prioScore(m.id) })).filter((x) => x.p).sort((a, b) => b.p.score - a.p.score);
+  const sevOf = (mid) => { const i = ranked.findIndex((x) => x.m.id === mid); if (i < 0) return null; return i === 0 ? { cls: "ko", label: "Élevé" } : i === 1 ? { cls: "wa", label: "Moyen" } : { cls: "gr", label: "Faible" }; };
+
+  const subjCards = ms.slice().sort((a, b) => stats(a.id).prog - stats(b.id).prog).map((m) => {
+    const s = stats(m.id), elo = getElo(m.id), sev = sevOf(m.id), ev = nearestEvent(m.id);
+    return `<a class="card subj" href="#/m/${m.id}" style="--c:${m.couleur}">
+      <div class="row nowrap"><b>${esc(m.court)}</b><div class="sp"></div><span class="chip ${sev ? sev.cls : "gr"}">${sev ? sev.label : "—"}</span></div>
+      <div class="row nowrap" style="gap:12px">
+        <div class="ring" style="--v:${Math.min(100, Math.round((elo / ELO_MAX_PER_MATIERE) * 100))}" data-t="${elo}"></div>
+        <div class="sp"><div class="bar"><i style="width:${s.prog}%;background:${m.couleur}"></i></div><div class="tiny muted" style="margin-top:5px">${s.prog}% avancé</div></div>
+      </div>
+      <div class="tiny muted" style="border-top:1px solid var(--line);padding-top:8px">${ev ? `${esc(fmtPoids(ev.poids))} · ${cd(ev)}` : "aucune échéance"}</div>
+    </a>`;
+  }).join("");
+
   return {
-    html: `${onboard}${hero}
-    ${edtHome()}
-    <div class="grid g4 keep2" style="margin:16px 0">
-      <div class="card stat"><b>${t.read}<small class="muted">/${t.seances}</small></b><span>séances lues</span></div>
-      <div class="card stat"><b>${pct(t.ok, t.n)}<small class="muted"> %</small></b><span>réussite aux QCM (${t.answered}/${t.nq} vus)</span></div>
-      <div class="card stat"><b>${t.mastered}<small class="muted">/${t.nf}</small></b><span>cartes maîtrisées</span></div>
-      <div class="card stat"><b>${st}<small class="muted"> j</small></b><span>jours d'affilée</span></div>
+    html: `${hiddenH1}${onboard}
+    <div class="card row" style="gap:24px;flex-wrap:wrap">
+      <div class="row" style="gap:14px"><div class="ring" style="--v:${avgProg}" data-t="${avgProg}%"></div><div class="stat"><b>${avgProg}<small class="muted"> %</small></b><span>avancement moyen du semestre</span></div></div>
+      <div class="row" style="gap:14px"><div class="ring" style="--v:${Math.round((totalElo / eloScale) * 100)}" data-t="${Math.round((totalElo / eloScale) * 100)}%"></div><div class="stat"><b>${totalElo}<small class="muted"> / ${eloScale}</small></b><span>Elo global · ${esc(tier.name)}</span></div></div>
+      <div class="sp"></div>
+      <a class="btn ghost" href="#/elo">${icon("flag")}Voir le détail Elo</a>
     </div>
-    <div class="grid g2">
-      <div class="card"><h3 style="margin-top:0">À faire maintenant</h3><div class="list">
-        <a class="item" href="#/cards?mode=due"><span class="badge">${icon("cards")}</span><div class="sp"><b>${plural(dueTot, "carte")} à revoir</b><div class="tiny muted">${dueTot ? "révision espacée : c'est le bon moment" : "rien de dû — ajoute des cartes nouvelles"}</div></div>${icon("arrow")}</a>
-        <a class="item" href="#/qcm?wrong=1"><span class="badge">${icon("flag")}</span><div class="sp"><b>${plural(wrongTot, "question ratée", "questions ratées")}</b><div class="tiny muted">refais tes erreurs</div></div>${icon("arrow")}</a>
-        <a class="item" href="#/qcm"><span class="badge">${icon("check")}</span><div class="sp"><b>Nouveau QCM</b><div class="tiny muted">${D.Q.length} questions avec correction</div></div>${icon("arrow")}</a>
-      </div></div>
+    <div class="grid g2" style="margin:16px 0">
       <div class="card"><h3 style="margin-top:0">Prochaines échéances</h3><div class="list">${up || '<div class="empty">Aucune échéance.</div>'}</div><a class="btn sm ghost" href="#/cal">Tout le calendrier ${icon("arrow")}</a></div>
+      ${edtHome() || `<div class="card"><h3 style="margin-top:0">Aujourd'hui</h3><div class="empty">Aucun emploi du temps importé.</div></div>`}
     </div>
-    <h2>Matières</h2><div class="grid g3">${subj}</div>
-    <h2>Activité</h2><div class="card">${heatmap()}<div class="tiny muted" style="margin-top:8px">16 dernières semaines — chaque action (QCM, carte, exercice, cours lu) compte.</div></div>`,
+    <h2>Tes matières</h2>
+    <div class="grid g3">${subjCards}</div>
+    <div class="card" style="margin:16px 0"><h3 style="margin-top:0">Activité</h3><div class="tiny muted" style="margin-bottom:10px">Ce qui a été fait, jour par jour, ces 30 derniers jours.</div>${activityChart()}</div>`,
   };
 }
 function subjectCard(m) {
@@ -453,7 +485,7 @@ function matiere(mid, tab) {
     const evs = D.cal.evenements.filter((e) => e.matiere === mid);
     const rem = D.cal.remarques.filter((r) => r.matiere === mid);
     body = `<div class="card"><p class="muted small" style="margin-top:0">${esc(m.cc)}</p>
-      <div class="list">${evs.map((e) => `<div class="item"><span class="badge" style="font-size:.66rem">${fmtDate(e.date).split(" ").slice(1).join(" ")}</span><div class="sp"><b>${esc(e.titre)}</b> <span class="chip gr">${esc(e.poids)}</span>${e.type === "2e" ? ' <span class="chip wa">2e chance</span>' : ""}<div class="tiny muted">${esc(e.detail)}</div></div></div>`).join("") || '<div class="muted small">Pas de date fixée pour l\'instant.</div>'}</div>
+      <div class="list">${evs.map((e) => `<div class="item"><span class="badge" style="font-size:.66rem">${fmtDate(e.date).split(" ").slice(1).join(" ")}</span><div class="sp"><b>${esc(e.titre)}</b> <span class="chip gr">${esc(fmtPoids(e.poids))}</span>${e.type === "2e" ? ' <span class="chip wa">2e chance</span>' : ""}<div class="tiny muted">${esc(e.detail)}</div></div></div>`).join("") || '<div class="muted small">Pas de date fixée pour l\'instant.</div>'}</div>
       ${rem.map((r) => `<div class="note" style="margin-top:10px"><b>À noter —</b> ${esc(r.texte)}</div>`).join("")}
       ${m.pdfCC ? `<a class="btn sm" href="${m.pdfCC}" download>${icon("dl")}Fiche CC (PDF)</a>` : ""}</div>
       ${CALC[mid] ? `<h3>Calculateur de note</h3>${notesCard(mid)}` : ""}`;
@@ -467,6 +499,357 @@ function matiere(mid, tab) {
 }
 
 // ───────────────────────── Cours ─────────────────────────
+// ───────────────────────── Écriture manuscrite (stylet) — moteur vectoriel ─────────────────────────
+// Chaque trait est un objet {tool,color,size,pts:[{x,y,p}]} (ou une forme {tool,x1,y1,x2,y2}), pas
+// des pixels figés : ça permet un rendu net à tout zoom et une gomme qui efface un trait entier
+// plutôt que des pixels. La vue (DRAW.view = {scale,ox,oy}) est un pur zoom/pan d'affichage appliqué
+// dans redrawAll() — les coordonnées stockées des traits restent toujours en espace "page" à 100 %.
+// Le doigt seul (pointerType "touch") ne trace jamais (rejet de paume) : à deux doigts, il pince
+// la VUE du canevas ; le stylet et la souris (pen/mouse) dessinent normalement.
+let DRAW = null;
+let CURRENT_DOCS = []; // docs (avec strokes/paper) de la séance affichée — évite de stocker du JSON dans un data-attribut
+const PEN_PALETTE = ["#111111", "#C4342B", "#E08A2B", "#B8960C", "#2E8B57", "#2454C7", "#7C4DBE", "#C6427E"];
+const SHAPES = ["line", "rect", "ellipse", "arrow"];
+function openWriteOverlay(el, mid, sid, doc = null) {
+  const overlay = $("#writeOverlay", el), canvas = $("#writeCanvas", el);
+  overlay.hidden = false;
+  document.body.style.overflow = "hidden";
+  const dpr = window.devicePixelRatio || 1, rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * dpr; canvas.height = rect.height * dpr;
+  const ctx = canvas.getContext("2d");
+  // Pas de ctx.scale ici : redrawAll() pose la transform en entier à chaque frame (dpr + zoom/pan),
+  // pour pouvoir zoomer/déplacer la vue sans jamais toucher aux coordonnées stockées des traits.
+  DRAW = {
+    el, ctx, canvas, mid, sid, w: rect.width, h: rect.height, dpr, editingDoc: doc,
+    tool: "pen", color: "#111111", size: 4, paper: "blank",
+    strokes: [], log: [], redoLog: [], eraseGesture: null, cur: null, drawing: false, dirty: false,
+    view: { scale: 1, ox: 0, oy: 0 }, touches: new Map(), pinch: null, backdropImg: null,
+  };
+  if (doc?.strokes?.length) {
+    DRAW.strokes = JSON.parse(JSON.stringify(doc.strokes)); // copie : jamais l'objet du doc d'origine
+    DRAW.paper = doc.paper || "blank";
+    redrawAll();
+  } else if (doc?.path) {
+    // Page enregistrée avant l'écriture vectorielle : plus moyen de retoucher trait par trait,
+    // mais on peut continuer à écrire par-dessus l'image telle quelle.
+    toast("Page d'avant cette mise à jour : les traits ne sont plus modifiables un par un, mais tu peux continuer à écrire dessus.");
+    getSeanceDocBlobUrl(doc.path).then((blobUrl) => {
+      const img = new Image();
+      img.onload = () => { DRAW.backdropImg = img; redrawAll(); URL.revokeObjectURL(blobUrl); };
+      img.onerror = () => toast("Impossible de charger cette page pour la modifier.");
+      img.src = blobUrl;
+    }).catch((err) => toast("Erreur : " + err.message));
+  } else {
+    redrawAll();
+  }
+  syncWriteToolbar(el);
+}
+function closeWriteOverlay(el) {
+  $("#writeOverlay", el).hidden = true;
+  document.body.style.overflow = "";
+  DRAW = null;
+}
+function syncWriteToolbar(el) {
+  $$("[data-a='wtool']", el).forEach((b) => b.classList.toggle("on", b.dataset.tool === DRAW.tool));
+  const slider = $("[data-a='wsizeslider']", el); if (slider) slider.value = DRAW.size;
+  const sv = $("#wsizeval", el); if (sv) sv.textContent = DRAW.size;
+  $$("[data-a='wpaper']", el).forEach((b) => b.classList.toggle("on", b.dataset.paper === DRAW.paper));
+  $$("[data-a='wcolor']", el).forEach((b) => b.classList.toggle("on", b.dataset.c === DRAW.color));
+}
+// `rect` est la zone PAGE actuellement visible (dépend du pan/zoom) : le quadrillage/lignage est
+// calculé par modulo à partir de l'origine absolue, pas depuis le coin du rect, pour qu'il continue
+// à l'identique quand on se déplace — c'est ce qui donne l'impression d'une feuille "infinie".
+function paperPattern(ctx, rect, paper) {
+  if (paper === "blank") return;
+  const { left, top, right, bottom } = rect;
+  ctx.save();
+  ctx.strokeStyle = "rgba(0,0,0,.12)"; ctx.lineWidth = 1;
+  if (paper === "lined") {
+    const step = 30;
+    for (let y = Math.floor((top - 6) / step) * step + 6; y < bottom; y += step) { ctx.beginPath(); ctx.moveTo(left, y + .5); ctx.lineTo(right, y + .5); ctx.stroke(); }
+  } else if (paper === "grid") {
+    const step = 24;
+    for (let x = Math.floor(left / step) * step; x < right; x += step) { ctx.beginPath(); ctx.moveTo(x + .5, top); ctx.lineTo(x + .5, bottom); ctx.stroke(); }
+    for (let y = Math.floor(top / step) * step; y < bottom; y += step) { ctx.beginPath(); ctx.moveTo(left, y + .5); ctx.lineTo(right, y + .5); ctx.stroke(); }
+  }
+  ctx.restore();
+}
+// Trace lissée par courbes quadratiques passant par les points-milieux : évite l'aspect "brisé"
+// d'un simple enchaînement de segments droits point à point.
+function pathThrough(ctx, pts) {
+  if (pts.length < 2) return;
+  ctx.beginPath(); ctx.moveTo(pts[0].x, pts[0].y);
+  for (let i = 1; i < pts.length - 1; i++) {
+    const mx = (pts[i].x + pts[i + 1].x) / 2, my = (pts[i].y + pts[i + 1].y) / 2;
+    ctx.quadraticCurveTo(pts[i].x, pts[i].y, mx, my);
+  }
+  ctx.lineTo(pts[pts.length - 1].x, pts[pts.length - 1].y);
+}
+function drawArrowHead(ctx, s) {
+  const ang = Math.atan2(s.y2 - s.y1, s.x2 - s.x1), len = 9 + s.size;
+  ctx.beginPath();
+  ctx.moveTo(s.x2 - len * Math.cos(ang - Math.PI / 7), s.y2 - len * Math.sin(ang - Math.PI / 7));
+  ctx.lineTo(s.x2, s.y2);
+  ctx.lineTo(s.x2 - len * Math.cos(ang + Math.PI / 7), s.y2 - len * Math.sin(ang + Math.PI / 7));
+  ctx.stroke();
+}
+function drawStroke(ctx, s) {
+  ctx.lineCap = "round"; ctx.lineJoin = "round";
+  ctx.strokeStyle = s.color;
+  if (s.tool === "pen" || s.tool === "highlighter") {
+    ctx.globalAlpha = s.tool === "highlighter" ? .35 : 1;
+    ctx.lineWidth = s.tool === "highlighter" ? s.size * 3 : s.size;
+    pathThrough(ctx, s.pts); ctx.stroke();
+    ctx.globalAlpha = 1;
+  } else if (s.tool === "line" || s.tool === "arrow") {
+    ctx.lineWidth = s.size;
+    ctx.beginPath(); ctx.moveTo(s.x1, s.y1); ctx.lineTo(s.x2, s.y2); ctx.stroke();
+    if (s.tool === "arrow") drawArrowHead(ctx, s);
+  } else if (s.tool === "rect") {
+    ctx.lineWidth = s.size;
+    ctx.strokeRect(Math.min(s.x1, s.x2), Math.min(s.y1, s.y2), Math.abs(s.x2 - s.x1), Math.abs(s.y2 - s.y1));
+  } else if (s.tool === "ellipse") {
+    ctx.lineWidth = s.size;
+    const cx = (s.x1 + s.x2) / 2, cy = (s.y1 + s.y2) / 2, rx = Math.abs(s.x2 - s.x1) / 2, ry = Math.abs(s.y2 - s.y1) / 2;
+    ctx.beginPath(); ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2); ctx.stroke();
+  }
+}
+function redrawAll() {
+  if (!DRAW) return;
+  const { ctx, w, h, dpr, view, canvas } = DRAW;
+  // Reset complet avant de reposer la transform : sinon une zone qui sort du cadre (dézoom, pan)
+  // garderait les pixels bruts de la frame précédente au lieu d'être vide.
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.setTransform(dpr * view.scale, 0, 0, dpr * view.scale, dpr * view.ox, dpr * view.oy);
+  // Feuille "presque infinie" : on peint du blanc + le quadrillage sur toute la zone PAGE
+  // actuellement visible (dépend du pan/zoom), pas seulement sur le rectangle initial — se déplacer
+  // ne révèle donc jamais de vide, la feuille continue dans toutes les directions.
+  const vis = { left: -view.ox / view.scale, top: -view.oy / view.scale, right: (w - view.ox) / view.scale, bottom: (h - view.oy) / view.scale };
+  ctx.fillStyle = "#fff"; ctx.fillRect(vis.left, vis.top, vis.right - vis.left, vis.bottom - vis.top);
+  if (DRAW.backdropImg) ctx.drawImage(DRAW.backdropImg, 0, 0, w, h);
+  paperPattern(ctx, vis, DRAW.paper);
+  DRAW.strokes.forEach((s) => drawStroke(ctx, s));
+  if (DRAW.cur) drawStroke(ctx, DRAW.cur);
+}
+// Historique d'actions unifié (ajout ET gomme) : gommer un morceau par erreur doit pouvoir s'annuler
+// exactement comme un trait de trop, donc les deux passent par la même pile plutôt que par un
+// simple "dernier trait" — sinon effacer serait irréversible.
+function undoStroke() {
+  if (!DRAW || !DRAW.log.length) return;
+  const last = DRAW.log.pop();
+  if (last.type === "add") { const i = DRAW.strokes.indexOf(last.stroke); if (i >= 0) DRAW.strokes.splice(i, 1); }
+  else last.items.slice().sort((a, b) => a.originalIndex - b.originalIndex).forEach(({ original, originalIndex, pieces }) => {
+    pieces.forEach((pc) => { const i = DRAW.strokes.indexOf(pc); if (i >= 0) DRAW.strokes.splice(i, 1); });
+    DRAW.strokes.splice(Math.min(originalIndex, DRAW.strokes.length), 0, original);
+  });
+  DRAW.redoLog.push(last); DRAW.dirty = true; redrawAll();
+}
+function redoStroke() {
+  if (!DRAW || !DRAW.redoLog.length) return;
+  const last = DRAW.redoLog.pop();
+  if (last.type === "add") DRAW.strokes.push(last.stroke);
+  else last.items.forEach(({ original, originalIndex, pieces }) => {
+    const i = DRAW.strokes.indexOf(original); if (i >= 0) DRAW.strokes.splice(i, 1);
+    DRAW.strokes.splice(Math.min(originalIndex, DRAW.strokes.length), 0, ...pieces);
+  });
+  DRAW.log.push(last); DRAW.dirty = true; redrawAll();
+}
+// La gomme est un stylo qui gomme : son rayon suit le même curseur de taille que le stylo, et elle
+// efface au pixel près — un trait touché est DÉCOUPÉ à l'endroit du contact (les morceaux de part et
+// d'autre redeviennent deux traits indépendants), il ne disparaît pas en entier comme un objet qu'on
+// aurait cliqué. Les formes (ligne/rectangle/cercle/flèche) n'ont pas de "pixels" à découper : elles
+// s'effacent toujours entières au contact, comme avant.
+// `DRAW.eraseGesture` suit, pour tout le geste (du pointerdown au pointerup), quel trait ORIGINAL est
+// à l'origine de quel morceau actuellement affiché — via une Map indexée par référence d'objet — afin
+// qu'annuler restaure le trait d'origine intact même s'il a été redécoupé plusieurs fois en chemin.
+// Distance d'un point au SEGMENT [a,b] (pas juste à ses deux extrémités) : avec des points de trait
+// parfois espacés (trait rapide, événements pointeur peu fréquents), tester seulement les sommets
+// laisserait passer un clic pourtant visuellement en plein sur le trait, entre deux points stockés.
+function distToSeg(p, a, b) {
+  const dx = b.x - a.x, dy = b.y - a.y, len2 = dx * dx + dy * dy;
+  const t = len2 === 0 ? 0 : Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.y - a.y) * dy) / len2));
+  return Math.hypot(p.x - (a.x + t * dx), p.y - (a.y + t * dy));
+}
+function eraseAt(p) {
+  const r = DRAW.size * 3 + 6;
+  const { records, pieceGid } = DRAW.eraseGesture;
+  let i = 0;
+  while (i < DRAW.strokes.length) {
+    const s = DRAW.strokes[i];
+    let hit = false, pieces = null;
+    if (s.tool === "pen" || s.tool === "highlighter") {
+      const pts = s.pts;
+      if (pts.length < 2) {
+        hit = Math.hypot(pts[0].x - p.x, pts[0].y - p.y) < r;
+        if (hit) pieces = [];
+      } else {
+        const runs = []; let cur = [pts[0]];
+        for (let k = 0; k < pts.length - 1; k++) {
+          if (distToSeg(p, pts[k], pts[k + 1]) < r) { hit = true; if (cur.length >= 2) runs.push(cur); cur = [pts[k + 1]]; }
+          else cur.push(pts[k + 1]);
+        }
+        if (cur.length >= 2) runs.push(cur);
+        if (hit) pieces = runs.map((run) => ({ tool: s.tool, color: s.color, size: s.size, pts: run }));
+      }
+    } else {
+      const pts = [{ x: s.x1, y: s.y1 }, { x: s.x2, y: s.y2 }, { x: (s.x1 + s.x2) / 2, y: (s.y1 + s.y2) / 2 }];
+      hit = pts.some((pt) => Math.hypot(pt.x - p.x, pt.y - p.y) < r);
+      if (hit) pieces = [];
+    }
+    if (!hit) { i++; continue; }
+    let recIdx = pieceGid.get(s);
+    if (recIdx === undefined) { recIdx = records.length; records.push({ original: s, originalIndex: i }); }
+    pieces.forEach((pc) => pieceGid.set(pc, recIdx));
+    DRAW.strokes.splice(i, 1, ...pieces);
+    i += pieces.length;
+    DRAW.dirty = true;
+  }
+}
+async function saveWriteNote() {
+  if (!DRAW) return;
+  const { el, canvas, mid, sid, editingDoc, strokes, paper } = DRAW;
+  const savedView = DRAW.view;
+  DRAW.view = { scale: 1, ox: 0, oy: 0 }; // export toujours la page entière à 100%, peu importe le zoom/pan en cours
+  redrawAll(); // s'assure aussi qu'aucun trait/forme en cours de tracé n'est exporté à moitié
+  const blob = await new Promise((res) => canvas.toBlob(res, "image/png"));
+  DRAW.view = savedView; redrawAll();
+  if (!blob) { toast("Erreur : impossible d'enregistrer cette page."); return; }
+  const vector = { strokes, paper };
+  try {
+    if (editingDoc) {
+      await updateSeanceDoc(editingDoc, new File([blob], editingDoc.nom, { type: "image/png" }), vector);
+    } else {
+      const d = new Date(), pad = (n) => String(n).padStart(2, "0");
+      const stamp = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}h${pad(d.getMinutes())}`;
+      await uploadSeanceDoc(mid, sid, new File([blob], `Note manuscrite ${stamp}.png`, { type: "image/png" }), vector);
+    }
+  } catch (err) { toast("Erreur : " + err.message); return; }
+  closeWriteOverlay(el);
+  toast(editingDoc ? "Modifications enregistrées" : "Note enregistrée dans les documents");
+  rerender();
+}
+// Convertit un point écran (CSS px) en coordonnées page (celles stockées dans les traits), en
+// inversant la transform de vue courante — indispensable pour dessiner juste sous le stylet une
+// fois qu'on a zoomé/déplacé la vue.
+function ptFromEvent(e, canvas) {
+  const r = canvas.getBoundingClientRect(), { scale, ox, oy } = DRAW.view;
+  return { x: (e.clientX - r.left - ox) / scale, y: (e.clientY - r.top - oy) / scale, p: e.pressure || .5 };
+}
+function isShapeTool(t) { return SHAPES.includes(t); }
+function touchPt(e, canvas) {
+  const r = canvas.getBoundingClientRect();
+  return { x: e.clientX - r.left, y: e.clientY - r.top };
+}
+// Fige le point de la PAGE actuellement sous le milieu des deux doigts : tant que ce point reste
+// sous le milieu courant pendant tout le geste, pincer zoome/déplace naturellement en une seule fois
+// (pas besoin de logique séparée pour le pan).
+function startPinch() {
+  const [a, b] = [...DRAW.touches.values()];
+  const d0 = Math.hypot(b.x - a.x, b.y - a.y) || 1;
+  const midX = (a.x + b.x) / 2, midY = (a.y + b.y) / 2;
+  const { scale, ox, oy } = DRAW.view;
+  DRAW.pinch = { d0, scale0: scale, anchor: { x: (midX - ox) / scale, y: (midY - oy) / scale } };
+}
+function resetZoomView() { if (!DRAW) return; DRAW.view = { scale: 1, ox: 0, oy: 0 }; redrawAll(); }
+function wireWriteCanvas(el) {
+  const canvas = $("#writeCanvas", el); if (!canvas) return;
+  const start = (e, p) => {
+    if (DRAW.tool === "eraser") { DRAW.drawing = true; DRAW.eraseGesture = { records: [], pieceGid: new Map() }; eraseAt(p); return; }
+    if (isShapeTool(DRAW.tool)) { DRAW.cur = { tool: DRAW.tool, color: DRAW.color, size: DRAW.size, x1: p.x, y1: p.y, x2: p.x, y2: p.y }; DRAW.drawing = true; return; }
+    DRAW.cur = { tool: DRAW.tool, color: DRAW.color, size: DRAW.size, pts: [p] }; DRAW.drawing = true;
+  };
+  const move = (e, p) => {
+    if (DRAW.tool === "eraser") { eraseAt(p); return; }
+    if (isShapeTool(DRAW.tool)) { DRAW.cur.x2 = p.x; DRAW.cur.y2 = p.y; }
+    else DRAW.cur.pts.push(p);
+    DRAW.dirty = true;
+  };
+  const end = () => {
+    if (!DRAW.drawing) return;
+    DRAW.drawing = false;
+    if (DRAW.tool === "eraser") {
+      const { records, pieceGid } = DRAW.eraseGesture;
+      if (records.length) {
+        const items = records.map((rec, idx) => ({ original: rec.original, originalIndex: rec.originalIndex, pieces: DRAW.strokes.filter((x) => pieceGid.get(x) === idx) }));
+        DRAW.log.push({ type: "erase", items }); DRAW.redoLog = [];
+      }
+      DRAW.eraseGesture = null;
+    } else if (DRAW.cur) {
+      DRAW.strokes.push(DRAW.cur); DRAW.log.push({ type: "add", stroke: DRAW.cur }); DRAW.redoLog = []; DRAW.cur = null; DRAW.dirty = true;
+    }
+  };
+  // Pincer à deux doigts zoome/déplace la VUE du canevas (jamais la barre d'outils, qui est en
+  // dehors du canevas) ; le doigt seul ne trace jamais (rejet de paume déjà en place ci-dessus).
+  const touchStart = (e) => {
+    DRAW.touches.set(e.pointerId, touchPt(e, canvas));
+    if (DRAW.touches.size === 2) startPinch(); else DRAW.pinch = null;
+  };
+  const touchMove = (e) => {
+    if (!DRAW.touches.has(e.pointerId)) return;
+    DRAW.touches.set(e.pointerId, touchPt(e, canvas));
+    if (DRAW.touches.size !== 2 || !DRAW.pinch) return;
+    const [a, b] = [...DRAW.touches.values()];
+    const d = Math.hypot(b.x - a.x, b.y - a.y);
+    const midX = (a.x + b.x) / 2, midY = (a.y + b.y) / 2;
+    const scale = Math.min(6, Math.max(.4, DRAW.pinch.scale0 * (d / DRAW.pinch.d0)));
+    DRAW.view = { scale, ox: midX - DRAW.pinch.anchor.x * scale, oy: midY - DRAW.pinch.anchor.y * scale };
+    redrawAll();
+  };
+  const touchEnd = (e) => {
+    DRAW.touches.delete(e.pointerId);
+    DRAW.pinch = null;
+    if (DRAW.touches.size === 2) startPinch(); // un 3e doigt levé en premier : le pinceau à 2 continue sans à-coup
+  };
+  canvas.addEventListener("pointerdown", (e) => {
+    if (!DRAW) return;
+    if (e.pointerType === "touch") { canvas.setPointerCapture(e.pointerId); touchStart(e); return; }
+    canvas.setPointerCapture(e.pointerId);
+    start(e, ptFromEvent(e, canvas)); redrawAll();
+  });
+  canvas.addEventListener("pointermove", (e) => {
+    if (!DRAW) return;
+    if (e.pointerType === "touch") { touchMove(e); return; }
+    if (!DRAW.drawing) return;
+    move(e, ptFromEvent(e, canvas)); redrawAll();
+  });
+  const endMain = (e) => {
+    if (!DRAW) return;
+    if (e.pointerType === "touch") { touchEnd(e); return; }
+    end(); redrawAll();
+  };
+  canvas.addEventListener("pointerup", endMain);
+  canvas.addEventListener("pointercancel", endMain);
+  canvas.addEventListener("pointerleave", endMain);
+  // Trackpad (Mac/PC) : un pincement à deux doigts arrive au navigateur comme un `wheel` avec
+  // `ctrlKey` à true — il n'y a pas d'évènement dédié pour ce geste sur ordinateur. On l'intercepte
+  // sur TOUT l'overlay (pas juste le canevas) pour empêcher le zoom natif de la page — qui zoomerait
+  // aussi la barre d'outils — et on l'applique nous-mêmes à `DRAW.view`. Un défilement à deux doigts
+  // sans ctrl déplace la vue (pan) : au trackpad/souris comme au doigt, on peut ainsi se balader sur
+  // une feuille sans bord plutôt que rester coincé sur le rectangle de départ.
+  const overlay = $("#writeOverlay", el) || canvas;
+  overlay.addEventListener("wheel", (e) => {
+    if (!DRAW) return;
+    e.preventDefault();
+    const r = canvas.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top;
+    const { scale, ox, oy } = DRAW.view;
+    if (e.ctrlKey || e.metaKey) {
+      const anchor = { x: (mx - ox) / scale, y: (my - oy) / scale };
+      const ns = Math.min(6, Math.max(.4, scale * Math.exp(-e.deltaY * 0.01)));
+      DRAW.view = { scale: ns, ox: mx - anchor.x * ns, oy: my - anchor.y * ns };
+    } else {
+      DRAW.view = { scale, ox: ox - e.deltaX, oy: oy - e.deltaY };
+    }
+    redrawAll();
+  }, { passive: false });
+}
+const fmtSize = (b) => !b ? "" : b < 1024 ? `${b} o` : b < 1048576 ? `${Math.round(b / 1024)} Ko` : `${(b / 1048576).toFixed(1)} Mo`;
+const isHandNote = (d) => d.type === "image/png" && d.nom.startsWith("Note manuscrite");
+function docRowHtml(d) {
+  return `<div class="item"><span class="badge">${icon("dl")}</span><div class="sp"><b class="small">${esc(d.nom)}</b><div class="tiny muted">${fmtSize(d.taille)}</div></div>
+    ${isHandNote(d) ? `<button class="btn sm" data-a="editnote" data-id="${d.id}" aria-label="Modifier ${esc(d.nom)}">${icon("edit")}</button>` : ""}
+    ${d.url ? `<a class="btn sm" href="${d.url}" download="${esc(d.nom)}" target="_blank" rel="noopener">${icon("dl")}</a>` : ""}<button class="btn sm ghost" data-a="deldoc" data-id="${d.id}" data-path="${esc(d.path)}" data-nom="${esc(d.nom)}" aria-label="Supprimer ${esc(d.nom)}">✕</button></div>`;
+}
 async function cours(mid, sid) {
   const m = M(mid), s = m && seanceOf(mid, sid);
   if (!s) return { html: `<div class="empty">Séance introuvable.</div>` };
@@ -474,18 +857,67 @@ async function cours(mid, sid) {
   const prev = c.seances[i - 1], next = c.seances[i + 1];
   const nq = c.qcm.filter((q) => q.seance === sid).length, nf = c.flashcards.filter((f) => f.seance === sid).length, ne = c.exercices.filter((e) => e.seance === sid).length;
   const rd = state.read[sKey(mid, sid)]?.v;
+  const key = sKey(mid, sid);
+  const hasContent = !!(s.contenu && s.contenu.replace(/<[^>]+>/g, "").trim());
+  const docs = await loadSeanceDocs(mid, sid);
+  CURRENT_DOCS = docs;
+  const notes = state.seanceNotes[key]?.text || "";
+  const docBody = `<div class="doc-layout"><article class="prose" id="doc">${s.contenu}</article><aside class="toc" id="toc"></aside></div>`;
+  const emptyBody = `<div class="empty" style="text-align:left;padding:20px 22px"><b>Pas encore de cours rédigé pour cette séance.</b><p class="small muted" style="margin:6px 0 0">Utilise l'espace de travail ci-dessous pour déposer un support ou prendre des notes en attendant — tu pourras toujours demander la rédaction d'une vraie fiche à partir de ça plus tard.</p></div>`;
   return {
     html: `<div class="crumbs"><a href="#/m">Matières</a> › <a href="#/m/${mid}">${esc(m.court)}</a> › ${s.type} ${s.numero}</div>
     <div class="row"><div><h1 style="margin:0">${s.titre}</h1><div class="muted">${fmtLong(s.date)} · ${TYPES[s.type]}</div></div><div class="sp"></div>
       ${s.pdf ? `<a class="btn sm" href="${s.pdf}" download>${icon("dl")}PDF</a>` : ""}<a class="btn sm" href="#/mm/${mid}/${sid}">${icon("edit")}Modifier</a><button class="btn sm ${rd ? "" : "pri"}" data-a="read" data-k="${sKey(mid, sid)}">${rd ? "✓ Lu" : "Marquer comme lu"}</button></div>
     <p class="muted">${s.resume}</p>
-    <div class="doc-layout"><article class="prose" id="doc">${s.contenu}</article><aside class="toc" id="toc"></aside></div>
-    <div class="card" style="margin-top:26px"><h3 style="margin-top:0">S'entraîner sur cette séance</h3><div class="row">
+    ${hasContent ? docBody : emptyBody}
+    <div class="card" style="margin-top:26px"><h3 style="margin-top:0">Espace de travail</h3><p class="tiny muted" style="margin-top:-6px">Tes notes et tes documents pour cette séance — rien de tout ça n'est un cours rédigé, juste un endroit pour garder ce que tu as sous la main.</p>
+      <div class="field"><label>Tes notes</label><textarea data-note-key="${key}" rows="6" placeholder="Notes prises en séance, points à retenir…" style="${TA_STYLE}">${esc(notes)}</textarea></div>
+      <div style="margin-top:16px"><label class="tiny muted" style="display:block;margin-bottom:6px">Documents</label>
+        <div class="list" style="border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;margin-bottom:10px">${docs.map(docRowHtml).join("") || '<div class="empty" style="padding:16px">Aucun document déposé.</div>'}</div>
+        <div class="row" style="gap:8px"><label class="btn sm">${icon("upload")}Ajouter un document<input type="file" multiple data-a="adddoc" data-mid="${mid}" data-sid="${sid}" class="sr"></label>
+        <button type="button" class="btn sm" data-a="opennote" data-mid="${mid}" data-sid="${sid}">${icon("edit")}Écrire à la main</button></div>
+      </div></div>
+    <div class="write-overlay" id="writeOverlay" hidden>
+      <div class="write-tb">
+        <button type="button" data-a="wtool" data-tool="pen" class="on" aria-label="Stylo">${icon("edit")}Stylo</button>
+        <button type="button" data-a="wtool" data-tool="highlighter" aria-label="Surligneur">Surligneur</button>
+        <button type="button" data-a="wtool" data-tool="eraser" aria-label="Gomme">Gomme</button>
+        <span class="write-sep"></span>
+        <button type="button" data-a="wtool" data-tool="line">Ligne</button>
+        <button type="button" data-a="wtool" data-tool="rect">Rectangle</button>
+        <button type="button" data-a="wtool" data-tool="ellipse">Cercle</button>
+        <button type="button" data-a="wtool" data-tool="arrow">Flèche</button>
+        <span class="write-sep"></span>
+        <button type="button" data-a="wundo" aria-label="Annuler">${icon("back")}</button>
+        <button type="button" data-a="wredo" aria-label="Rétablir">${icon("arrow")}</button>
+      </div>
+      <div class="write-tb">
+        ${PEN_PALETTE.map((c, i) => `<button type="button" data-a="wcolor" data-c="${c}" class="sw${i === 0 ? " on" : ""}" style="background:${c}" aria-label="Couleur ${c}"></button>`).join("")}
+        <label class="sw sw-custom" aria-label="Couleur personnalisée"><input type="color" data-a="wcustomcolor" value="#111111"></label>
+        <span class="write-sep"></span>
+        <span class="tiny muted">Taille</span>
+        <input type="range" class="write-slider" data-a="wsizeslider" min="1" max="24" step="1" value="4">
+        <span class="tiny" id="wsizeval" style="width:1.4em;text-align:right">4</span>
+        <span class="write-sep"></span>
+        <button type="button" data-a="wpaper" data-paper="blank" class="on">Blanc</button>
+        <button type="button" data-a="wpaper" data-paper="lined">Ligné</button>
+        <button type="button" data-a="wpaper" data-paper="grid">Quadrillé</button>
+        <span class="write-sep"></span>
+        <button type="button" data-a="wzoomreset" aria-label="Réinitialiser le zoom">${icon("search")}100 %</button>
+        <div class="sp"></div>
+        <button type="button" data-a="wclose">Fermer</button>
+        <button type="button" class="pri" data-a="wsave">${icon("check")}Enregistrer dans les documents</button>
+      </div>
+      <div class="write-canvas-wrap"><canvas id="writeCanvas"></canvas></div>
+    </div>
+    <div class="card" style="margin-top:16px"><h3 style="margin-top:0">S'entraîner sur cette séance</h3><div class="row">
       ${nq ? `<a class="btn pri" href="#/qcm?m=${mid}&s=${sid}">${icon("check")}${nq} QCM</a>` : ""}
       ${nf ? `<a class="btn" href="#/cards?m=${mid}&s=${sid}">${icon("cards")}${nf} cartes</a>` : ""}
       ${ne ? `<a class="btn" href="#/m/${mid}/exos?s=${sid}">${icon("edit")}${ne} exercices</a>` : ""}</div></div>
     <div class="row" style="margin-top:16px">${prev ? `<a class="btn" href="#/c/${mid}/${prev.id}">${icon("back")}${prev.type} ${prev.numero}</a>` : ""}<div class="sp"></div>${next ? `<a class="btn" href="#/c/${mid}/${next.id}">${next.type} ${next.numero}${icon("arrow")}</a>` : ""}</div>`,
     after: (el) => {
+      wireWriteCanvas(el);
+      if (!hasContent) return;
       const hs = $$("#doc h2, #doc h3", el);
       $("#toc", el).innerHTML = hs.length > 2 ? `<b>Sommaire</b>` + hs.map((h, k) => { h.id = "s" + k; const cl = h.cloneNode(true); $$(".katex-mathml", cl).forEach((n) => n.remove()); return `<a class="${h.tagName === "H3" ? "l3" : ""}" href="#/c/${mid}/${sid}" data-scroll="s${k}">${esc(cl.textContent.replace(/\s+/g, " ").trim())}</a>`; }).join("") : "";
       $$("[data-scroll]", el).forEach((a) => a.addEventListener("click", (e) => { e.preventDefault(); document.getElementById(a.dataset.scroll).scrollIntoView({ behavior: "smooth", block: "start" }); }));
@@ -542,9 +974,10 @@ function texteResultHtml(ok) {
 }
 // Note le résultat d'une correction automatique (code ou texte) : progression + éval en cours si active.
 function autoMark(id, ok) {
-  setEntry("exos", id, { v: ok ? "ok" : "redo" });
   const ex = D.E.find((e) => e.id === id);
-  if (ex) recordElo(ex.mid, ex.difficulte, ok);
+  setEntry("exos", id, { v: ok ? "ok" : "redo" });
+  bump(2, "exercice");
+  if (ex) snapshotElo(ex.mid);
   if (EV) {
     const it = EV.items.find((x) => x.e.id === id);
     if (it) {
@@ -710,7 +1143,7 @@ async function finishEval(timeout) {
       setEntry("reponses", e.id, { value, ok });
       it.mark = ok ? "ok" : "redo";
     }
-    if (it.mark) { setEntry("exos", e.id, { v: it.mark }); recordElo(e.mid, e.difficulte, it.mark === "ok"); }
+    if (it.mark) { setEntry("exos", e.id, { v: it.mark }); snapshotElo(e.mid); }
   }
   saveEvalRecord();
   EV.grading = false;
@@ -725,7 +1158,7 @@ function saveEvalRecord() {
   const by = {}; EV.items.forEach((it) => { const s = by[it.e.seance] || (by[it.e.seance] = [0, 0]); s[1]++; if (it.mark === "ok") s[0]++; });
   const id = "ev" + EV.start;
   setEntry("evals", id, { id, mid: EV.mid, n, ok, score20: (ok / n) * 20, dur: Math.round(((EV.end || Date.now()) - EV.start) / 1000), seances: by });
-  bump(3);
+  bump(3, "eval");
   commit();
 }
 function evalResult() {
@@ -756,8 +1189,8 @@ function recordQ(x) {
   const cur = state.qcm[x.q.id] || { n: 0, ok: 0, last: false };
   const good = okQ(x);
   setEntry("qcm", x.q.id, { n: cur.n + 1, ok: cur.ok + (good ? 1 : 0), last: good });
-  recordElo(x.q.mid, x.q.niveau, good);
-  bump(1);
+  snapshotElo(x.q.mid);
+  bump(1, "qcm");
 }
 function quizView() {
   if (Q.done) return quizResult();
@@ -877,7 +1310,7 @@ function rate(r) {
   let box = r === "again" ? 1 : Math.min(5, Math.max(1, cur.box) + (r === "easy" ? 2 : 1));
   if (cur.box === 0 && r !== "again") box = r === "easy" ? 3 : 2;
   setEntry("cards", f.id, { box, n: cur.n + 1, ok: cur.ok + (r === "again" ? 0 : 1), due: r === "again" ? Date.now() : Date.now() + DAYS[box] * 864e5 });
-  bump(1);
+  bump(1, "carte");
   if (r === "again") { if (!FC.again.has(f.id)) { FC.again.add(f.id); FC.cards.push(f); } }
   else if (!FC.again.has(f.id)) FC.good++;
   FC.i++; FC.flip = false;
@@ -931,17 +1364,23 @@ function edtRow(e, now, rel) {
   const href = sc ? `#/c/${e.m}/${sc.id}` : draftHrefFor(e) || "#/edt";
   return `<a class="item edt-row ${st}" href="${href}"><span class="badge" style="background:color-mix(in srgb,${c} 15%,var(--surface));color:${c}">${e.s}</span><div class="sp"><b>${esc(edtName(e))}</b> <span class="chip ${e.t === "CC" ? "wa" : "gr"}">${esc(e.t)}</span>${st === "live" ? ' <span class="chip ok">en cours</span>' : ""}<div class="tiny muted">${rel ? edtRel(e.d) + " · " : ""}${e.s}–${e.e}${edtMeta(e) ? " · " + edtMeta(e) : ""}${sc ? ` · ${esc(sc.type)} ${sc.numero}` : ""}</div></div></a>`;
 }
+// Nombre de créneaux visés dans la carte "Aujourd'hui" : si la journée en a moins, on complète
+// avec les prochains cours à venir (jusqu'à EDT_UPCOMING_MAX) pour ne jamais laisser la carte
+// à moitié vide — sans en jamais montrer plus de EDT_HOME_FILL au total si la journée est chargée.
+const EDT_HOME_FILL = 4, EDT_UPCOMING_MAX = 3;
 function edtHome() {
   if (!D.edt.events.length) return "";
   const now = new Date(), iso = todayKey();
   const day = edtOf(iso), timed = day.filter((e) => !e.allday), off = day.find((e) => e.allday);
-  const left = timed.some((e) => pd(e.d, e.e) > now);
-  const nx = left ? null : D.edt.events.find((e) => !e.allday && e.t !== "Réunion" && pd(e.d, e.e) > now);
+  const left = timed.filter((e) => pd(e.d, e.e) > now);
   const head = timed.length ? "" : `<div class="small muted" style="margin:4px 0 8px">${off ? esc(edtLabel(off)) + " aujourd'hui." : "Pas de cours aujourd'hui."}</div>`;
-  const doneMsg = timed.length && !left ? '<div class="small muted" style="margin:4px 0 8px">Journée terminée.</div>' : "";
-  return `<div class="card" style="margin-top:16px"><div class="row"><h3 style="margin:0">Aujourd'hui</h3><div class="sp"></div><a class="btn sm ghost" href="#/edt">${icon("grid")}Emploi du temps</a></div>
+  const doneMsg = timed.length && !left.length ? '<div class="small muted" style="margin:4px 0 8px">Journée terminée.</div>' : "";
+  const upcoming = left.length < EDT_HOME_FILL
+    ? D.edt.events.filter((e) => !e.allday && e.t !== "Réunion" && e.d !== iso && pd(e.d, e.e) > now).sort((a, b) => pd(a.d, a.s) - pd(b.d, b.s)).slice(0, Math.min(EDT_UPCOMING_MAX, EDT_HOME_FILL - left.length))
+    : [];
+  return `<div class="card"><div class="row"><h3 style="margin:0">Aujourd'hui</h3><div class="sp"></div><a class="btn sm ghost" href="#/edt">${icon("grid")}Emploi du temps</a></div>
     ${head}<div class="list">${timed.map((e) => edtRow(e, now)).join("")}</div>${doneMsg}
-    ${nx ? `<div class="tiny muted" style="margin:10px 0 2px;text-transform:uppercase;letter-spacing:.06em">Prochain cours</div><div class="list">${edtRow(nx, now, true)}</div>` : ""}</div>`;
+    ${upcoming.length ? `<div class="tiny muted" style="margin:10px 0 2px;text-transform:uppercase;letter-spacing:.06em">${upcoming.length > 1 ? "Prochains cours" : "Prochain cours"}</div><div class="list">${upcoming.map((e) => edtRow(e, now, true)).join("")}</div>` : ""}</div>`;
 }
 let edtWeek = null;
 const mondayOf = (d) => { const x = startOfDay(d); x.setDate(x.getDate() - ((x.getDay() + 6) % 7)); return x; };
@@ -1025,24 +1464,24 @@ function edtEventDetailHtml(e) {
     </div>
   </div>`;
 }
-function edtDraft(q) {
+// Un créneau d'EDT sans séance correspondante n'a plus sa propre page factice : on crée (une
+// seule fois, retrouvée ensuite par date+type) une séance minimale vide pour ce créneau, et on
+// affiche directement sa page normale — donc son état vide + son espace de travail, comme
+// n'importe quelle autre séance sans cours rédigé.
+async function edtDraft(q) {
   const m = M(q.m), want = EDT_TYPE_MAP[q.t];
   if (!m || !want || !q.d) return { html: `<div class="empty">Créneau introuvable.</div>` };
-  const sameType = C(q.m).seances.filter((s) => s.type === want);
-  const numero = sameType.length ? Math.max(...sameType.map((s) => s.numero)) + 1 : 1;
-  const meta = [q.r, q.p, q.g].filter(Boolean).join(" · ");
-  const reqText = `Écris le ${want} ${numero} de ${m.nom} (${fmtLong(q.d)}, ${q.s}–${q.e}${q.r ? ", " + q.r : ""}${q.p ? ", " + q.p : ""}) et ajoute-le au site, dans le style des séances existantes.`;
-  return {
-    html: `<div class="crumbs"><a href="#/edt">Emploi du temps</a> › ${esc(m.court)} · ${want} ${numero}</div>
-    <h1 style="margin:0">${esc(m.nom)} — ${want} ${numero}</h1>
-    <div class="muted" style="margin-bottom:4px">${fmtLong(q.d)} · ${q.s}–${q.e}${meta ? " · " + esc(meta) : ""}</div>
-    <div class="card" style="margin-top:18px;border-left:4px solid ${m.couleur}">
-      <p class="muted" style="margin-top:0">Ce cours n'a pas encore été rédigé.</p>
-      <p>Copie cette demande et colle-la dans une conversation avec Claude : il rédigera le cours complet et l'ajoutera au site.</p>
-      <textarea readonly style="width:100%;min-height:90px;resize:vertical;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--surface2);color:var(--text);font:inherit">${esc(reqText)}</textarea>
-      <div class="row" style="margin-top:12px"><button class="btn pri" data-a="copyreq" data-text="${esc(reqText)}">${icon("edit")}Copier la demande</button></div>
-    </div>`,
-  };
+  let s = C(q.m).seances.find((x) => x.type === want && x.date === q.d);
+  if (!s) {
+    const sameType = C(q.m).seances.filter((x) => x.type === want);
+    const numero = sameType.length ? Math.max(...sameType.map((x) => x.numero)) + 1 : 1;
+    const id = `${want.toLowerCase()}-${numero}`;
+    await saveSeance(q.m, { id, type: want, numero, date: q.d, titre: `${want} ${numero}`, resume: "", contenu: "" });
+    await loadData();
+    s = { id };
+  }
+  history.replaceState(null, "", `#/c/${q.m}/${s.id}`); // remplace l'URL "todo" par l'URL réelle, sans redéclencher route()
+  return cours(q.m, s.id);
 }
 
 // ───────────────────────── Calendrier ─────────────────────────
@@ -1074,7 +1513,7 @@ function ccEntryForm(e) {
 }
 function ccAdminHtml() {
   return `${D.cal.evenements.map((e) => `<div class="card" style="margin-bottom:10px">
-    <div class="row nowrap"><i class="dot" style="--c:${M(e.matiere)?.couleur || "#888"}"></i><div class="sp"><b>${esc(M(e.matiere)?.court || "?")}</b> — ${esc(e.titre)}<div class="tiny muted">${fmtLong(e.date)}${e.poids ? " · " + esc(e.poids) : ""}</div></div></div>
+    <div class="row nowrap"><i class="dot" style="--c:${M(e.matiere)?.couleur || "#888"}"></i><div class="sp"><b>${esc(M(e.matiere)?.court || "?")}</b> — ${esc(e.titre)}<div class="tiny muted">${fmtLong(e.date)}${e.poids ? " · " + esc(fmtPoids(e.poids)) : ""}</div></div></div>
     <details style="margin-top:10px"><summary>Modifier</summary><div style="margin-top:10px">${ccEntryForm(e)}</div></details>
   </div>`).join("")}
   <details ${D.cal.evenements.length ? "" : "open"}><summary>Ajouter une échéance</summary><div class="card" style="margin-top:10px">${ccEntryForm(null)}</div></details>`;
@@ -1116,7 +1555,7 @@ function calendar(q) {
   const monthName = new Intl.DateTimeFormat("fr-FR", { month: "long", year: "numeric" }).format(calMonth);
   const upcoming = D.cal.evenements.filter((e) => daysUntil(e.date) >= 0);
   const past = D.cal.evenements.filter((e) => daysUntil(e.date) < 0);
-  const line = (e) => `<div class="item"><span class="badge" style="background:color-mix(in srgb,${M(e.matiere).couleur} 15%,var(--surface));color:${M(e.matiere).couleur};font-size:.66rem">${fmtDate(e.date).split(" ").slice(1).join(" ")}</span><div class="sp"><b>${esc(M(e.matiere).court)}</b> — ${esc(e.titre)} <span class="chip gr">${esc(e.poids)}</span>${e.type === "2e" ? ' <span class="chip wa">2e chance</span>' : ""}${e.statut && e.poids !== "à confirmer" ? ` <span class="chip wa">${e.statut === "provisoire" ? "date provisoire" : "à confirmer"}</span>` : ""}<div class="tiny muted">${fmtLong(e.date)} · ${esc(e.detail)}</div></div><span class="count small muted">${daysUntil(e.date) >= 0 ? "J-" + daysUntil(e.date) : "passé"}</span></div>`;
+  const line = (e) => `<div class="item"><span class="badge" style="background:color-mix(in srgb,${M(e.matiere).couleur} 15%,var(--surface));color:${M(e.matiere).couleur};font-size:.66rem">${fmtDate(e.date).split(" ").slice(1).join(" ")}</span><div class="sp"><b>${esc(M(e.matiere).court)}</b> — ${esc(e.titre)} <span class="chip gr">${esc(fmtPoids(e.poids))}</span>${e.type === "2e" ? ' <span class="chip wa">2e chance</span>' : ""}${e.statut && e.poids !== "à confirmer" ? ` <span class="chip wa">${e.statut === "provisoire" ? "date provisoire" : "à confirmer"}</span>` : ""}<div class="tiny muted">${fmtLong(e.date)} · ${esc(e.detail)}</div></div><span class="count small muted">${daysUntil(e.date) >= 0 ? "J-" + daysUntil(e.date) : "passé"}</span></div>`;
   return {
     html: `<h1>Calendrier</h1>
     ${ccSuggestionsHtml()}
@@ -1598,7 +2037,7 @@ document.addEventListener("click", async (e) => {
   const t = e.target.closest("[data-a]"); if (!t || t.tagName === "SELECT" || (t.tagName === "INPUT" && t.type !== "checkbox" && t.type !== "file")) return;
   const a = t.dataset.a;
   if (["calfilter", "calses", "import", "icsfile"].includes(a)) return; // gérés par change
-  if (a === "read") { const k = t.dataset.k, cur = state.read[k]?.v; setEntry("read", k, { v: !cur }); if (!cur) bump(3); commit(); const [mid, sid] = k.split("/"); const s = seanceOf(mid, sid); t.textContent = !cur ? "✓ Lu" : "Marquer comme lu"; t.classList.toggle("pri", cur); toast(!cur ? "Marqué comme lu" : "Marqué comme non lu"); }
+  if (a === "read") { const k = t.dataset.k, cur = state.read[k]?.v; setEntry("read", k, { v: !cur }); if (!cur) bump(3, "lecture"); commit(); const [mid, sid] = k.split("/"); const s = seanceOf(mid, sid); t.textContent = !cur ? "✓ Lu" : "Marquer comme lu"; t.classList.toggle("pri", cur); toast(!cur ? "Marqué comme lu" : "Marqué comme non lu"); }
   else if (a === "choose") { const x = Q.qs[Q.i]; if (x.checked) return; const i = +t.dataset.i; if (x.q.type === "multiple") { x.ans.has(i) ? x.ans.delete(i) : x.ans.add(i); } else { x.ans = new Set([i]); } rerenderKeep(); }
   else if (a === "check") { const x = Q.qs[Q.i]; if (!x.ans.size) return; x.checked = true; recordQ(x); commit(); rerenderKeep(); }
   else if (a === "next") { if (Q.i < Q.qs.length - 1) { Q.i++; rerender(); } }
@@ -1614,7 +2053,7 @@ document.addEventListener("click", async (e) => {
   else if (a === "emark") {
     const it = EV.items[+t.dataset.i]; it.mark = t.dataset.v;
     setEntry("exos", it.e.id, { v: it.mark });
-    recordElo(it.e.mid, it.e.difficulte, it.mark === "ok");
+    snapshotElo(it.e.mid);
     saveEvalRecord();
     rerenderKeep();
   }
@@ -1654,7 +2093,7 @@ document.addEventListener("click", async (e) => {
   }
   else if (a === "flip") { FC.flip = !FC.flip; rerender(); }
   else if (a === "rate") rate(t.dataset.r);
-  else if (a === "exo") { setEntry("exos", t.dataset.id, { v: t.dataset.v }); bump(2); commit(); toast(t.dataset.v === "ok" ? "Bien joué" : "Noté à refaire"); }
+  else if (a === "exo") { setEntry("exos", t.dataset.id, { v: t.dataset.v }); bump(2, "exercice"); commit(); toast(t.dataset.v === "ok" ? "Bien joué" : "Noté à refaire"); }
   else if (a === "calprev") { calMonth = new Date(calMonth.getFullYear(), calMonth.getMonth() - 1, 1); rerender(); }
   else if (a === "calnext") { calMonth = new Date(calMonth.getFullYear(), calMonth.getMonth() + 1, 1); rerender(); }
   else if (a === "caltoday") { calMonth = null; rerender(); }
@@ -1667,7 +2106,7 @@ document.addEventListener("click", async (e) => {
     try { await updateEdtEvent(t.dataset.id, { t: newType }); toast("Type mis à jour"); await loadData(); rerender(); }
     catch (err) { toast("Erreur : " + err.message); }
   }
-  else if (a === "evt") { const ev = D.cal.evenements.find((x) => x.id === t.dataset.id); $("#evd").innerHTML = `<div class="card" style="margin-top:12px;border-left:4px solid ${M(ev.matiere).couleur}"><b>${esc(M(ev.matiere).nom)} — ${esc(ev.titre)}</b><div class="muted small">${fmtLong(ev.date)} · poids ${esc(ev.poids)} · ${cd(ev)}</div><p class="small">${esc(ev.detail)}</p><div class="row"><a class="btn sm pri" href="#/eval?m=${ev.matiere}">Éval blanche</a><a class="btn sm" href="#/qcm?m=${ev.matiere}">QCM</a><a class="btn sm" href="#/m/${ev.matiere}/cc">Fiche CC</a></div></div>`; }
+  else if (a === "evt") { const ev = D.cal.evenements.find((x) => x.id === t.dataset.id); $("#evd").innerHTML = `<div class="card" style="margin-top:12px;border-left:4px solid ${M(ev.matiere).couleur}"><b>${esc(M(ev.matiere).nom)} — ${esc(ev.titre)}</b><div class="muted small">${fmtLong(ev.date)} · poids ${esc(fmtPoids(ev.poids))} · ${cd(ev)}</div><p class="small">${esc(ev.detail)}</p><div class="row"><a class="btn sm pri" href="#/eval?m=${ev.matiere}">Éval blanche</a><a class="btn sm" href="#/qcm?m=${ev.matiere}">QCM</a><a class="btn sm" href="#/m/${ev.matiere}/cc">Fiche CC</a></div></div>`; }
   else if (a === "login") { /* submit géré */ }
   else if (a === "signup") doAuth("signup", $("#lf"));
   else if (a === "magic") doAuth("magic", $("#lf"));
@@ -1675,7 +2114,6 @@ document.addEventListener("click", async (e) => {
   else if (a === "pull") { await pull(); rerender(); toast("Données récupérées"); }
   else if (a === "push") { await push(); rerender(); toast("Données envoyées"); }
   else if (a === "export") download("progression-l1s1.json", exportJSON(), "application/json");
-  else if (a === "copyreq") { try { await navigator.clipboard.writeText(t.dataset.text); toast("Demande copiée — colle-la à Claude"); } catch (err) { toast("Copie impossible : sélectionne le texte à la main"); } }
   else if (a === "delmatiere") { if (await appConfirm("Supprimer cette matière et toutes ses séances ?")) { await deleteMatiere(t.dataset.mid); toast("Matière supprimée"); await loadData(); location.hash = "#/compte"; refreshShell(); } }
   else if (a === "toggleperiode") {
     const newStatut = t.dataset.statut === "actif" ? "termine" : "actif";
@@ -1701,6 +2139,17 @@ document.addEventListener("click", async (e) => {
   else if (a === "confirmics") { if (!icsPreview) return; toast("Import en cours…"); try { const r = await commitIcsImport(icsPreview, D.matieres); icsPreview = null; toast(`Importé : ${plural(r.matieresCreees, "matière créée", "matières créées")}, ${plural(r.evenements, "créneau")}`); await loadData(); refreshShell(); } catch (err) { toast("Erreur : " + err.message); } }
   else if (a === "cancelics") { icsPreview = null; rerender(); }
   else if (a === "delcc") { if (await appConfirm("Supprimer cette échéance ?")) { try { await deleteCCEvent(t.dataset.id); toast("Échéance supprimée"); await loadData(); rerender(); } catch (err) { toast("Erreur : " + err.message); } } }
+  else if (a === "deldoc") { if (await appConfirm(`Supprimer « ${t.dataset.nom} » ?`)) { try { await deleteSeanceDoc({ id: t.dataset.id, path: t.dataset.path }); toast("Document supprimé"); rerender(); } catch (err) { toast("Erreur : " + err.message); } } }
+  else if (a === "opennote") { openWriteOverlay(document, t.dataset.mid, t.dataset.sid); }
+  else if (a === "editnote") { openWriteOverlay(document, t.dataset.mid, t.dataset.sid, CURRENT_DOCS.find((d) => d.id === t.dataset.id)); }
+  else if (a === "wtool") { if (DRAW) { DRAW.tool = t.dataset.tool; syncWriteToolbar(DRAW.el); } }
+  else if (a === "wcolor") { if (DRAW) { DRAW.color = t.dataset.c; syncWriteToolbar(DRAW.el); } }
+  else if (a === "wpaper") { if (DRAW) { DRAW.paper = t.dataset.paper; syncWriteToolbar(DRAW.el); redrawAll(); } }
+  else if (a === "wzoomreset") { resetZoomView(); }
+  else if (a === "wundo") { undoStroke(); }
+  else if (a === "wredo") { redoStroke(); }
+  else if (a === "wsave") { await saveWriteNote(); }
+  else if (a === "wclose") { if (DRAW?.dirty && !(await appConfirm("Fermer sans enregistrer cette page ?"))) return; if (DRAW) closeWriteOverlay(DRAW.el); }
   else if (a === "addccsugg") {
     try { await saveCCEvent({ matiere: t.dataset.m, date: t.dataset.date, titre: t.dataset.titre, poids: "" }); toast("Échéance ajoutée"); await loadData(); rerender(); }
     catch (err) { toast("Erreur : " + err.message); }
@@ -1718,15 +2167,33 @@ document.addEventListener("click", async (e) => {
     toast("Tout a été effacé");
   }
 });
+document.addEventListener("input", (e) => {
+  // Retour en direct pendant le glissé du curseur de taille (avant même l'évènement "change").
+  if (e.target.dataset?.a === "wsizeslider" && DRAW) { DRAW.size = +e.target.value; syncWriteToolbar(DRAW.el); }
+});
 document.addEventListener("change", (e) => {
   const t = e.target, a = t.dataset?.a;
   if (t.dataset.codeId) { setEntry("reponses", t.dataset.codeId, { value: t.value }); commit(); return; }
   if (t.dataset.texteId) { const cur = state.reponses[t.dataset.texteId]; setEntry("reponses", t.dataset.texteId, { value: t.value, ok: cur?.ok }); commit(); return; }
+  if (t.dataset.noteKey) { setEntry("seanceNotes", t.dataset.noteKey, { text: t.value }); commit(); return; }
+  if (a === "wcustomcolor") { if (DRAW) { DRAW.color = t.value; syncWriteToolbar(DRAW.el); } return; }
+  if (a === "wsizeslider") { if (DRAW) { DRAW.size = +t.value; syncWriteToolbar(DRAW.el); } return; }
   if (a === "calses") { calSeances = t.checked; rerender(); }
   else if (a === "theme") { state.prefs.theme = t.value; state.prefs.ts = Date.now(); applyTheme(); commit(); }
   else if (a === "exfilter") { location.hash = `#/m/${t.dataset.m}/exos` + (t.value ? "?s=" + t.value : ""); }
   else if (a === "import") { const f = t.files[0]; if (!f) return; f.text().then((s) => { try { importJSON(s); toast("Progression importée"); rerender(); } catch (err) { toast("Fichier invalide"); } }); }
   else if (a === "icsfile") { const f = t.files[0]; if (!f) return; f.text().then((s) => { try { icsPreview = analyzeIcs(s); rerender(); } catch (err) { toast("Fichier .ics invalide"); } }); }
+  else if (a === "adddoc") {
+    const files = [...t.files]; if (!files.length) return;
+    const { mid, sid } = t.dataset;
+    (async () => {
+      for (const f of files) {
+        try { await uploadSeanceDoc(mid, sid, f); } catch (err) { toast("Erreur sur " + f.name + " : " + err.message); }
+      }
+      toast(plural(files.length, "document ajouté", "documents ajoutés"));
+      rerender();
+    })();
+  }
 });
 function rerenderKeep() { const y = window.scrollY; rerender().then?.(() => 0); requestAnimationFrame(() => window.scrollTo(0, y)); }
 
