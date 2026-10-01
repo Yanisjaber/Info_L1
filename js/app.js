@@ -1028,7 +1028,7 @@ async function cours(mid, sid) {
   const emptyBody = `<div class="empty" style="text-align:left;padding:20px 22px"><b>Pas encore de cours rédigé pour cette séance.</b><p class="small muted" style="margin:6px 0 0">Utilise l'espace de travail ci-dessous pour déposer un support ou prendre des notes en attendant — tu pourras toujours demander la rédaction d'une vraie fiche à partir de ça plus tard.</p></div>`;
   return {
     html: `<div class="crumbs"><a href="#/m">Matières</a> › <a href="#/m/${mid}">${esc(m.court)}</a> › ${s.type} ${s.numero}</div>
-    <div class="row"><div><h1 style="margin:0">${s.titre}</h1><div class="muted">${fmtLong(s.date)} · ${TYPES[s.type]}</div></div><div class="sp"></div>
+    <div class="row"><div><h1 style="margin:0">${s.titre}</h1><div class="muted">${s.date ? fmtLong(s.date) + " · " : ""}${TYPES[s.type]}</div></div><div class="sp"></div>
       ${s.pdf ? `<a class="btn sm" href="${s.pdf}" download>${icon("dl")}PDF</a>` : ""}<a class="btn sm" href="#/mm/${mid}/${sid}">${icon("edit")}Modifier</a><button class="btn sm ${rd ? "" : "pri"}" data-a="read" data-k="${sKey(mid, sid)}">${rd ? "✓ Lu" : "Marquer comme lu"}</button></div>
     <p class="muted">${s.resume}</p>
     ${hasContent ? docBody : emptyBody}
@@ -1645,24 +1645,29 @@ function edtEventDetailHtml(e) {
     </div>
   </div>`;
 }
-// Un créneau d'EDT sans séance correspondante n'a plus sa propre page factice : on crée (une
-// seule fois, retrouvée ensuite par date+type) une séance minimale vide pour ce créneau, et on
-// affiche directement sa page normale — donc son état vide + son espace de travail, comme
-// n'importe quelle autre séance sans cours rédigé.
-async function edtDraft(q) {
+// Un créneau d'EDT sans séance correspondante n'en crée plus une automatiquement au simple clic —
+// juste regarder un créneau pour voir de quoi il s'agit ne doit jamais laisser une séance vide
+// traîner dans la matière. On affiche un écran de confirmation ("Créer CM 3 ?") et seul un clic
+// explicite sur le bouton crée réellement la séance (data-a="creerseance", plus bas).
+function edtDraft(q) {
   const m = M(q.m), want = EDT_TYPE_MAP[q.t];
   if (!m || !want || !q.d) return { html: `<div class="empty">Créneau introuvable.</div>` };
-  let s = C(q.m).seances.find((x) => x.type === want && x.date === q.d);
-  if (!s) {
-    const sameType = C(q.m).seances.filter((x) => x.type === want);
-    const numero = sameType.length ? Math.max(...sameType.map((x) => x.numero)) + 1 : 1;
-    const id = `${want.toLowerCase()}-${numero}`;
-    await saveSeance(q.m, { id, type: want, numero, date: q.d, titre: `${want} ${numero}`, resume: "", contenu: "" });
-    await loadData();
-    s = { id };
-  }
-  history.replaceState(null, "", `#/c/${q.m}/${s.id}`); // remplace l'URL "todo" par l'URL réelle, sans redéclencher route()
-  return cours(q.m, s.id);
+  const sameType = C(q.m).seances.filter((x) => x.type === want);
+  const numero = sameType.length ? Math.max(...sameType.map((x) => x.numero)) + 1 : 1;
+  const meta = [q.r, q.p, q.g].filter(Boolean).join(" · ");
+  return {
+    html: `<div class="crumbs"><a href="#/edt">Emploi du temps</a> › ${esc(m.court)}</div>
+    <h1>Créer ${esc(want)} ${numero} ?</h1>
+    <div class="card" style="max-width:520px">
+      <div class="row nowrap"><i class="dot" style="--c:${m.couleur}"></i><b>${esc(m.nom)}</b></div>
+      <p class="muted" style="margin:10px 0 4px">${esc(fmtLong(q.d))} · ${esc(q.s)}–${esc(q.e)}${meta ? " · " + esc(meta) : ""}</p>
+      <p class="small muted">Ce créneau n'a pas encore de séance dans l'appli. La créer ajoute « ${esc(want)} ${numero} » à la matière avec un espace de travail vide (notes, documents) — tu pourras rédiger le cours plus tard, ou juste y déposer des documents.</p>
+      <div class="row" style="margin-top:16px">
+        <button type="button" class="btn pri" data-a="creerseance" data-m="${esc(q.m)}" data-d="${esc(q.d)}" data-t="${esc(q.t)}">${icon("check")}Créer ${esc(want)} ${numero}</button>
+        <a class="btn ghost" href="#/edt">Annuler</a>
+      </div>
+    </div>`,
+  };
 }
 
 // ───────────────────────── Calendrier ─────────────────────────
@@ -1900,7 +1905,7 @@ function bindSeanceForm(mid) {
         await saveSeance(mid, { id, type: fd.get("type"), numero: +fd.get("numero") || 1, date: fd.get("date") || null, titre: fd.get("titre"), resume: fd.get("resume"), contenu: fd.get("contenu"), pdf: fd.get("pdf") });
         toast("Séance enregistrée");
         await loadData();
-        location.hash = `#/mm/${mid}`;
+        location.hash = `#/c/${mid}/${id}`; // retour à la page normale de la séance, pas à la liste d'admin
       } catch (err) { toast("Erreur : " + err.message); }
     });
   };
@@ -1929,6 +1934,7 @@ function mmSeanceForm(mid, sid) {
       <div class="field" style="margin-top:10px"><label>Contenu du cours — HTML (paragraphes, &lt;h2&gt;, &lt;div class="def"&gt;…&lt;/div&gt; pour les encadrés, \\( \\) pour les maths)</label><textarea name="contenu" rows="16" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--text);font:.88rem/1.5 ui-monospace,monospace">${esc(v.contenu)}</textarea></div>
       <div class="row" style="margin-top:12px">
         <button class="btn pri" type="submit">${icon("check")}Enregistrer</button>
+        <a class="btn ghost" href="${isNew ? `#/mm/${mid}` : `#/c/${mid}/${esc(v.id)}`}">Annuler</a>
         ${isNew ? "" : `<button class="btn" type="button" data-a="delseance" data-mid="${mid}" data-sid="${esc(v.id)}">Supprimer</button>`}
       </div>
     </form>`,
@@ -2283,6 +2289,21 @@ document.addEventListener("click", async (e) => {
   else if (a === "edtprev") { edtWeek.setDate(edtWeek.getDate() - 7); rerender(); }
   else if (a === "edtnext") { edtWeek.setDate(edtWeek.getDate() + 7); rerender(); }
   else if (a === "edtev") { const ev = D.edt.events.find((x) => x.id === t.dataset.id); if (ev) $("#edtd").innerHTML = edtEventDetailHtml(ev); }
+  else if (a === "creerseance") {
+    const mid = t.dataset.m, d = t.dataset.d, want = EDT_TYPE_MAP[t.dataset.t];
+    let s = C(mid).seances.find((x) => x.type === want && x.date === d);
+    try {
+      if (!s) {
+        const sameType = C(mid).seances.filter((x) => x.type === want);
+        const numero = sameType.length ? Math.max(...sameType.map((x) => x.numero)) + 1 : 1;
+        const id = `${want.toLowerCase()}-${numero}`;
+        await saveSeance(mid, { id, type: want, numero, date: d, titre: `${want} ${numero}`, resume: "", contenu: "" });
+        await loadData();
+        s = { id };
+      }
+      location.hash = `#/c/${mid}/${s.id}`;
+    } catch (err) { toast("Erreur : " + err.message); }
+  }
   else if (a === "edtretype") {
     const sel = document.getElementById("edtd-type"), newType = sel?.value; if (!newType) return;
     try { await updateEdtEvent(t.dataset.id, { t: newType }); toast("Type mis à jour"); await loadData(); rerender(); }
@@ -2314,7 +2335,7 @@ document.addEventListener("click", async (e) => {
       await loadData(); refreshShell();
     } catch (err) { toast("Erreur : " + err.message); }
   }
-  else if (a === "delseance") { if (await appConfirm("Supprimer cette séance ?")) { await deleteSeance(t.dataset.mid, t.dataset.sid); toast("Séance supprimée"); await loadData(); location.hash = `#/mm/${t.dataset.mid}`; } }
+  else if (a === "delseance") { if (await appConfirm("Supprimer cette séance ?")) { await deleteSeance(t.dataset.mid, t.dataset.sid); toast("Séance supprimée"); await loadData(); location.hash = `#/m/${t.dataset.mid}`; } }
   else if (a === "delqcm") { if (await appConfirm("Supprimer cette question ?")) { await deleteQCM(t.dataset.id); toast("Question supprimée"); await loadData(); location.hash = `#/aq/${t.dataset.mid}`; } }
   else if (a === "delflash") { if (await appConfirm("Supprimer cette carte ?")) { await deleteFlashcard(t.dataset.id); toast("Carte supprimée"); await loadData(); location.hash = `#/af/${t.dataset.mid}`; } }
   else if (a === "delexo") { if (await appConfirm("Supprimer cet exercice ?")) { await deleteExercice(t.dataset.id); toast("Exercice supprimé"); await loadData(); location.hash = `#/ax/${t.dataset.mid}`; } }

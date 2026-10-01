@@ -23,7 +23,10 @@
 }
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
-body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;min-height:100vh}
+/* overscroll-behavior:contain empêche un défilement d'en "chaîner" un autre (scroll chaining) et,
+   sur tablette, évite qu'un doigt posé sur le menu pendant que la page défile encore (inertie) ne se
+   fasse "voler" par le défilement de la page en cours — chaque zone garde son propre geste. */
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;min-height:100vh;overscroll-behavior-y:contain}
 a{color:var(--acc);text-decoration:none} a:hover{text-decoration:underline}
 h1,h2,h3,h4{line-height:1.25;margin:1.4em 0 .5em;color:var(--text)}
 h1{font-size:1.9rem;margin-top:0} h2{font-size:1.4rem} h3{font-size:1.15rem} h4{font-size:1rem;color:var(--muted)}
@@ -48,7 +51,17 @@ button,input,select,textarea{font:inherit;color:inherit}
    aucun cas — fixed le garantit indépendamment de la mise en page, sticky dépend du contexte.
    #main récupère l'espace laissé par le menu via margin-left plutôt que la mise en page flex
    habituelle, puisque #side sort du flux normal. */
-#side{width:var(--side);flex:none;background:var(--surface);border-right:1px solid var(--line);position:fixed;top:0;left:0;height:100vh;overflow:hidden;display:flex;flex-direction:column;z-index:10}
+/* 100vh déborde de la zone réellement visible sur tablette/mobile (il compte la hauteur maximale,
+   barre d'adresse rétractée comprise) : un menu fixed de 100vh se fait alors couper en bas par
+   l'interface du navigateur — "Compte"/"Synchronisé" apparaissait à moitié hors écran. 100dvh suit
+   la hauteur réellement visible à chaque instant ; 100vh reste en repli pour les navigateurs qui ne
+   le supportent pas encore (la 2e déclaration écrase la 1re seulement si dvh est reconnu). */
+/* transform force sa propre couche de composition : sans ça, sur iOS/iPadOS, un doigt posé sur ce
+   panneau fixed pendant que la PAGE défile encore par inertie peut se faire "récupérer" par le
+   défilement de la page au lieu de démarrer son propre geste sur le menu — avec sa couche à lui, le
+   geste tactile est capturé par le bon élément dès le premier contact, quel que soit l'état de
+   l'autre défilement au même instant. */
+#side{width:var(--side);flex:none;background:var(--surface);border-right:1px solid var(--line);position:fixed;top:0;left:0;height:100vh;height:100dvh;overflow:hidden;display:flex;flex-direction:column;z-index:10;transform:translateZ(0)}
 #main{flex:1;min-width:0;margin-left:var(--side)}
 #view{max-width:1320px;margin:0 auto;padding:26px clamp(16px,3vw,40px) 90px}
 .brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:1.05rem;padding:4px 8px 14px;color:var(--text)}
@@ -60,7 +73,7 @@ button,input,select,textarea{font:inherit;color:inherit}
    titre en haut ni "Compte" en bas ne bougent jamais, quel que soit le nombre de matières. */
 #side>.brand{padding:18px 14px 10px}
 #side>.sform{padding:0 14px 14px}
-#side>.nav{flex:1;min-height:0;overflow-y:auto;padding:0 14px 10px;display:flex;flex-direction:column;gap:4px}
+#side>.nav{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y;padding:0 14px 10px;display:flex;flex-direction:column;gap:4px}
 .nav a{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;color:var(--text);font-size:.95rem}
 .nav a:hover{background:var(--surface2);text-decoration:none}
 .nav a.on{background:var(--accbg);color:var(--acc);font-weight:600}
