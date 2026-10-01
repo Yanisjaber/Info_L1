@@ -1,9 +1,9 @@
 import { $, $$, esc, icon, fmtDate, fmtLong, parseDay, startOfDay, daysUntil, pct, shuffle, plural, fmtMMSS, fmt1, toast, appConfirm, renderMath, download } from "./util.js";
 import { state, commit, bump, setEntry, onChange, sync, initSync, pull, push, signIn, signUp, magicLink, signOut, exportJSON, importJSON, resetAll, todayKey } from "./store.js";
 import { CALC } from "./grades.js";
-import { loadMatieres, loadSeances, saveMatiere, deleteMatiere, saveSeance, deleteSeance, loadEdt, updateEdtEvent, analyzeIcs, commitIcsImport, loadPeriodes, savePeriode, deletePeriode, wipeAccount, loadCC, saveCCEvent, deleteCCEvent, loadQCM, saveQCM, deleteQCM, loadFlashcards, saveFlashcard, deleteFlashcard, loadExercices, saveExercice, deleteExercice, loadSeanceDocs, uploadSeanceDoc, updateSeanceDoc, deleteSeanceDoc, getSeanceDocBlobUrl, loadTodos, saveTodo, setTodoDone, deleteTodo } from "./content.js";
+import { loadMatieres, loadSeances, saveMatiere, deleteMatiere, saveSeance, deleteSeance, loadEdt, updateEdtEvent, analyzeIcs, commitIcsImport, loadPeriodes, savePeriode, deletePeriode, wipeAccount, loadCC, saveCCEvent, deleteCCEvent, loadQCM, saveQCM, deleteQCM, loadFlashcards, saveFlashcard, deleteFlashcard, loadExercices, saveExercice, deleteExercice, loadSeanceDocs, loadSeanceDocSids, uploadSeanceDoc, updateSeanceDoc, deleteSeanceDoc, getSeanceDocBlobUrl, loadTodos, saveTodo, setTodoDone, deleteTodo } from "./content.js";
 
-const D = { matieres: [], periodes: [], cal: { evenements: [], remarques: [] }, edt: { events: [] }, content: {}, Q: [], F: [], E: [], todos: [], idx: null };
+const D = { matieres: [], periodes: [], cal: { evenements: [], remarques: [] }, edt: { events: [] }, content: {}, docSids: new Set(), Q: [], F: [], E: [], todos: [], idx: null };
 let IDS = [];
 const TYPES = { CM: "Cours magistraux", TD: "Travaux dirigés", TP: "Travaux pratiques" };
 const view = () => $("#view");
@@ -39,7 +39,7 @@ function periodeLabel() {
 // appelé AVANT toute requête réseau : si le rechargement qui suit échoue, l'écran reste
 // vide (sûr) plutôt que de garder affichées les données du compte précédent (pas sûr).
 function resetContent() {
-  D.matieres = []; D.periodes = []; D.content = {}; D.Q = []; D.F = []; D.E = []; D.todos = []; IDS = []; D.edt = { events: [] }; D.cal = { evenements: [], remarques: [] };
+  D.matieres = []; D.periodes = []; D.content = {}; D.docSids = new Set(); D.Q = []; D.F = []; D.E = []; D.todos = []; IDS = []; D.edt = { events: [] }; D.cal = { evenements: [], remarques: [] };
 }
 async function loadData() {
   resetContent();
@@ -63,6 +63,7 @@ async function loadData() {
     IDS = activeMatieres().map((m) => m.id);
     D.cal = await loadCC();
     D.todos = await loadTodos();
+    D.docSids = await loadSeanceDocSids();
   }
   IDS.forEach((id) => {
     C(id).qcm.forEach((q) => D.Q.push({ ...q, mid: id }));
@@ -869,6 +870,7 @@ async function saveWriteNote() {
       const d = new Date(), pad = (n) => String(n).padStart(2, "0");
       const stamp = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}h${pad(d.getMinutes())}`;
       await uploadSeanceDoc(mid, sid, new File([blob], `Note manuscrite ${stamp}.png`, { type: "image/png" }), vector);
+      D.docSids.add(sid);
     }
   } catch (err) { toast("Erreur : " + err.message); return; }
   closeWriteOverlay(el);
@@ -1508,6 +1510,10 @@ const edtState = (e, now) => (e.e ? (pd(e.d, e.e) <= now ? "past" : pd(e.d, e.s)
 // edtDraft — voir plus bas) sans qu'aucun cours y ait jamais été rédigé : le seul fait qu'une ligne
 // existe ne veut rien dire pour l'utilisateur, seul `contenu` compte.
 const seanceHasContent = (s) => !!(s?.contenu && s.contenu.replace(/<[^>]+>/g, "").trim());
+// A-t-on déjà déposé de la matière (document, note manuscrite ou tapée) pour cette séance, même si
+// elle n'a pas encore été rédigée (`contenu` vide) ? Sert à distinguer "rien n'a été fait" de
+// "j'ai de quoi écrire le cours, il ne reste qu'à le rédiger".
+const seanceHasMaterial = (mid, s) => !!(s && (D.docSids.has(s.id) || (state.seanceNotes[sKey(mid, s.id)]?.text || "").trim()));
 // Associe un créneau de l'EDT à la séance de cours correspondante (même matière, même date, même type)
 const EDT_TYPE_MAP = { Cours: "CM", TD: "TD", TP: "TP" };
 function seanceFor(e) {
@@ -1533,31 +1539,34 @@ function edtCard(e, now, top, height, left, width, px) {
   const href = sc ? `#/c/${e.m}/${sc.id}` : draftHrefFor(e);
   const clickable = cc && !href && e.id;
   const tag = href ? "a" : "div";
+  const status = written ? `<span class="tiny edt-link">${icon("book")}${esc(sc.type)} ${sc.numero}</span>`
+    : href ? (seanceHasMaterial(e.m, sc) ? `<span class="tiny edt-link">${icon("edit")}Rédiger ce cours</span>` : `<span class="tiny muted">Aucune note ou doc</span>`) : "";
   return `<${tag} class="edt-ev ${cc ? "cc " : ""}${st}${href || clickable ? " clickable" : ""}" style="--c:${edtColor(e)};top:${top}%;height:${height}%;left:${left}%;width:calc(${width}% - 3px)" title="${tt}"${href ? ` href="${href}"` : ""}${clickable ? ` data-a="edtev" data-id="${esc(e.id)}"` : ""}>
     <div class="edt-h"><b>${e.s}${micro ? "" : "–" + e.e}</b>${!micro ? `<span class="chip ${cc ? "wa" : "gr"}">${esc(e.t)}</span>` : ""}${!micro && st === "live" ? '<span class="chip ok">en cours</span>' : ""}</div>
     ${!micro ? `<div class="edt-t">${esc(edtName(e))}</div>` : ""}
     ${!compact && edtMeta(e) ? `<div class="tiny muted">${edtMeta(e)}</div>` : ""}${!compact && e.n ? `<div class="tiny edt-n">${esc(e.n)}</div>` : ""}
-    ${!compact && written ? `<span class="tiny edt-link">${icon("book")}${esc(sc.type)} ${sc.numero}</span>` : ""}${!compact && !written && href ? `<span class="tiny edt-link">${icon("edit")}Rédiger ce cours</span>` : ""}</${tag}>`;
+    ${!compact ? status : ""}</${tag}>`;
 }
 const edtRel = (iso) => { const d = daysUntil(iso); return d === 0 ? "aujourd'hui" : d === 1 ? "demain" : fmtLong(iso); };
 function edtRow(e, now, rel) {
   const c = edtColor(e), st = edtState(e, now), sc = seanceFor(e), written = seanceHasContent(sc);
   const href = sc ? `#/c/${e.m}/${sc.id}` : draftHrefFor(e) || "#/edt";
-  return `<a class="item edt-row ${st}" href="${href}"><span class="badge" style="background:color-mix(in srgb,${c} 15%,var(--surface));color:${c}">${e.s}</span><div class="sp"><b>${esc(edtName(e))}</b> <span class="chip ${e.t === "CC" ? "wa" : "gr"}">${esc(e.t)}</span>${st === "live" ? ' <span class="chip ok">en cours</span>' : ""}<div class="tiny muted">${rel ? edtRel(e.d) + " · " : ""}${e.s}–${e.e}${edtMeta(e) ? " · " + edtMeta(e) : ""}${written ? ` · ${esc(sc.type)} ${sc.numero}` : href !== "#/edt" ? " · à rédiger" : ""}</div></div></a>`;
+  const statusTxt = written ? `${esc(sc.type)} ${sc.numero}` : href !== "#/edt" ? (seanceHasMaterial(e.m, sc) ? "à rédiger" : "aucune note ou doc") : "";
+  return `<a class="item edt-row ${st}" href="${href}"><span class="badge" style="background:color-mix(in srgb,${c} 15%,var(--surface));color:${c}">${e.s}</span><div class="sp"><b>${esc(edtName(e))}</b> <span class="chip ${e.t === "CC" ? "wa" : "gr"}">${esc(e.t)}</span>${st === "live" ? ' <span class="chip ok">en cours</span>' : ""}<div class="tiny muted">${rel ? edtRel(e.d) + " · " : ""}${e.s}–${e.e}${edtMeta(e) ? " · " + edtMeta(e) : ""}${statusTxt ? " · " + statusTxt : ""}</div></div></a>`;
 }
 // Nombre de créneaux visés dans la carte "Aujourd'hui" : si la journée en a moins, on complète
 // avec les prochains cours à venir (jusqu'à EDT_UPCOMING_MAX) pour ne jamais laisser la carte
-// à moitié vide — sans en jamais montrer plus de EDT_HOME_FILL au total si la journée est chargée.
-const EDT_HOME_FILL = 4, EDT_UPCOMING_MAX = 3;
+// à moitié vide — sans jamais dépasser EDT_HOME_MAX créneaux au total (journée + prochains cours).
+const EDT_HOME_MAX = 5, EDT_UPCOMING_MAX = 3;
 function edtHome() {
   if (!D.edt.events.length) return "";
   const now = new Date(), iso = todayKey();
-  const day = edtOf(iso), timed = day.filter((e) => !e.allday), off = day.find((e) => e.allday);
-  const left = timed.filter((e) => pd(e.d, e.e) > now);
-  const head = timed.length ? "" : `<div class="small muted" style="margin:4px 0 8px">${off ? esc(edtLabel(off)) + " aujourd'hui." : "Pas de cours aujourd'hui."}</div>`;
-  const doneMsg = timed.length && !left.length ? '<div class="small muted" style="margin:4px 0 8px">Journée terminée.</div>' : "";
-  const upcoming = left.length < EDT_HOME_FILL
-    ? D.edt.events.filter((e) => !e.allday && e.t !== "Réunion" && e.d !== iso && pd(e.d, e.e) > now).sort((a, b) => pd(a.d, a.s) - pd(b.d, b.s)).slice(0, Math.min(EDT_UPCOMING_MAX, EDT_HOME_FILL - left.length))
+  const day = edtOf(iso), timedAll = day.filter((e) => !e.allday), off = day.find((e) => e.allday);
+  const timed = timedAll.slice(0, EDT_HOME_MAX);
+  const head = timedAll.length ? "" : `<div class="small muted" style="margin:4px 0 8px">${off ? esc(edtLabel(off)) + " aujourd'hui." : "Pas de cours aujourd'hui."}</div>`;
+  const doneMsg = timedAll.length && !timedAll.some((e) => pd(e.d, e.e) > now) ? '<div class="small muted" style="margin:4px 0 8px">Journée terminée.</div>' : "";
+  const upcoming = timed.length < EDT_HOME_MAX
+    ? D.edt.events.filter((e) => !e.allday && e.t !== "Réunion" && e.d !== iso && pd(e.d, e.e) > now).sort((a, b) => pd(a.d, a.s) - pd(b.d, b.s)).slice(0, Math.min(EDT_UPCOMING_MAX, EDT_HOME_MAX - timed.length))
     : [];
   return `<div class="card"><div class="row"><h3 style="margin:0">Aujourd'hui</h3><div class="sp"></div><a class="btn sm ghost" href="#/edt">${icon("grid")}Emploi du temps</a></div>
     ${head}<div class="list">${timed.map((e) => edtRow(e, now)).join("")}</div>${doneMsg}
@@ -1620,9 +1629,8 @@ function edt() {
   const hrs = wkEv.reduce((a, e) => a + (toMin(e.e) - toMin(e.s)) / 60, 0);
 
   return {
-    html: `<h1 style="text-align:center">Emploi du temps</h1>
-    <div class="row center" style="margin:6px 0 14px"><button class="btn sm" data-a="edtprev" aria-label="Semaine précédente">${icon("back")}</button><b style="min-width:170px;text-align:center">${fs.format(shown[0])} – ${fs.format(shown[shown.length - 1])}</b><button class="btn sm" data-a="edtnext" aria-label="Semaine suivante">${icon("arrow")}</button></div>
-    <div class="tiny muted" style="margin:-6px 0 12px;text-align:center">${plural(wkEv.length, "créneau", "créneaux")} · ${String(Math.round(hrs * 10) / 10).replace(".", ",")} h dans la semaine</div>
+    html: `<h1>Emploi du temps</h1>
+    <div class="row" style="margin:6px 0 14px"><button class="btn sm" data-a="edtprev" aria-label="Semaine précédente">${icon("back")}</button><b style="min-width:170px;text-align:center">${fs.format(shown[0])} – ${fs.format(shown[shown.length - 1])}</b><button class="btn sm" data-a="edtnext" aria-label="Semaine suivante">${icon("arrow")}</button><button class="btn sm ghost" data-a="edttoday">Aujourd'hui</button><div class="sp"></div><span class="tiny muted">${plural(wkEv.length, "créneau", "créneaux")} · ${String(Math.round(hrs * 10) / 10).replace(".", ",")} h dans la semaine</span></div>
     <div class="edt-wrap"><div class="edt-inner" style="--n:${shown.length};--hpx:${EDT_HOUR_PX}px">
       <div class="edt-corner"></div>${heads}
       <div class="edt-axis" style="height:${gridH}px">${axisLabels}</div>${cols}
@@ -1697,13 +1705,6 @@ function ccEntryForm(e) {
     </div>
   </form>`;
 }
-function ccAdminHtml() {
-  return `${D.cal.evenements.map((e) => `<div class="card" style="margin-bottom:10px">
-    <div class="row nowrap"><i class="dot" style="--c:${M(e.matiere)?.couleur || "#888"}"></i><div class="sp"><b>${esc(M(e.matiere)?.court || "?")}</b> — ${esc(e.titre)}<div class="tiny muted">${fmtLong(e.date)}${e.poids ? " · " + esc(fmtPoids(e.poids)) : ""}</div></div></div>
-    <details style="margin-top:10px"><summary>Modifier</summary><div style="margin-top:10px">${ccEntryForm(e)}</div></details>
-  </div>`).join("")}
-  <details ${D.cal.evenements.length ? "" : "open"}><summary>Ajouter une échéance</summary><div class="card" style="margin-top:10px">${ccEntryForm(null)}</div></details>`;
-}
 // Les événements CC importés depuis l'ICS n'ont pas de matière rattachée (e.m est null :
 // le résumé ne correspond pas au format d'un cours/TD/TP) mais leur libellé (ex. « Bas — CC »)
 // contient le nom de la matière avant le tiret : on essaie de le retrouver par ce nom.
@@ -1722,7 +1723,7 @@ function ccSuggestionsHtml() {
   return `<div class="card" style="margin-bottom:14px"><h3 style="margin-top:0">Suggestions depuis ton emploi du temps</h3>
     <div class="list">${sugg.map(({ e, mid }) => `<div class="item"><div class="sp"><b>${esc(M(mid)?.court || "")}</b> — ${esc((e.n || "Examen").replace(/^.*?[-–—]\s*/, ""))}<div class="tiny muted">${fmtLong(e.d)} · ${e.s}–${e.e}</div></div><button class="btn sm" data-a="addccsugg" data-m="${esc(mid)}" data-date="${e.d}" data-titre="${esc(e.n || "CC")}">${icon("check")}Ajouter</button></div>`).join("")}</div></div>`;
 }
-let calMonth = null, calSeances = false;
+let calMonth = null, calSeances = false, editCCId = null, addCCOpen = false;
 function calendar(q) {
   if (!sync.user) return { html: `<h1>Calendrier</h1><div class="empty">Connecte-toi pour voir ton calendrier.<div style="margin-top:10px"><a class="btn pri" href="#/compte">Se connecter</a></div></div>` };
   if (!calMonth) { const t = new Date(); calMonth = new Date(t.getFullYear(), t.getMonth(), 1); const has = D.cal.evenements.some((e) => { const d = parseDay(e.date); return d.getFullYear() === calMonth.getFullYear() && d.getMonth() === calMonth.getMonth(); }); const nx = nextEvents(1)[0]; if (!has && nx) { const d = parseDay(nx.date); calMonth = new Date(d.getFullYear(), d.getMonth(), 1); } }
@@ -1741,17 +1742,18 @@ function calendar(q) {
   const monthName = new Intl.DateTimeFormat("fr-FR", { month: "long", year: "numeric" }).format(calMonth);
   const upcoming = D.cal.evenements.filter((e) => daysUntil(e.date) >= 0);
   const past = D.cal.evenements.filter((e) => daysUntil(e.date) < 0);
-  const line = (e) => `<div class="item"><span class="badge" style="background:color-mix(in srgb,${M(e.matiere).couleur} 15%,var(--surface));color:${M(e.matiere).couleur};font-size:.66rem">${fmtDate(e.date).split(" ").slice(1).join(" ")}</span><div class="sp"><b>${esc(M(e.matiere).court)}</b> — ${esc(e.titre)} <span class="chip gr">${esc(fmtPoids(e.poids))}</span>${e.type === "2e" ? ' <span class="chip wa">2e chance</span>' : ""}${e.statut && e.poids !== "à confirmer" ? ` <span class="chip wa">${e.statut === "provisoire" ? "date provisoire" : "à confirmer"}</span>` : ""}<div class="tiny muted">${fmtLong(e.date)} · ${esc(e.detail)}</div></div><span class="count small muted">${daysUntil(e.date) >= 0 ? "J-" + daysUntil(e.date) : "passé"}</span></div>`;
+  const line = (e) => `<div class="item"><span class="badge" style="background:color-mix(in srgb,${M(e.matiere).couleur} 15%,var(--surface));color:${M(e.matiere).couleur};font-size:.66rem">${fmtDate(e.date).split(" ").slice(1).join(" ")}</span><div class="sp"><b>${esc(M(e.matiere).court)}</b> — ${esc(e.titre)} <span class="chip gr">${esc(fmtPoids(e.poids))}</span>${e.type === "2e" ? ' <span class="chip wa">2e chance</span>' : ""}${e.statut && e.poids !== "à confirmer" ? ` <span class="chip wa">${e.statut === "provisoire" ? "date provisoire" : "à confirmer"}</span>` : ""}<div class="tiny muted">${fmtLong(e.date)} · ${esc(e.detail)}</div></div><span class="count small muted">${daysUntil(e.date) >= 0 ? "J-" + daysUntil(e.date) : "passé"}</span><button type="button" class="btn sm ghost" data-a="editcc" data-id="${esc(e.id)}" aria-label="Modifier ${esc(e.titre)}">${icon("edit")}</button><button type="button" class="btn sm ghost" data-a="delcc" data-id="${esc(e.id)}" aria-label="Supprimer ${esc(e.titre)}">✕</button></div>${editCCId === e.id ? `<div class="card" style="margin:0 0 10px">${ccEntryForm(e)}</div>` : ""}`;
   return {
     html: `<h1>Calendrier</h1>
     ${ccSuggestionsHtml()}
     <div class="row" style="margin:6px 0 14px"><button class="btn sm" data-a="calprev" aria-label="Mois précédent">${icon("back")}</button><b style="min-width:150px;text-align:center;text-transform:capitalize">${monthName}</b><button class="btn sm" data-a="calnext" aria-label="Mois suivant">${icon("arrow")}</button><button class="btn sm ghost" data-a="caltoday">Aujourd'hui</button><div class="sp"></div><label class="row small"><input type="checkbox" data-a="calses" ${calSeances ? "checked" : ""}> Afficher les séances</label><button class="btn sm" data-a="ics">${icon("dl")}Export .ics</button></div>
     <div class="cal">${["lun", "mar", "mer", "jeu", "ven", "sam", "dim"].map((d) => `<div class="dh">${d}</div>`).join("")}${cells}</div>
     <div id="evd"></div>
-    <h2>À venir</h2><div class="card list">${upcoming.map(line).join("") || '<div class="empty">Rien à venir.</div>'}</div>
+    <div class="row" style="align-items:center;margin:0"><h2 style="margin:0">À venir</h2><div class="sp"></div><button type="button" class="btn sm pri" data-a="addcc" aria-label="Ajouter une échéance">+</button></div>
+    ${addCCOpen ? `<div class="card" style="margin:10px 0 14px">${ccEntryForm(null)}</div>` : ""}
+    <div class="card list">${upcoming.map(line).join("") || '<div class="empty">Rien à venir.</div>'}</div>
     ${D.cal.remarques.length ? `<div class="warn prose" style="margin-top:14px;padding:12px 16px"><b>À compléter —</b><ul>${D.cal.remarques.map((r) => `<li><b>${esc(M(r.matiere).court)}</b> : ${esc(r.texte)}</li>`).join("")}</ul></div>` : ""}
-    ${past.length ? `<details><summary>Épreuves passées (${past.length})</summary><div class="list">${past.map(line).join("")}</div></details>` : ""}
-    <details class="card" style="margin-top:18px" data-section="ccadmin"><summary>Mes échéances (ajouter/modifier/supprimer)</summary><div style="margin-top:12px">${ccAdminHtml()}</div></details>`,
+    ${past.length ? `<details><summary>Épreuves passées (${past.length})</summary><div class="list">${past.map(line).join("")}</div></details>` : ""}`,
     after: (el) => {
       $$('form[data-a="savecc"]', el).forEach((f) => f.addEventListener("submit", async (e) => {
         e.preventDefault();
@@ -1759,6 +1761,7 @@ function calendar(q) {
         try {
           await saveCCEvent({ id: fd.get("id") || undefined, matiere: fd.get("matiere"), date: fd.get("date"), titre: fd.get("titre"), poids: fd.get("poids"), type: fd.get("type"), statut: fd.get("statut"), detail: fd.get("detail") });
           toast("Échéance enregistrée");
+          editCCId = null; addCCOpen = false;
           await loadData(); rerender();
         } catch (err) { toast("Erreur : " + err.message); }
       }));
@@ -2288,6 +2291,7 @@ document.addEventListener("click", async (e) => {
   else if (a === "ics") icsExport();
   else if (a === "edtprev") { edtWeek.setDate(edtWeek.getDate() - 7); rerender(); }
   else if (a === "edtnext") { edtWeek.setDate(edtWeek.getDate() + 7); rerender(); }
+  else if (a === "edttoday") { edtWeek = mondayOf(new Date()); rerender(); }
   else if (a === "edtev") { const ev = D.edt.events.find((x) => x.id === t.dataset.id); if (ev) $("#edtd").innerHTML = edtEventDetailHtml(ev); }
   else if (a === "creerseance") {
     const mid = t.dataset.m, d = t.dataset.d, want = EDT_TYPE_MAP[t.dataset.t];
@@ -2341,7 +2345,9 @@ document.addEventListener("click", async (e) => {
   else if (a === "delexo") { if (await appConfirm("Supprimer cet exercice ?")) { await deleteExercice(t.dataset.id); toast("Exercice supprimé"); await loadData(); location.hash = `#/ax/${t.dataset.mid}`; } }
   else if (a === "confirmics") { if (!icsPreview) return; toast("Import en cours…"); try { const r = await commitIcsImport(icsPreview, D.matieres); icsPreview = null; toast(`Importé : ${plural(r.matieresCreees, "matière créée", "matières créées")}, ${plural(r.evenements, "créneau")}`); await loadData(); refreshShell(); } catch (err) { toast("Erreur : " + err.message); } }
   else if (a === "cancelics") { icsPreview = null; rerender(); }
-  else if (a === "delcc") { if (await appConfirm("Supprimer cette échéance ?")) { try { await deleteCCEvent(t.dataset.id); toast("Échéance supprimée"); await loadData(); rerender(); } catch (err) { toast("Erreur : " + err.message); } } }
+  else if (a === "editcc") { editCCId = editCCId === t.dataset.id ? null : t.dataset.id; addCCOpen = false; rerender(); }
+  else if (a === "addcc") { addCCOpen = !addCCOpen; editCCId = null; rerender(); }
+  else if (a === "delcc") { if (await appConfirm("Supprimer cette échéance ?")) { try { await deleteCCEvent(t.dataset.id); toast("Échéance supprimée"); if (editCCId === t.dataset.id) editCCId = null; await loadData(); rerender(); } catch (err) { toast("Erreur : " + err.message); } } }
   else if (a === "deltodo") { if (await appConfirm("Supprimer cette tâche ?")) { try { await deleteTodo(t.dataset.id); toast("Tâche supprimée"); await loadData(); rerender(); } catch (err) { toast("Erreur : " + err.message); } } }
   else if (a === "caltodo") {
     const todo = D.todos.find((x) => x.id === t.dataset.id); if (!todo) return;
@@ -2350,7 +2356,7 @@ document.addEventListener("click", async (e) => {
   else if (a === "todoprev") { todoMonth = new Date(todoMonth.getFullYear(), todoMonth.getMonth() - 1, 1); rerender(); }
   else if (a === "todonext") { todoMonth = new Date(todoMonth.getFullYear(), todoMonth.getMonth() + 1, 1); rerender(); }
   else if (a === "todotoday") { todoMonth = null; rerender(); }
-  else if (a === "deldoc") { if (await appConfirm(`Supprimer « ${t.dataset.nom} » ?`)) { try { await deleteSeanceDoc({ id: t.dataset.id, path: t.dataset.path }); toast("Document supprimé"); rerender(); } catch (err) { toast("Erreur : " + err.message); } } }
+  else if (a === "deldoc") { if (await appConfirm(`Supprimer « ${t.dataset.nom} » ?`)) { try { await deleteSeanceDoc({ id: t.dataset.id, path: t.dataset.path }); const sid = CURRENT_DOCS.find((d) => d.id === t.dataset.id)?.sid; if (sid && !CURRENT_DOCS.some((d) => d.sid === sid && d.id !== t.dataset.id)) D.docSids.delete(sid); toast("Document supprimé"); rerender(); } catch (err) { toast("Erreur : " + err.message); } } }
   else if (a === "opennote") { openWriteOverlay(document, t.dataset.mid, t.dataset.sid); }
   else if (a === "editnote") { openWriteOverlay(document, t.dataset.mid, t.dataset.sid, CURRENT_DOCS.find((d) => d.id === t.dataset.id)); }
   else if (a === "wtool") { if (DRAW) { DRAW.tool = t.dataset.tool; syncWriteToolbar(DRAW.el); } }
@@ -2399,7 +2405,7 @@ document.addEventListener("change", (e) => {
     const { mid, sid } = t.dataset;
     (async () => {
       for (const f of files) {
-        try { await uploadSeanceDoc(mid, sid, f); } catch (err) { toast("Erreur sur " + f.name + " : " + err.message); }
+        try { await uploadSeanceDoc(mid, sid, f); D.docSids.add(sid); } catch (err) { toast("Erreur sur " + f.name + " : " + err.message); }
       }
       toast(plural(files.length, "document ajouté", "documents ajoutés"));
       rerender();

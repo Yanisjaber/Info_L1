@@ -74,6 +74,15 @@ export async function deleteSeance(mid, id) {
 // Bucket privé "docs" : chaque fichier vit sous <user_id>/<mid>/<sid>/<horodatage>-<nom>, protégé par
 // RLS Storage. Les URLs de téléchargement sont signées (expirent) plutôt que publiques.
 const DOC_URL_TTL = 3600;
+// Version allégée de loadSeanceDocs : juste les sid ayant au moins un document, sans signer d'URLs.
+// Sert à savoir en un coup d'œil (EDT, accueil) si une séance a déjà de la matière déposée, sans
+// attendre l'ouverture de sa page.
+export async function loadSeanceDocSids() {
+  if (!sync.client || !sync.user) return new Set();
+  const { data, error } = await sync.client.from("seance_docs").select("sid");
+  if (error) { console.warn("loadSeanceDocSids", error); return new Set(); }
+  return new Set(data.map((r) => r.sid));
+}
 export async function loadSeanceDocs(mid, sid) {
   if (!sync.client || !sync.user) return [];
   const { data, error } = await sync.client.from("seance_docs").select("*").eq("mid", mid).eq("sid", sid).order("created_at", { ascending: true });
