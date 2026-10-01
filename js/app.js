@@ -1,13 +1,18 @@
 import { $, $$, esc, icon, fmtDate, fmtLong, parseDay, startOfDay, daysUntil, pct, shuffle, plural, fmtMMSS, fmt1, toast, appConfirm, renderMath, download } from "./util.js";
 import { state, commit, bump, setEntry, onChange, sync, initSync, pull, push, signIn, signUp, magicLink, signOut, exportJSON, importJSON, resetAll, todayKey } from "./store.js";
 import { CALC } from "./grades.js";
-import { loadMatieres, loadSeances, saveMatiere, deleteMatiere, saveSeance, deleteSeance, loadEdt, updateEdtEvent, analyzeIcs, commitIcsImport, loadPeriodes, savePeriode, deletePeriode, wipeAccount, loadCC, saveCCEvent, deleteCCEvent, loadQCM, saveQCM, deleteQCM, loadFlashcards, saveFlashcard, deleteFlashcard, loadExercices, saveExercice, deleteExercice, loadSeanceDocs, uploadSeanceDoc, updateSeanceDoc, deleteSeanceDoc, getSeanceDocBlobUrl } from "./content.js";
+import { loadMatieres, loadSeances, saveMatiere, deleteMatiere, saveSeance, deleteSeance, loadEdt, updateEdtEvent, analyzeIcs, commitIcsImport, loadPeriodes, savePeriode, deletePeriode, wipeAccount, loadCC, saveCCEvent, deleteCCEvent, loadQCM, saveQCM, deleteQCM, loadFlashcards, saveFlashcard, deleteFlashcard, loadExercices, saveExercice, deleteExercice, loadSeanceDocs, uploadSeanceDoc, updateSeanceDoc, deleteSeanceDoc, getSeanceDocBlobUrl, loadTodos, saveTodo, setTodoDone, deleteTodo } from "./content.js";
 
-const D = { matieres: [], periodes: [], cal: { evenements: [], remarques: [] }, edt: { events: [] }, content: {}, Q: [], F: [], E: [], idx: null };
+const D = { matieres: [], periodes: [], cal: { evenements: [], remarques: [] }, edt: { events: [] }, content: {}, Q: [], F: [], E: [], todos: [], idx: null };
 let IDS = [];
 const TYPES = { CM: "Cours magistraux", TD: "Travaux dirigés", TP: "Travaux pratiques" };
 const view = () => $("#view");
 let cleanup = null;
+// Compte les navigations RÉELLES (hashchange) de la session, pas les rerenders déclenchés par une
+// simple modif de données (rerender() appelle route() directement, sans hashchange) : sert à savoir
+// si "Retour" a un sens (0 ou 1 = on vient d'arriver, rien à quoi revenir) sans dépendre de
+// history.length, peu fiable d'un navigateur à l'autre.
+let navCount = 0;
 let Q = null; // session QCM
 let EV = null; // session Éval blanche (exercices)
 let FC = null; // session flashcards
@@ -34,7 +39,7 @@ function periodeLabel() {
 // appelé AVANT toute requête réseau : si le rechargement qui suit échoue, l'écran reste
 // vide (sûr) plutôt que de garder affichées les données du compte précédent (pas sûr).
 function resetContent() {
-  D.matieres = []; D.periodes = []; D.content = {}; D.Q = []; D.F = []; D.E = []; IDS = []; D.edt = { events: [] }; D.cal = { evenements: [], remarques: [] };
+  D.matieres = []; D.periodes = []; D.content = {}; D.Q = []; D.F = []; D.E = []; D.todos = []; IDS = []; D.edt = { events: [] }; D.cal = { evenements: [], remarques: [] };
 }
 async function loadData() {
   resetContent();
@@ -57,6 +62,7 @@ async function loadData() {
     });
     IDS = activeMatieres().map((m) => m.id);
     D.cal = await loadCC();
+    D.todos = await loadTodos();
   }
   IDS.forEach((id) => {
     C(id).qcm.forEach((q) => D.Q.push({ ...q, mid: id }));
@@ -81,34 +87,6 @@ function stats(mid) {
   return { read, seances: c.seances.length, nq: c.qcm.length, answered: answered.length, right, acc: pct(ok, n), n, ok, nf: c.flashcards.length, seen: seen.length, mastered, due, wrong, ne: c.exercices.length, exoOk, prog };
 }
 const totals = () => IDS.reduce((t, id) => { const s = stats(id); for (const k of ["read", "seances", "nq", "answered", "right", "n", "ok", "nf", "seen", "mastered", "due", "wrong"]) t[k] = (t[k] || 0) + s[k]; return t; }, { read: 0, seances: 0, nq: 0, answered: 0, right: 0, n: 0, ok: 0, nf: 0, seen: 0, mastered: 0, due: 0, wrong: 0 });
-// Nature de chaque action comptée dans state.activity[jour].by — sert au détail du graphique
-// d'activité (quoi, pas seulement combien) ; l'ordre définit aussi l'ordre d'empilement.
-const ACT_TYPES = [
-  { key: "lecture", label: "Cours lus", c: "var(--navy)" },
-  { key: "qcm", label: "QCM", c: "var(--ok)" },
-  { key: "carte", label: "Flashcards", c: "var(--amber)" },
-  { key: "exercice", label: "Exercices", c: "var(--terra)" },
-  { key: "eval", label: "Éval blanche", c: "var(--violet)" },
-];
-// Graphique en barres empilées : chaque jour = une colonne, chaque couleur = un type d'action,
-// la hauteur = le volume ce jour-là — montre le quoi et le quand, pas juste un total par case.
-function activityChart(days = 30) {
-  const today = startOfDay();
-  const list = [...Array(days)].map((_, i) => new Date(today.getTime() - (days - 1 - i) * 864e5));
-  const entries = list.map((d) => ({ d, a: state.activity[todayKey(d)] }));
-  if (!entries.some((x) => x.a?.n)) return `<div class="empty">Aucune activité encore.</div>`;
-  const max = Math.max(1, ...entries.map((x) => x.a?.n || 0));
-  const bars = entries.map(({ d, a }) => {
-    const n = a?.n || 0, by = a?.by || {};
-    const known = ACT_TYPES.reduce((s, t) => s + (by[t.key] || 0), 0);
-    const rest = n - known; // activité d'avant l'introduction du détail par type, ou type "autre"
-    const segs = ACT_TYPES.filter((t) => by[t.key] > 0).map((t) => `<i style="flex:${by[t.key]};background:${t.c}"></i>`).join("") + (rest > 0 ? `<i style="flex:${rest};background:var(--muted)"></i>` : "");
-    const detail = n ? [...ACT_TYPES.filter((t) => by[t.key] > 0).map((t) => `${by[t.key]} ${t.label.toLowerCase()}`), rest > 0 ? `${rest} autre` : ""].filter(Boolean).join(", ") : "rien";
-    return `<div class="actbar"><div class="actcol" style="height:${n ? Math.max(4, Math.round((n / max) * 100)) : 0}%" title="${fmtDate(todayKey(d))} : ${detail}">${segs}</div></div>`;
-  }).join("");
-  const legend = ACT_TYPES.map((t) => `<span class="tiny muted" style="display:inline-flex;align-items:center;gap:5px"><i style="width:8px;height:8px;border-radius:50%;background:${t.c};display:inline-block"></i>${t.label}</span>`).join("");
-  return `<div class="actchart" role="img" aria-label="Activité des ${days} derniers jours">${bars}</div><div class="row" style="gap:14px;flex-wrap:wrap;margin-top:12px">${legend}</div>`;
-}
 const ring = (v, c) => `<div class="ring" style="--v:${v};${c ? "--acc:" + c : ""}" data-t="${v}%"></div>`;
 
 // ───────────────────────── Elo ─────────────────────────
@@ -261,6 +239,7 @@ function shell() {
       <a href="#/" data-nav="">${icon("home")}Accueil</a>
       <a href="#/edt" data-nav="edt">${icon("grid")}Emploi du temps</a>
       <a href="#/cal" data-nav="cal">${icon("cal")}Calendrier</a>
+      <a href="#/todos" data-nav="todos">${icon("todo")}To do list</a>
       <a href="#/notes" data-nav="notes">${icon("chart")}Notes &amp; CC</a>
       <a href="#/elo" data-nav="elo">${icon("flag")}Elo</a>
       <div class="sep">Matières</div>${navSubj}
@@ -306,6 +285,18 @@ function syncLabel() {
 }
 
 // ───────────────────────── Routeur ─────────────────────────
+// Une page listée dans la barre latérale (Accueil, EDT, Calendrier, To do list, Notes & CC, Elo,
+// Compte, archives, une matière précise et ses onglets, les pages de lancement QCM/Éval/Flashcards)
+// est déjà "la base" : inutile d'y proposer un retour, on y est arrivé directement depuis le menu.
+// Tout le reste (une séance, une fiche Elo détaillée, une recherche, un formulaire d'admin…) est une
+// sous-page atteinte par un lien, où revenir en arrière a un sens.
+function isTopLevel(p) {
+  if (!p.length) return true;
+  if (["edt", "cal", "todos", "notes", "compte", "archives"].includes(p[0])) return true;
+  if (["elo", "qcm", "eval", "cards"].includes(p[0]) && !p[1]) return true;
+  if (p[0] === "m" && p[1]) return true;
+  return false;
+}
 function parse() {
   const h = location.hash.replace(/^#/, "") || "/";
   const [path, qs] = h.split("?");
@@ -329,6 +320,7 @@ async function route() {
     else if (p[0] === "edt") ({ html, after } = edt());
     else if (p[0] === "todo") ({ html, after } = await edtDraft(r.q));
     else if (p[0] === "cal") ({ html, after } = calendar(r.q));
+    else if (p[0] === "todos") ({ html, after } = todosPage());
     else if (p[0] === "notes") ({ html, after } = notes());
     else if (p[0] === "elo" && !p[1]) ({ html, after } = eloPage());
     else if (p[0] === "elo" && p[1]) ({ html, after } = eloDetail(p[1]));
@@ -347,7 +339,12 @@ async function route() {
     console.error(e);
     html = `<div class="empty"><h2>Oups</h2><p>${esc(e.message)}</p><a class="btn" href="#/">Accueil</a></div>`;
   }
-  el.innerHTML = html;
+  // Bouton "Retour" universel : revient à l'écran précédent de la session, quel qu'il soit (EDT,
+  // recherche, calendrier…) — pas un lien statique vers un parent hiérarchique supposé (une séance
+  // ouverte depuis l'EDT doit revenir à l'EDT, pas à sa matière). Absent sur l'accueil et au tout
+  // premier chargement (rien à quoi revenir).
+  const backBtn = !isTopLevel(p) && navCount > 0 ? `<button type="button" class="btn sm ghost" data-a="navback" style="margin-bottom:14px">${icon("back")}Retour</button>` : "";
+  el.innerHTML = backBtn + html;
   renderMath(el);
   if (after) after(el);
   window.scrollTo(0, 0);
@@ -384,6 +381,19 @@ function prioScore(mid) {
   const d = Math.max(0, daysUntil(ev.date)), prog = stats(mid).prog;
   const urgency = Math.max(0.2, 1 - d / 45), gap = Math.max(0.2, 1 - prog / 100);
   return { ev, score: parsePoidsNum(ev.poids) * urgency * gap };
+}
+
+// ───────────────────────── To-do list ─────────────────────────
+// Juste trois états visuels, calculés à la volée depuis `done`/`date` — rien à stocker en plus :
+// faite (vert), en retard (rouge, date passée et pas faite), ou normale (ni l'un ni l'autre).
+const todoLate = (t) => !t.done && daysUntil(t.date) < 0;
+const todoChip = (t) => (t.done ? "ok" : todoLate(t) ? "ko" : "gr");
+const todosSorted = () => D.todos.slice().sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : 0);
+function todoRowHtml(t, compact = false) {
+  return `<div class="item"><input type="checkbox" data-a="todotoggle" data-id="${t.id}" ${t.done ? "checked" : ""} aria-label="Marquer « ${esc(t.texte)} » comme faite">
+    <div class="sp"><b class="${t.done ? "muted" : ""}" style="${t.done ? "text-decoration:line-through" : ""}">${esc(t.texte)}</b></div>
+    <span class="chip ${todoChip(t)}">${t.done ? "Faite" : todoLate(t) ? "En retard" : fmtDate(t.date)}</span>
+    ${compact ? "" : `<button type="button" class="btn sm ghost" data-a="deltodo" data-id="${t.id}" aria-label="Supprimer « ${esc(t.texte)} »">✕</button>`}</div>`;
 }
 function home() {
   const ne = nextEvents(1)[0];
@@ -431,7 +441,140 @@ function home() {
     </div>
     <h2>Tes matières</h2>
     <div class="grid g3">${subjCards}</div>
-    <div class="card" style="margin:16px 0"><h3 style="margin-top:0">Activité</h3><div class="tiny muted" style="margin-bottom:10px">Ce qui a été fait, jour par jour, ces 30 derniers jours.</div>${activityChart()}</div>`,
+    ${todoPreviewCard()}`,
+  };
+}
+// Aperçu sur l'accueil : les 6 tâches les plus urgentes (en retard d'abord, puis les plus proches),
+// réparties en 2 colonnes de 3 — la liste complète (ajout/suppression, petit calendrier) est sur sa
+// propre page, ici on ne fait que montrer et cocher.
+function todoPreviewCard() {
+  const pending = todosSorted().filter((t) => !t.done).slice(0, 6);
+  const col1 = pending.slice(0, 3), col2 = pending.slice(3, 6);
+  const body = pending.length
+    ? `<div class="grid g2">
+        <div class="list">${col1.map((t) => todoRowHtml(t, true)).join("")}</div>
+        <div class="list">${col2.map((t) => todoRowHtml(t, true)).join("")}</div>
+      </div>`
+    : `<div class="empty">Rien à faire pour l'instant.</div>`;
+  return `<div class="card" style="margin:16px 0">
+    <div class="row nowrap"><h3 style="margin:0">To do list</h3><div class="sp"></div><a class="btn sm ghost" href="#/todos">Page complète ${icon("arrow")}</a></div>
+    ${body}
+  </div>`;
+}
+// Sélecteur de date "maison" (remplace le widget natif du navigateur, trop éloigné du reste de
+// l'appli) : un bouton qui affiche la date choisie, un `<input type="hidden">` qui porte la vraie
+// valeur pour le formulaire, et une pastille calendrier (mêmes classes `.cal`/`.d`/`.dh` que les
+// autres calendriers de l'appli) qui s'ouvre en dessous. Générique : plusieurs instances peuvent
+// coexister sur une même page (`data-datepicker` + `wireDatePickers` les câble toutes).
+function datePickerHtml(name, value) {
+  return `<div class="dpick" data-datepicker>
+    <button type="button" class="btn dpick-trig" data-a="dpicktoggle">${icon("cal")}<span class="dpick-label">${fmtDate(value)}</span></button>
+    <input type="hidden" name="${name}" value="${value}">
+    <div class="card dpick-pop" hidden>
+      <div class="row nowrap" style="margin-bottom:8px;gap:6px">
+        <button type="button" class="btn sm" data-a="dpickprev" aria-label="Mois précédent">${icon("back")}</button>
+        <b class="dpick-mlabel" style="flex:1;text-align:center;text-transform:capitalize"></b>
+        <button type="button" class="btn sm" data-a="dpicknext" aria-label="Mois suivant">${icon("arrow")}</button>
+      </div>
+      <div class="cal pick dpick-grid"></div>
+      <div class="row" style="margin-top:8px;justify-content:center"><button type="button" class="btn sm ghost" data-a="dpicktoday">Aujourd'hui</button></div>
+    </div>
+  </div>`;
+}
+function wireDatePickers(el) {
+  $$("[data-datepicker]", el).forEach((wrap) => {
+    const hidden = $('input[type="hidden"]', wrap), label = $(".dpick-label", wrap), pop = $(".dpick-pop", wrap);
+    const mlabel = $(".dpick-mlabel", wrap), grid = $(".dpick-grid", wrap);
+    const d0 = parseDay(hidden.value || todayKey());
+    let view = new Date(d0.getFullYear(), d0.getMonth(), 1);
+    const render = () => {
+      const y = view.getFullYear(), mo = view.getMonth();
+      const first = new Date(y, mo, 1), off = (first.getDay() + 6) % 7, dim = new Date(y, mo + 1, 0).getDate();
+      const today = todayKey(), sel = hidden.value;
+      let cells = "";
+      for (let i = 0; i < off; i++) cells += `<div class="d out"></div>`;
+      for (let d = 1; d <= dim; d++) {
+        const iso = `${y}-${String(mo + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+        cells += `<button type="button" class="d ${iso === today ? "today" : ""} ${iso === sel ? "sel" : ""}" data-iso="${iso}">${d}</button>`;
+      }
+      mlabel.textContent = new Intl.DateTimeFormat("fr-FR", { month: "long", year: "numeric" }).format(view);
+      grid.innerHTML = `${["L", "M", "M", "J", "V", "S", "D"].map((d) => `<div class="dh">${d}</div>`).join("")}${cells}`;
+    };
+    render();
+    $('[data-a="dpicktoggle"]', wrap).addEventListener("click", (e) => {
+      e.stopPropagation();
+      const willOpen = pop.hidden;
+      $$(".dpick-pop", el).forEach((p) => { p.hidden = true; });
+      if (willOpen) { render(); pop.hidden = false; }
+    });
+    pop.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const dayBtn = e.target.closest("[data-iso]");
+      if (dayBtn) {
+        hidden.value = dayBtn.dataset.iso; label.textContent = fmtDate(dayBtn.dataset.iso); pop.hidden = true;
+        hidden.dispatchEvent(new Event("change", { bubbles: true }));
+        return;
+      }
+      const a = e.target.closest("[data-a]")?.dataset.a;
+      if (a === "dpickprev") { view = new Date(view.getFullYear(), view.getMonth() - 1, 1); render(); }
+      else if (a === "dpicknext") { view = new Date(view.getFullYear(), view.getMonth() + 1, 1); render(); }
+      else if (a === "dpicktoday") { const t = new Date(); view = new Date(t.getFullYear(), t.getMonth(), 1); render(); }
+    });
+  });
+  // Un clic ailleurs sur la page ferme toute pastille restée ouverte.
+  el.addEventListener("click", () => $$(".dpick-pop", el).forEach((p) => { p.hidden = true; }));
+}
+let todoMonth = null;
+// Page complète : ajout, petit calendrier (quels jours ont des tâches), et la liste groupée
+// par état (en retard d'abord, puis à venir, puis terminées repliées).
+function todosPage() {
+  if (!sync.user) return { html: `<h1>To do list</h1><div class="empty">Connecte-toi pour voir ta liste de tâches.<div style="margin-top:10px"><a class="btn pri" href="#/compte">Se connecter</a></div></div>` };
+  if (!todoMonth) todoMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+  const y = todoMonth.getFullYear(), mo = todoMonth.getMonth();
+  const first = new Date(y, mo, 1), off = (first.getDay() + 6) % 7, dim = new Date(y, mo + 1, 0).getDate();
+  const today = todayKey();
+  let cells = "";
+  for (let i = 0; i < off; i++) cells += `<div class="d out"></div>`;
+  for (let d = 1; d <= dim; d++) {
+    const iso = `${y}-${String(mo + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+    const ts = D.todos.filter((t) => t.date === iso);
+    const chipColor = (t) => t.done ? "var(--ok)" : todoLate(t) ? "var(--ko)" : "var(--muted)";
+    const chips = ts.slice(0, 2).map((t) => `<button type="button" class="ev" style="--c:${chipColor(t)};${t.done ? "text-decoration:line-through" : ""}" data-a="caltodo" data-id="${t.id}" title="${esc(t.texte)}">${esc(t.texte)}</button>`).join("");
+    const extra = ts.length > 2 ? `<div class="tiny muted" style="padding-left:2px">+${ts.length - 2}</div>` : "";
+    cells += `<div class="d ${iso === today ? "today" : ""}"><b>${d}</b>${chips}${extra}</div>`;
+  }
+  const monthName = new Intl.DateTimeFormat("fr-FR", { month: "long", year: "numeric" }).format(todoMonth);
+
+  const all = todosSorted();
+  const late = all.filter((t) => todoLate(t));
+  const upcoming = all.filter((t) => !t.done && !todoLate(t));
+  const done = all.filter((t) => t.done);
+
+  return {
+    html: `<h1>To do list</h1>
+    <div class="card" style="margin-bottom:16px">
+      <form data-a="addtodo" class="row" style="gap:8px;flex-wrap:wrap">
+        <input type="text" name="texte" placeholder="Nouvelle tâche…" required style="flex:1;min-width:180px">
+        ${datePickerHtml("date", today)}
+        <button class="btn pri" type="submit">${icon("check")}Ajouter</button>
+      </form>
+    </div>
+    <div class="card" style="margin-bottom:16px">
+      <div class="row" style="margin-bottom:10px"><button type="button" class="btn sm" data-a="todoprev" aria-label="Mois précédent">${icon("back")}</button><b style="min-width:150px;text-align:center;text-transform:capitalize">${monthName}</b><button type="button" class="btn sm" data-a="todonext" aria-label="Mois suivant">${icon("arrow")}</button><button type="button" class="btn sm ghost" data-a="todotoday">Aujourd'hui</button></div>
+      <div class="cal mini">${["lun", "mar", "mer", "jeu", "ven", "sam", "dim"].map((d) => `<div class="dh">${d}</div>`).join("")}${cells}</div>
+    </div>
+    ${late.length ? `<h2>En retard</h2><div class="card list" style="margin-bottom:16px">${late.map((t) => todoRowHtml(t)).join("")}</div>` : ""}
+    <h2>À venir</h2><div class="card list">${upcoming.map((t) => todoRowHtml(t)).join("") || `<div class="empty">Rien de prévu.</div>`}</div>
+    ${done.length ? `<details style="margin-top:16px"><summary>Tâches terminées (${done.length})</summary><div class="card list" style="margin-top:10px">${done.map((t) => todoRowHtml(t)).join("")}</div></details>` : ""}`,
+    after: (el) => {
+      wireDatePickers(el);
+      $('form[data-a="addtodo"]', el)?.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const fd = new FormData(e.target), texte = fd.get("texte").trim();
+        if (!texte) return;
+        try { await saveTodo({ texte, date: fd.get("date") }); toast("Tâche ajoutée"); await loadData(); rerender(); } catch (err) { toast("Erreur : " + err.message); }
+      });
+    },
   };
 }
 function subjectCard(m) {
@@ -504,8 +647,11 @@ function matiere(mid, tab) {
 // des pixels figés : ça permet un rendu net à tout zoom et une gomme qui efface un trait entier
 // plutôt que des pixels. La vue (DRAW.view = {scale,ox,oy}) est un pur zoom/pan d'affichage appliqué
 // dans redrawAll() — les coordonnées stockées des traits restent toujours en espace "page" à 100 %.
-// Le doigt seul (pointerType "touch") ne trace jamais (rejet de paume) : à deux doigts, il pince
-// la VUE du canevas ; le stylet et la souris (pen/mouse) dessinent normalement.
+// Rejet de paume ADAPTATIF : tant qu'aucun vrai stylet (pointerType "pen") n'a touché l'écran cette
+// session d'écriture, un seul doigt dessine normalement (sinon personne sans Apple Pencil ne pourrait
+// rien écrire) ; dès qu'un stylet est détecté, le rejet de paume classique s'active et le doigt ne
+// sert plus qu'à pincer/déplacer la vue — poser la main pendant qu'on écrit au stylet ne laisse plus
+// de traits. Deux doigts pincent/déplacent la vue dans tous les cas ; la souris dessine toujours.
 let DRAW = null;
 let CURRENT_DOCS = []; // docs (avec strokes/paper) de la séance affichée — évite de stocker du JSON dans un data-attribut
 const PEN_PALETTE = ["#111111", "#C4342B", "#E08A2B", "#B8960C", "#2E8B57", "#2454C7", "#7C4DBE", "#C6427E"];
@@ -523,7 +669,7 @@ function openWriteOverlay(el, mid, sid, doc = null) {
     el, ctx, canvas, mid, sid, w: rect.width, h: rect.height, dpr, editingDoc: doc,
     tool: "pen", color: "#111111", size: 4, paper: "blank",
     strokes: [], log: [], redoLog: [], eraseGesture: null, cur: null, drawing: false, dirty: false,
-    view: { scale: 1, ox: 0, oy: 0 }, touches: new Map(), pinch: null, backdropImg: null,
+    view: { scale: 1, ox: 0, oy: 0 }, touches: new Map(), pinch: null, sawPen: false, touchDrawing: false, backdropImg: null,
   };
   if (doc?.strokes?.length) {
     DRAW.strokes = JSON.parse(JSON.stringify(doc.strokes)); // copie : jamais l'objet du doc d'origine
@@ -780,29 +926,45 @@ function wireWriteCanvas(el) {
     }
   };
   // Pincer à deux doigts zoome/déplace la VUE du canevas (jamais la barre d'outils, qui est en
-  // dehors du canevas) ; le doigt seul ne trace jamais (rejet de paume déjà en place ci-dessus).
+  // dehors du canevas). Un seul doigt dessine SAUF si un vrai stylet a déjà touché l'écran cette
+  // session (DRAW.sawPen) — c'est le rejet de paume adaptatif décrit plus haut.
   const touchStart = (e) => {
     DRAW.touches.set(e.pointerId, touchPt(e, canvas));
-    if (DRAW.touches.size === 2) startPinch(); else DRAW.pinch = null;
+    if (DRAW.touches.size === 2) {
+      // un 2e doigt arrive pendant qu'on dessinait au 1er : on finalise ce trait avant de pincer,
+      // sinon le pincement laisserait un trait fantôme au point de contact du 1er doigt.
+      if (DRAW.touchDrawing) { end(); DRAW.touchDrawing = false; }
+      startPinch();
+    } else if (DRAW.touches.size === 1) {
+      DRAW.pinch = null;
+      if (!DRAW.sawPen) { DRAW.touchDrawing = true; start(e, ptFromEvent(e, canvas)); }
+    }
+    redrawAll();
   };
   const touchMove = (e) => {
     if (!DRAW.touches.has(e.pointerId)) return;
     DRAW.touches.set(e.pointerId, touchPt(e, canvas));
-    if (DRAW.touches.size !== 2 || !DRAW.pinch) return;
-    const [a, b] = [...DRAW.touches.values()];
-    const d = Math.hypot(b.x - a.x, b.y - a.y);
-    const midX = (a.x + b.x) / 2, midY = (a.y + b.y) / 2;
-    const scale = Math.min(6, Math.max(.4, DRAW.pinch.scale0 * (d / DRAW.pinch.d0)));
-    DRAW.view = { scale, ox: midX - DRAW.pinch.anchor.x * scale, oy: midY - DRAW.pinch.anchor.y * scale };
-    redrawAll();
+    if (DRAW.touches.size === 2 && DRAW.pinch) {
+      const [a, b] = [...DRAW.touches.values()];
+      const d = Math.hypot(b.x - a.x, b.y - a.y);
+      const midX = (a.x + b.x) / 2, midY = (a.y + b.y) / 2;
+      const scale = Math.min(6, Math.max(.4, DRAW.pinch.scale0 * (d / DRAW.pinch.d0)));
+      DRAW.view = { scale, ox: midX - DRAW.pinch.anchor.x * scale, oy: midY - DRAW.pinch.anchor.y * scale };
+      redrawAll();
+    } else if (DRAW.touches.size === 1 && DRAW.touchDrawing) {
+      move(e, ptFromEvent(e, canvas)); redrawAll();
+    }
   };
   const touchEnd = (e) => {
     DRAW.touches.delete(e.pointerId);
+    if (DRAW.touchDrawing && DRAW.touches.size === 0) { end(); DRAW.touchDrawing = false; }
     DRAW.pinch = null;
-    if (DRAW.touches.size === 2) startPinch(); // un 3e doigt levé en premier : le pinceau à 2 continue sans à-coup
+    if (DRAW.touches.size === 2) startPinch(); // un 3e doigt levé en premier : le pincement à 2 continue sans à-coup
+    redrawAll();
   };
   canvas.addEventListener("pointerdown", (e) => {
     if (!DRAW) return;
+    if (e.pointerType === "pen") DRAW.sawPen = true;
     if (e.pointerType === "touch") { canvas.setPointerCapture(e.pointerId); touchStart(e); return; }
     canvas.setPointerCapture(e.pointerId);
     start(e, ptFromEvent(e, canvas)); redrawAll();
@@ -858,7 +1020,7 @@ async function cours(mid, sid) {
   const nq = c.qcm.filter((q) => q.seance === sid).length, nf = c.flashcards.filter((f) => f.seance === sid).length, ne = c.exercices.filter((e) => e.seance === sid).length;
   const rd = state.read[sKey(mid, sid)]?.v;
   const key = sKey(mid, sid);
-  const hasContent = !!(s.contenu && s.contenu.replace(/<[^>]+>/g, "").trim());
+  const hasContent = seanceHasContent(s);
   const docs = await loadSeanceDocs(mid, sid);
   CURRENT_DOCS = docs;
   const notes = state.seanceNotes[key]?.text || "";
@@ -926,15 +1088,30 @@ async function cours(mid, sid) {
 }
 
 // ───────────────────────── Exercices ─────────────────────────
+function exoCardHtml(e, mid) {
+  const st = state.exos[e.id]?.v, s = seanceOf(mid, e.seance);
+  const isCode = e.type === "code", isTexte = e.type === "texte", isAuto = isCode || isTexte;
+  return `<div class="card" style="margin:14px 0" id="${e.id}"><div class="row"><span class="chip gr">${s.type} ${s.numero}</span><span class="chip" title="difficulté">${"★".repeat(e.difficulte)}${"·".repeat(3 - e.difficulte)}</span>${isCode ? '<span class="chip gr">code Python</span>' : isTexte ? '<span class="chip gr">réponse courte</span>' : ""}<div class="sp"></div>${st === "ok" ? '<span class="chip ok">réussi</span>' : st === "redo" ? '<span class="chip wa">à refaire</span>' : ""}</div><h3 style="margin:.6em 0 .3em">${e.titre}</h3><div class="prose">${e.enonce}</div>
+    ${e.indice ? `<details><summary>Indice</summary><div class="prose">${e.indice}</div></details>` : ""}
+    ${isCode ? codeBlockHtml(e) : isTexte ? texteBlockHtml(e, true) : ""}
+    <details><summary>Voir le corrigé</summary><div class="prose">${e.corrige}</div>${isAuto ? "" : `<div class="row" style="margin-top:12px"><span class="small muted">Alors ?</span><button class="btn sm" data-a="exo" data-id="${e.id}" data-v="ok">Je l'avais</button><button class="btn sm" data-a="exo" data-id="${e.id}" data-v="redo">À refaire</button></div>`}</details></div>`;
+}
 function exosHtml(mid, sid0) {
   const q = parse().q, sid = sid0 || q.s || "";
   const c = C(mid);
-  const L = c.exercices.filter((e) => !sid || e.seance === sid);
-  return `<div class="row"><div class="field"><label for="exs">Séance</label><select id="exs" data-a="exfilter" data-m="${mid}"><option value="">Toutes (${c.exercices.length})</option>${c.seances.filter((s) => c.exercices.some((e) => e.seance === s.id)).map((s) => `<option value="${s.id}" ${sid === s.id ? "selected" : ""}>${s.type} ${s.numero} — ${s.titre.replace(/<[^>]+>/g, "")}</option>`).join("")}</select></div><div class="sp"></div><span class="muted small">${L.length} exercices · ${c.exercices.filter((e) => state.exos[e.id]?.v === "ok").length} réussis</span></div>
-  ${L.map((e) => { const st = state.exos[e.id]?.v; const s = seanceOf(mid, e.seance); const isCode = e.type === "code", isTexte = e.type === "texte", isAuto = isCode || isTexte; return `<div class="card" style="margin:14px 0" id="${e.id}"><div class="row"><span class="chip gr">${s.type} ${s.numero}</span><span class="chip" title="difficulté">${"★".repeat(e.difficulte)}${"·".repeat(3 - e.difficulte)}</span>${isCode ? '<span class="chip gr">code Python</span>' : isTexte ? '<span class="chip gr">réponse courte</span>' : ""}<div class="sp"></div>${st === "ok" ? '<span class="chip ok">réussi</span>' : st === "redo" ? '<span class="chip wa">à refaire</span>' : ""}</div><h3 style="margin:.6em 0 .3em">${e.titre}</h3><div class="prose">${e.enonce}</div>
-    ${e.indice ? `<details><summary>Indice</summary><div class="prose">${e.indice}</div></details>` : ""}
-    ${isCode ? codeBlockHtml(e) : isTexte ? texteBlockHtml(e, true) : ""}
-    <details><summary>Voir le corrigé</summary><div class="prose">${e.corrige}</div>${isAuto ? "" : `<div class="row" style="margin-top:12px"><span class="small muted">Alors ?</span><button class="btn sm" data-a="exo" data-id="${e.id}" data-v="ok">Je l'avais</button><button class="btn sm" data-a="exo" data-id="${e.id}" data-v="redo">À refaire</button></div>`}</details></div>`; }).join("") || '<div class="empty">Aucun exercice pour cette séance.</div>'}`;
+  const okCount = (list) => list.filter((e) => state.exos[e.id]?.v === "ok").length;
+  const selectHtml = `<div class="field"><label for="exs">Séance</label><select id="exs" data-a="exfilter" data-m="${mid}"><option value="">Toutes (${c.exercices.length})</option>${c.seances.filter((s) => c.exercices.some((e) => e.seance === s.id)).map((s) => `<option value="${s.id}" ${sid === s.id ? "selected" : ""}>${s.type} ${s.numero} — ${s.titre.replace(/<[^>]+>/g, "")}</option>`).join("")}</select></div>`;
+  if (sid) {
+    const L = c.exercices.filter((e) => e.seance === sid);
+    return `<div class="row">${selectHtml}<div class="sp"></div><span class="muted small">${L.length} exercices · ${okCount(L)} réussis</span></div>
+    ${L.map((e) => exoCardHtml(e, mid)).join("") || '<div class="empty">Aucun exercice pour cette séance.</div>'}`;
+  }
+  const header = `<div class="row">${selectHtml}<div class="sp"></div><span class="muted small">${c.exercices.length} exercices · ${okCount(c.exercices)} réussis</span></div>`;
+  // Vue "Toutes" : regroupée séance par séance (chaque exercice vient du cours qui l'accompagnait)
+  // plutôt qu'une seule liste plate — s'y retrouver devient difficile dès qu'une matière cumule
+  // des dizaines d'exercices venant de plusieurs CM/TD/TP.
+  const groups = c.seances.filter((s) => c.exercices.some((e) => e.seance === s.id)).map((s) => ({ s, L: c.exercices.filter((e) => e.seance === s.id) }));
+  return `${header}${groups.map(({ s, L }) => `<h3 style="margin:22px 0 2px">${s.type} ${s.numero} <span class="tiny muted">— ${s.titre.replace(/<[^>]+>/g, "")} · ${okCount(L)}/${L.length} réussis</span></h3>${L.map((e) => exoCardHtml(e, mid)).join("")}`).join("") || `<div class="empty">Aucun exercice pour l'instant.</div>`}`;
 }
 let codeResults = {}; // id -> dernier résultat d'exécution (mémoire seulement, pour survivre à un rerender)
 function codeBlockHtml(e) {
@@ -1327,6 +1504,10 @@ const edtName = (e) => (e.m && M(e.m) ? M(e.m).court : e.t);
 const edtMeta = (e) => [e.r, e.p, e.g].filter(Boolean).map(esc).join(" · ");
 const edtMetaRaw = (e) => [e.r, e.p, e.g].filter(Boolean).join(" · ");
 const edtState = (e, now) => (e.e ? (pd(e.d, e.e) <= now ? "past" : pd(e.d, e.s) <= now ? "live" : "") : "");
+// Une séance peut exister en base (créée vide dès le premier clic sur "Rédiger ce cours", via
+// edtDraft — voir plus bas) sans qu'aucun cours y ait jamais été rédigé : le seul fait qu'une ligne
+// existe ne veut rien dire pour l'utilisateur, seul `contenu` compte.
+const seanceHasContent = (s) => !!(s?.contenu && s.contenu.replace(/<[^>]+>/g, "").trim());
 // Associe un créneau de l'EDT à la séance de cours correspondante (même matière, même date, même type)
 const EDT_TYPE_MAP = { Cours: "CM", TD: "TD", TP: "TP" };
 function seanceFor(e) {
@@ -1346,7 +1527,7 @@ function draftHrefFor(e) {
   return `#/todo?m=${e.m}&d=${e.d}&t=${encodeURIComponent(e.t)}&s=${e.s}&e=${e.e}&r=${encodeURIComponent(e.r || "")}&p=${encodeURIComponent(e.p || "")}&g=${encodeURIComponent(e.g || "")}`;
 }
 function edtCard(e, now, top, height, left, width, px) {
-  const st = edtState(e, now), cc = e.t === "CC", sc = seanceFor(e);
+  const st = edtState(e, now), cc = e.t === "CC", sc = seanceFor(e), written = seanceHasContent(sc);
   const compact = px < 58, micro = px < 32;
   const tt = esc([`${e.s}–${e.e}`, edtName(e), edtMetaRaw(e), e.n].filter(Boolean).join(" · "));
   const href = sc ? `#/c/${e.m}/${sc.id}` : draftHrefFor(e);
@@ -1356,13 +1537,13 @@ function edtCard(e, now, top, height, left, width, px) {
     <div class="edt-h"><b>${e.s}${micro ? "" : "–" + e.e}</b>${!micro ? `<span class="chip ${cc ? "wa" : "gr"}">${esc(e.t)}</span>` : ""}${!micro && st === "live" ? '<span class="chip ok">en cours</span>' : ""}</div>
     ${!micro ? `<div class="edt-t">${esc(edtName(e))}</div>` : ""}
     ${!compact && edtMeta(e) ? `<div class="tiny muted">${edtMeta(e)}</div>` : ""}${!compact && e.n ? `<div class="tiny edt-n">${esc(e.n)}</div>` : ""}
-    ${!compact && sc ? `<span class="tiny edt-link">${icon("book")}${esc(sc.type)} ${sc.numero}</span>` : ""}${!compact && !sc && href ? `<span class="tiny edt-link">${icon("edit")}Rédiger ce cours</span>` : ""}</${tag}>`;
+    ${!compact && written ? `<span class="tiny edt-link">${icon("book")}${esc(sc.type)} ${sc.numero}</span>` : ""}${!compact && !written && href ? `<span class="tiny edt-link">${icon("edit")}Rédiger ce cours</span>` : ""}</${tag}>`;
 }
 const edtRel = (iso) => { const d = daysUntil(iso); return d === 0 ? "aujourd'hui" : d === 1 ? "demain" : fmtLong(iso); };
 function edtRow(e, now, rel) {
-  const c = edtColor(e), st = edtState(e, now), sc = seanceFor(e);
+  const c = edtColor(e), st = edtState(e, now), sc = seanceFor(e), written = seanceHasContent(sc);
   const href = sc ? `#/c/${e.m}/${sc.id}` : draftHrefFor(e) || "#/edt";
-  return `<a class="item edt-row ${st}" href="${href}"><span class="badge" style="background:color-mix(in srgb,${c} 15%,var(--surface));color:${c}">${e.s}</span><div class="sp"><b>${esc(edtName(e))}</b> <span class="chip ${e.t === "CC" ? "wa" : "gr"}">${esc(e.t)}</span>${st === "live" ? ' <span class="chip ok">en cours</span>' : ""}<div class="tiny muted">${rel ? edtRel(e.d) + " · " : ""}${e.s}–${e.e}${edtMeta(e) ? " · " + edtMeta(e) : ""}${sc ? ` · ${esc(sc.type)} ${sc.numero}` : ""}</div></div></a>`;
+  return `<a class="item edt-row ${st}" href="${href}"><span class="badge" style="background:color-mix(in srgb,${c} 15%,var(--surface));color:${c}">${e.s}</span><div class="sp"><b>${esc(edtName(e))}</b> <span class="chip ${e.t === "CC" ? "wa" : "gr"}">${esc(e.t)}</span>${st === "live" ? ' <span class="chip ok">en cours</span>' : ""}<div class="tiny muted">${rel ? edtRel(e.d) + " · " : ""}${e.s}–${e.e}${edtMeta(e) ? " · " + edtMeta(e) : ""}${written ? ` · ${esc(sc.type)} ${sc.numero}` : href !== "#/edt" ? " · à rédiger" : ""}</div></div></a>`;
 }
 // Nombre de créneaux visés dans la carte "Aujourd'hui" : si la journée en a moins, on complète
 // avec les prochains cours à venir (jusqu'à EDT_UPCOMING_MAX) pour ne jamais laisser la carte
@@ -2037,7 +2218,8 @@ document.addEventListener("click", async (e) => {
   const t = e.target.closest("[data-a]"); if (!t || t.tagName === "SELECT" || (t.tagName === "INPUT" && t.type !== "checkbox" && t.type !== "file")) return;
   const a = t.dataset.a;
   if (["calfilter", "calses", "import", "icsfile"].includes(a)) return; // gérés par change
-  if (a === "read") { const k = t.dataset.k, cur = state.read[k]?.v; setEntry("read", k, { v: !cur }); if (!cur) bump(3, "lecture"); commit(); const [mid, sid] = k.split("/"); const s = seanceOf(mid, sid); t.textContent = !cur ? "✓ Lu" : "Marquer comme lu"; t.classList.toggle("pri", cur); toast(!cur ? "Marqué comme lu" : "Marqué comme non lu"); }
+  if (a === "navback") { history.back(); }
+  else if (a === "read") { const k = t.dataset.k, cur = state.read[k]?.v; setEntry("read", k, { v: !cur }); if (!cur) bump(3, "lecture"); commit(); const [mid, sid] = k.split("/"); const s = seanceOf(mid, sid); t.textContent = !cur ? "✓ Lu" : "Marquer comme lu"; t.classList.toggle("pri", cur); toast(!cur ? "Marqué comme lu" : "Marqué comme non lu"); }
   else if (a === "choose") { const x = Q.qs[Q.i]; if (x.checked) return; const i = +t.dataset.i; if (x.q.type === "multiple") { x.ans.has(i) ? x.ans.delete(i) : x.ans.add(i); } else { x.ans = new Set([i]); } rerenderKeep(); }
   else if (a === "check") { const x = Q.qs[Q.i]; if (!x.ans.size) return; x.checked = true; recordQ(x); commit(); rerenderKeep(); }
   else if (a === "next") { if (Q.i < Q.qs.length - 1) { Q.i++; rerender(); } }
@@ -2139,6 +2321,14 @@ document.addEventListener("click", async (e) => {
   else if (a === "confirmics") { if (!icsPreview) return; toast("Import en cours…"); try { const r = await commitIcsImport(icsPreview, D.matieres); icsPreview = null; toast(`Importé : ${plural(r.matieresCreees, "matière créée", "matières créées")}, ${plural(r.evenements, "créneau")}`); await loadData(); refreshShell(); } catch (err) { toast("Erreur : " + err.message); } }
   else if (a === "cancelics") { icsPreview = null; rerender(); }
   else if (a === "delcc") { if (await appConfirm("Supprimer cette échéance ?")) { try { await deleteCCEvent(t.dataset.id); toast("Échéance supprimée"); await loadData(); rerender(); } catch (err) { toast("Erreur : " + err.message); } } }
+  else if (a === "deltodo") { if (await appConfirm("Supprimer cette tâche ?")) { try { await deleteTodo(t.dataset.id); toast("Tâche supprimée"); await loadData(); rerender(); } catch (err) { toast("Erreur : " + err.message); } } }
+  else if (a === "caltodo") {
+    const todo = D.todos.find((x) => x.id === t.dataset.id); if (!todo) return;
+    try { await setTodoDone(todo.id, !todo.done); todo.done = !todo.done; rerender(); } catch (err) { toast("Erreur : " + err.message); }
+  }
+  else if (a === "todoprev") { todoMonth = new Date(todoMonth.getFullYear(), todoMonth.getMonth() - 1, 1); rerender(); }
+  else if (a === "todonext") { todoMonth = new Date(todoMonth.getFullYear(), todoMonth.getMonth() + 1, 1); rerender(); }
+  else if (a === "todotoday") { todoMonth = null; rerender(); }
   else if (a === "deldoc") { if (await appConfirm(`Supprimer « ${t.dataset.nom} » ?`)) { try { await deleteSeanceDoc({ id: t.dataset.id, path: t.dataset.path }); toast("Document supprimé"); rerender(); } catch (err) { toast("Erreur : " + err.message); } } }
   else if (a === "opennote") { openWriteOverlay(document, t.dataset.mid, t.dataset.sid); }
   else if (a === "editnote") { openWriteOverlay(document, t.dataset.mid, t.dataset.sid, CURRENT_DOCS.find((d) => d.id === t.dataset.id)); }
@@ -2193,6 +2383,15 @@ document.addEventListener("change", (e) => {
       toast(plural(files.length, "document ajouté", "documents ajoutés"));
       rerender();
     })();
+  } else if (a === "todotoggle") {
+    const id = t.dataset.id, done = t.checked;
+    (async () => {
+      try {
+        await setTodoDone(id, done);
+        const todo = D.todos.find((x) => x.id === id); if (todo) todo.done = done;
+        rerender();
+      } catch (err) { toast("Erreur : " + err.message); }
+    })();
   }
 });
 function rerenderKeep() { const y = window.scrollY; rerender().then?.(() => 0); requestAnimationFrame(() => window.scrollTo(0, y)); }
@@ -2222,7 +2421,7 @@ async function boot() {
     const s = (sync.user ? sync.user.id : "-") + sync.status + (sync.error || "");
     if (s !== sig) { sig = s; const p0 = parse().parts[0] || ""; if (["", "compte"].includes(p0) && !Q?.qs?.length) rerender(); else if (p0 === "compte") rerender(); }
   });
-  window.addEventListener("hashchange", () => route());
+  window.addEventListener("hashchange", () => { navCount++; route(); });
   await route();
   syncLabel();
 }

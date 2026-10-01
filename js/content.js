@@ -241,6 +241,32 @@ export async function deleteCCEvent(id) {
   if (error) throw error;
 }
 
+// ───────────────────────── To-do list ─────────────────────────
+export async function loadTodos() {
+  if (!sync.client || !sync.user) return [];
+  const { data, error } = await sync.client.from("todos").select("*").order("date", { ascending: true });
+  if (error) { console.warn("loadTodos", error); return []; }
+  return data.map((r) => ({ id: r.id, texte: r.texte, date: r.date, done: r.done }));
+}
+
+export async function saveTodo(t) {
+  const row = { user_id: sync.user.id, texte: t.texte || "", date: t.date, done: !!t.done };
+  if (t.id) row.id = t.id;
+  const { data, error } = await client().from("todos").upsert(row, { onConflict: "user_id,id" }).select().single();
+  if (error) throw error;
+  return data.id;
+}
+
+export async function setTodoDone(id, done) {
+  const { error } = await client().from("todos").update({ done }).eq("id", id);
+  if (error) throw error;
+}
+
+export async function deleteTodo(id) {
+  const { error } = await client().from("todos").delete().eq("id", id);
+  if (error) throw error;
+}
+
 export async function saveEdtEvents(rows) {
   if (!rows.length) return;
   const payload = rows.map((x) => ({ user_id: sync.user.id, d: x.d, s: x.s, e: x.e, t: x.t, m: x.m || null, r: x.r || null, p: x.p || null, g: x.g || null, n: x.n || null, allday: !!x.allday }));

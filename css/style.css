@@ -108,7 +108,12 @@ input[type=color]{padding:2px;height:38px;border:1px solid var(--line);border-ra
 
 /* Feuille blanche plein écran pour écrire au stylet : toujours "papier" (clair), indépendamment
    du thème du reste de l'app — comme une vraie app de prise de notes. */
-.write-overlay{position:fixed;inset:0;z-index:70;background:#fff;display:flex;flex-direction:column}
+/* touch-action:none sur TOUT l'overlay (pas seulement le canevas) : sur iPad, un pincer qui démarre
+   ne serait-ce qu'un peu sur la barre d'outils laisse Safari faire son propre zoom de page natif —
+   et comme l'overlay est position:fixed, ce zoom natif le fait apparaître comme une petite boîte
+   flottant dans une page blanche zoomée au lieu de remplir l'écran. En réservant tout pincer/geste
+   dans l'overlay à notre zoom JS (DRAW.view), ce problème ne peut plus se produire nulle part dedans. */
+.write-overlay{position:fixed;inset:0;z-index:70;background:#fff;display:flex;flex-direction:column;touch-action:none}
 .write-overlay[hidden]{display:none}
 .write-tb{display:flex;align-items:center;gap:8px;padding:10px 14px;background:#f2f2f2;border-bottom:1px solid #ddd;flex-wrap:wrap}
 .write-tb button{border:1px solid #ccc;background:#fff;border-radius:8px;padding:7px 12px;font:inherit;font-size:.86rem;cursor:pointer;color:#111;display:inline-flex;align-items:center;gap:6px}
@@ -182,12 +187,6 @@ details[open]{padding-bottom:12px}
 .fc .lbl{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:10px}
 .rate{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}
 .rate .btn{justify-content:center}
-.actchart{display:flex;align-items:flex-end;gap:4px;height:90px}
-.actbar{flex:1;height:100%;display:flex;align-items:flex-end;min-width:0}
-.actcol{width:100%;background:var(--surface2);border-radius:3px 3px 0 0;overflow:hidden;display:flex;flex-direction:column-reverse}
-.actcol i{display:block;width:100%}
-.actbar:hover .actcol{filter:brightness(1.15)}
-
 /* ===== Calendrier ===== */
 .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
 .cal .dh{font-size:.72rem;text-transform:uppercase;color:var(--muted);text-align:center;padding:4px 0}
@@ -197,6 +196,21 @@ details[open]{padding-bottom:12px}
 .ev{display:block;margin-top:3px;padding:1px 6px;border-radius:5px;background:color-mix(in srgb,var(--c) 18%,var(--surface));border-left:3px solid var(--c);font-size:.72rem;line-height:1.3;color:var(--text);cursor:pointer;text-align:left;width:100%;border-top:0;border-right:0;border-bottom:0}
 .ev.se{background:transparent;border-left-style:dotted;color:var(--muted)}
 .count{font-variant-numeric:tabular-nums}
+.cal.mini .d{min-height:72px}
+.cal .d.sel{background:var(--acc);border-color:var(--acc);color:#fff}
+.cal .d.sel b{color:#fff}
+
+/* Sélecteur de date maison (remplace le widget natif du navigateur) */
+.dpick{position:relative;display:inline-block}
+.dpick-trig{display:inline-flex;align-items:center;gap:8px}
+.dpick-pop{position:absolute;top:calc(100% + 6px);left:0;z-index:30;width:272px}
+.dpick-pop[hidden]{display:none}
+.cal.pick{gap:2px}
+.cal.pick .dh{padding:2px 0;font-size:.64rem}
+.cal.pick .d{min-height:0;display:flex;align-items:center;justify-content:center;padding:0;aspect-ratio:1;font:inherit;font-size:.82rem;font-weight:600;color:var(--text);cursor:pointer;appearance:none}
+.cal.pick .d.out{visibility:hidden;cursor:default}
+.cal.pick .d:hover{background:var(--surface2)}
+.cal.pick .d.sel:hover{background:var(--acc)}
 
 /* ===== Responsive ===== */
 @media (max-width:900px){
