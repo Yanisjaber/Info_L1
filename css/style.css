@@ -65,7 +65,10 @@ button,input,select,textarea{font:inherit;color:inherit}
 #main{flex:1;min-width:0;margin-left:var(--side)}
 #view{max-width:1320px;margin:0 auto;padding:26px clamp(16px,3vw,40px) 90px}
 .brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:1.05rem;padding:4px 8px 14px;color:var(--text)}
-.brand .logo{width:32px;height:32px;border-radius:9px;background:var(--navy);color:#fff;display:grid;place-items:center;font-size:.8rem;font-weight:800}
+.brand .logo{width:32px;height:32px;flex:none;display:block}
+.brand .logo svg{width:32px;height:32px;display:block}
+.brand-t{display:flex;flex-direction:column;line-height:1.1}
+.brand-t small{font-size:.7rem;font-weight:600;color:var(--muted);margin-top:2px}
 :root[data-theme="dark"] .brand .logo{color:#0F151D}
 /* Le titre et "Compte" restent fixes même si le menu (nav des matières, etc.) dépasse la hauteur de
    l'écran : seule .nav défile (flex:1 + min-height:0 + overflow-y:auto, le trio qui permet à un

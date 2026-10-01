@@ -31,7 +31,7 @@ const activeMatieres = () => D.matieres.filter(isActive);
 const archivedMatieres = () => D.matieres.filter((m) => !isActive(m));
 function periodeLabel() {
   const noms = [...new Set(D.periodes.filter((p) => p.statut === "actif").map((p) => p.nom))];
-  return noms.length === 1 ? noms[0] : "Mes révisions";
+  return noms.length === 1 ? noms[0] : "Révise";
 }
 
 // ───────────────────────── Données ─────────────────────────
@@ -227,14 +227,17 @@ function eloDetail(mid) {
   };
 }
 
+// Logo « Révise » (livre ouvert + signet)
+const BRAND_LOGO = `<svg viewBox="0 0 256 256" aria-hidden="true"><rect width="256" height="256" rx="58" fill="#1F3A5F"/><path d="M128 88C106 68 74 66 46 76V190C74 180 106 184 128 204Z" fill="#fff"/><path d="M128 88C150 68 182 66 210 76V190C182 180 150 184 128 204Z" fill="#fff" fill-opacity=".86"/><path d="M150 70H178V130L164 118L150 130Z" fill="#6FD6B5"/></svg>`;
+
 // ───────────────────────── Coque ─────────────────────────
 function shell() {
   const navSubj = activeMatieres().map((m) => `<a href="#/m/${m.id}" data-nav="m/${m.id}"><i class="dot" style="--c:${m.couleur}"></i>${esc(m.court)}</a>`).join("");
   const brandLabel = periodeLabel();
-  const brandMark = (brandLabel !== "Mes révisions" ? brandLabel.replace(/[^A-Za-zÀ-ÿ0-9]/g, "") : "R").slice(0, 2).toUpperCase() || "R";
+  const brandMark = BRAND_LOGO;
   $("#app").innerHTML = `
   <aside id="side">
-    <a class="brand" href="#/"><span class="logo">${esc(brandMark)}</span><span>${esc(brandLabel)}</span></a>
+    <a class="brand" href="#/"><span class="logo">${brandMark}</span><span class="brand-t">Révise${brandLabel !== "Révise" ? `<small>${esc(brandLabel)}</small>` : ""}</span></a>
     <form class="sform" role="search"><input type="text" name="q" placeholder="Rechercher…" aria-label="Rechercher"></form>
     <nav class="nav" aria-label="Navigation">
       <a href="#/" data-nav="">${icon("home")}Accueil</a>
@@ -255,7 +258,7 @@ function shell() {
     </div>
   </aside>
   <div id="main">
-    <header id="topbar"><a class="brand" href="#/"><span class="logo">${esc(brandMark)}</span></a><form class="sform" role="search"><input type="text" name="q" placeholder="Rechercher…" aria-label="Rechercher"></form><a href="#/compte" class="btn ghost sm" aria-label="Compte">${icon("user")}</a></header>
+    <header id="topbar"><a class="brand" href="#/"><span class="logo">${brandMark}</span></a><form class="sform" role="search"><input type="text" name="q" placeholder="Rechercher…" aria-label="Rechercher"></form><a href="#/compte" class="btn ghost sm" aria-label="Compte">${icon("user")}</a></header>
     <main id="view" tabindex="-1"></main>
   </div>
   <nav id="tabbar" aria-label="Navigation mobile">
@@ -282,7 +285,7 @@ function setNav(path) {
 }
 function syncLabel() {
   const el = $("#syncl"); if (!el) return;
-  el.textContent = !sync.configured ? "Compte (local)" : sync.user ? { ok: "Synchronisé", sync: "Synchro…", error: "Erreur synchro", off: "Connecté" }[sync.status] || "Connecté" : "Se connecter";
+  el.textContent = !sync.configured ? "Compte (local)" : sync.user ? { ok: "Compte", sync: "Synchro…", error: "Erreur synchro", off: "Connecté" }[sync.status] || "Connecté" : "Se connecter";
 }
 
 // ───────────────────────── Routeur ─────────────────────────
@@ -1031,7 +1034,7 @@ async function cours(mid, sid) {
   return {
     html: `<div class="crumbs"><a href="#/m">Matières</a> › <a href="#/m/${mid}">${esc(m.court)}</a> › ${s.type} ${s.numero}</div>
     <div class="row"><div><h1 style="margin:0">${s.titre}</h1><div class="muted">${s.date ? fmtLong(s.date) + " · " : ""}${TYPES[s.type]}</div></div><div class="sp"></div>
-      ${s.pdf ? `<a class="btn sm" href="${s.pdf}" download>${icon("dl")}PDF</a>` : ""}<a class="btn sm" href="#/mm/${mid}/${sid}">${icon("edit")}Modifier</a><button class="btn sm ${rd ? "" : "pri"}" data-a="read" data-k="${sKey(mid, sid)}">${rd ? "✓ Lu" : "Marquer comme lu"}</button></div>
+      ${s.pdf ? `<a class="btn sm" href="${s.pdf}" download>${icon("dl")}PDF</a>` : ""}<a class="btn sm" data-a="navreplace" href="#/mm/${mid}/${sid}">${icon("edit")}Modifier</a><button class="btn sm ${rd ? "" : "pri"}" data-a="read" data-k="${sKey(mid, sid)}">${rd ? "✓ Lu" : "Marquer comme lu"}</button></div>
     <p class="muted">${s.resume}</p>
     ${hasContent ? docBody : emptyBody}
     <div class="card" style="margin-top:26px"><h3 style="margin-top:0">Espace de travail</h3><p class="tiny muted" style="margin-top:-6px">Tes notes et tes documents pour cette séance — rien de tout ça n'est un cours rédigé, juste un endroit pour garder ce que tu as sous la main.</p>
@@ -1908,7 +1911,11 @@ function bindSeanceForm(mid) {
         await saveSeance(mid, { id, type: fd.get("type"), numero: +fd.get("numero") || 1, date: fd.get("date") || null, titre: fd.get("titre"), resume: fd.get("resume"), contenu: fd.get("contenu"), pdf: fd.get("pdf") });
         toast("Séance enregistrée");
         await loadData();
-        location.hash = `#/c/${mid}/${id}`; // retour à la page normale de la séance, pas à la liste d'admin
+        // replaceState (pas location.hash) : remplace l'entrée d'édition dans l'historique au lieu
+        // d'en empiler une nouvelle, sinon "Retour" (history.back) atterrit sur le formulaire au
+        // lieu de la page d'où l'utilisateur avait cliqué "Modifier".
+        history.replaceState(null, "", `#/c/${mid}/${id}`);
+        rerender();
       } catch (err) { toast("Erreur : " + err.message); }
     });
   };
@@ -1937,7 +1944,7 @@ function mmSeanceForm(mid, sid) {
       <div class="field" style="margin-top:10px"><label>Contenu du cours — HTML (paragraphes, &lt;h2&gt;, &lt;div class="def"&gt;…&lt;/div&gt; pour les encadrés, \\( \\) pour les maths)</label><textarea name="contenu" rows="16" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--text);font:.88rem/1.5 ui-monospace,monospace">${esc(v.contenu)}</textarea></div>
       <div class="row" style="margin-top:12px">
         <button class="btn pri" type="submit">${icon("check")}Enregistrer</button>
-        <a class="btn ghost" href="${isNew ? `#/mm/${mid}` : `#/c/${mid}/${esc(v.id)}`}">Annuler</a>
+        <a class="btn ghost" data-a="navreplace" href="${isNew ? `#/mm/${mid}` : `#/c/${mid}/${esc(v.id)}`}">Annuler</a>
         ${isNew ? "" : `<button class="btn" type="button" data-a="delseance" data-mid="${mid}" data-sid="${esc(v.id)}">Supprimer</button>`}
       </div>
     </form>`,
@@ -2228,6 +2235,9 @@ document.addEventListener("click", async (e) => {
   const a = t.dataset.a;
   if (["calfilter", "calses", "import", "icsfile"].includes(a)) return; // gérés par change
   if (a === "navback") { history.back(); }
+  // Bascule lecture/édition d'une séance : remplace l'entrée d'historique au lieu d'en empiler une
+  // nouvelle, pour que "Retour" retrouve la page d'où on a cliqué "Modifier", pas le formulaire.
+  else if (a === "navreplace") { e.preventDefault(); history.replaceState(null, "", t.getAttribute("href")); rerender(); }
   else if (a === "read") { const k = t.dataset.k, cur = state.read[k]?.v; setEntry("read", k, { v: !cur }); if (!cur) bump(3, "lecture"); commit(); const [mid, sid] = k.split("/"); const s = seanceOf(mid, sid); t.textContent = !cur ? "✓ Lu" : "Marquer comme lu"; t.classList.toggle("pri", cur); toast(!cur ? "Marqué comme lu" : "Marqué comme non lu"); }
   else if (a === "choose") { const x = Q.qs[Q.i]; if (x.checked) return; const i = +t.dataset.i; if (x.q.type === "multiple") { x.ans.has(i) ? x.ans.delete(i) : x.ans.add(i); } else { x.ans = new Set([i]); } rerenderKeep(); }
   else if (a === "check") { const x = Q.qs[Q.i]; if (!x.ans.size) return; x.checked = true; recordQ(x); commit(); rerenderKeep(); }
