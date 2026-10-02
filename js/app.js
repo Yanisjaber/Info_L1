@@ -1183,12 +1183,16 @@ function bindExos(el) { $$("details", el).forEach((d) => d.addEventListener("tog
 // ───────────────────────── QCM / Éval ─────────────────────────
 const chipsFor = (name, items, sel) => `<div class="checks">${items.map(([v, l]) => `<label><input type="checkbox" name="${name}" value="${v}" ${sel.has(String(v)) ? "checked" : ""}><span>${l}</span></label>`).join("")}</div>`;
 function seanceChips(mids, selS) {
-  return mids.map((mid) => `<div class="small muted" style="margin:8px 0 4px"><i class="dot" style="--c:${M(mid).couleur};display:inline-block"></i> ${esc(M(mid).court)}</div>${chipsFor("s", C(mid).seances.filter((s) => C(mid).qcm.some((q) => q.seance === s.id)).map((s) => [sKey(mid, s.id), `${s.type} ${s.numero}`]), selS)}`).join("");
+  return mids.map((mid, i) => {
+    const chips = chipsFor("s", C(mid).seances.filter((s) => C(mid).qcm.some((q) => q.seance === s.id)).map((s) => [sKey(mid, s.id), `${s.type} ${s.numero}`]), selS);
+    const withToutes = i === 0 ? chips.replace('<div class="checks">', `<div class="checks"><label><input type="checkbox" id="selallq"><span>Toutes</span></label>`) : chips;
+    return `<div class="small muted" style="margin:8px 0 4px"><i class="dot" style="--c:${M(mid).couleur};display:inline-block"></i> ${esc(M(mid).court)}</div>${withToutes}`;
+  }).join("");
 }
 function quizSetup(q) {
   const selM = new Set(q.m ? q.m.split(",") : IDS);
   const selS = new Set(q.s && q.m ? q.s.split(",").map((s) => sKey(q.m, s)) : []);
-  const wrong = q.wrong === "1";
+  const statut = ["wrong", "ok"].includes(q.statut) ? q.statut : "";
   return {
     html: `<h1>QCM</h1><p class="muted">Entraîne-toi avec correction immédiate, ou passe en mode « examen » (correction à la fin).</p>
     <form class="card" id="qf" style="display:flex;flex-direction:column;gap:16px">
@@ -1197,28 +1201,33 @@ function quizSetup(q) {
       <div class="row"><div class="field"><label>Niveau</label>${chipsFor("n", [[1, "Base"], [2, "Moyen"], [3, "Difficile"]], new Set(["1", "2", "3"]))}</div>
       <div class="field" style="max-width:160px"><label for="cnt">Nombre de questions</label><select id="cnt" name="cnt"><option>10</option><option selected>20</option><option>30</option><option>50</option><option value="0">Toutes</option></select></div>
       <div class="field" style="max-width:220px"><label for="mode">Mode</label><select id="mode" name="mode"><option value="train">Entraînement (correction directe)</option><option value="exam">Examen (correction à la fin)</option></select></div></div>
-      <label class="row small"><input type="checkbox" name="wrong" ${wrong ? "checked" : ""}> Seulement les questions que j'ai ratées la dernière fois</label>
+      <div class="field" style="max-width:300px"><label for="statut">Historique de réponse</label><select id="statut" name="statut">
+        <option value="" ${statut === "" ? "selected" : ""}>Toutes les questions</option>
+        <option value="wrong" ${statut === "wrong" ? "selected" : ""}>Seulement ratées la dernière fois</option>
+        <option value="ok" ${statut === "ok" ? "selected" : ""}>Seulement réussies la dernière fois</option>
+      </select></div>
       <div class="row"><button class="btn pri" type="submit">Commencer</button><span class="muted small" id="pc"></span></div></form>`,
     after: (el) => {
       const f = $("#qf", el);
-      const vals = () => { const fd = new FormData(f); return { mids: fd.getAll("m"), sids: new Set(fd.getAll("s")), niv: new Set(fd.getAll("n").map(Number)), wrong: fd.get("wrong") === "on", cnt: +fd.get("cnt"), mode: fd.get("mode") }; };
+      const vals = () => { const fd = new FormData(f); return { mids: fd.getAll("m"), sids: new Set(fd.getAll("s")), niv: new Set(fd.getAll("n").map(Number)), statut: fd.get("statut") || "", cnt: +fd.get("cnt"), mode: fd.get("mode") }; };
       const upd = () => { const v = vals(); $("#pc", el).textContent = `${poolQ(v).length} questions disponibles`; };
       f.addEventListener("change", (e) => {
         if (e.target.name === "m") { const cur = new Set(new FormData(f).getAll("s")); $("#sc", el).innerHTML = seanceChips(new FormData(f).getAll("m"), cur); }
+        if (e.target.id === "selallq") { $$("#sc input[name='s']", el).forEach((cb) => (cb.checked = e.target.checked)); }
         upd();
       });
       f.addEventListener("submit", (e) => {
         e.preventDefault(); const v = vals(); let pool = poolQ(v);
         if (!pool.length) return toast("Aucune question avec ces critères.");
         pool = shuffle(pool); if (v.cnt) pool = pool.slice(0, v.cnt);
-        startQuiz(pool, { mode: v.mode, title: v.wrong ? "Mes erreurs" : "QCM", mid: null });
+        startQuiz(pool, { mode: v.mode, title: v.statut === "wrong" ? "Mes erreurs" : v.statut === "ok" ? "Mes réussites" : "QCM", mid: null });
       });
       upd();
     },
   };
 }
-function poolQ({ mids, sids, niv, wrong }) {
-  return D.Q.filter((q) => mids.includes(q.mid) && (!sids.size || sids.has(sKey(q.mid, q.seance))) && niv.has(q.niveau) && (!wrong || state.qcm[q.id]?.last === false));
+function poolQ({ mids, sids, niv, statut }) {
+  return D.Q.filter((q) => mids.includes(q.mid) && (!sids.size || sids.has(sKey(q.mid, q.seance))) && niv.has(q.niveau) && (!statut || (statut === "wrong" ? state.qcm[q.id]?.last === false : state.qcm[q.id]?.last === true)));
 }
 function balanced(pool, n) {
   const g = {}; shuffle(pool).forEach((q) => (g[q.seance] = g[q.seance] || []).push(q));
@@ -1367,6 +1376,9 @@ function startQuiz(pool, opt) {
   if (location.hash.endsWith("/run")) rerender();
 }
 const okQ = (x) => x.ans.size === x.q.rep.length && x.q.rep.every((r) => x.ans.has(r));
+// N'est appelée qu'en mode examen (voir finishQuiz) : l'entraînement (correction immédiate,
+// sans enjeu, pensé pour être fait n'importe où) ne doit laisser aucune trace, ni dans les stats
+// de précision/progression ni dans l'Elo — seul l'examen (chronométré, correction à la fin) compte.
 function recordQ(x) {
   const cur = state.qcm[x.q.id] || { n: 0, ok: 0, last: false };
   const good = okQ(x);
@@ -2240,7 +2252,7 @@ document.addEventListener("click", async (e) => {
   else if (a === "navreplace") { e.preventDefault(); history.replaceState(null, "", t.getAttribute("href")); rerender(); }
   else if (a === "read") { const k = t.dataset.k, cur = state.read[k]?.v; setEntry("read", k, { v: !cur }); if (!cur) bump(3, "lecture"); commit(); const [mid, sid] = k.split("/"); const s = seanceOf(mid, sid); t.textContent = !cur ? "✓ Lu" : "Marquer comme lu"; t.classList.toggle("pri", cur); toast(!cur ? "Marqué comme lu" : "Marqué comme non lu"); }
   else if (a === "choose") { const x = Q.qs[Q.i]; if (x.checked) return; const i = +t.dataset.i; if (x.q.type === "multiple") { x.ans.has(i) ? x.ans.delete(i) : x.ans.add(i); } else { x.ans = new Set([i]); } rerenderKeep(); }
-  else if (a === "check") { const x = Q.qs[Q.i]; if (!x.ans.size) return; x.checked = true; recordQ(x); commit(); rerenderKeep(); }
+  else if (a === "check") { const x = Q.qs[Q.i]; if (!x.ans.size) return; x.checked = true; rerenderKeep(); }
   else if (a === "next") { if (Q.i < Q.qs.length - 1) { Q.i++; rerender(); } }
   else if (a === "prev") { if (Q.i > 0) { Q.i--; rerender(); } }
   else if (a === "goto") { Q.i = +t.dataset.i; rerender(); }
@@ -2414,10 +2426,11 @@ document.addEventListener("change", (e) => {
     const files = [...t.files]; if (!files.length) return;
     const { mid, sid } = t.dataset;
     (async () => {
+      let ok = 0;
       for (const f of files) {
-        try { await uploadSeanceDoc(mid, sid, f); D.docSids.add(sid); } catch (err) { toast("Erreur sur " + f.name + " : " + err.message); }
+        try { await uploadSeanceDoc(mid, sid, f); D.docSids.add(sid); ok++; } catch (err) { toast("Erreur sur " + f.name + " : " + err.message); }
       }
-      toast(plural(files.length, "document ajouté", "documents ajoutés"));
+      if (ok) toast(plural(ok, "document ajouté", "documents ajoutés"));
       rerender();
     })();
   } else if (a === "todotoggle") {

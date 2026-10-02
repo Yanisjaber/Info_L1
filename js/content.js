@@ -96,13 +96,22 @@ export async function loadSeanceDocs(mid, sid) {
   return data.map((r) => ({ id: r.id, mid: r.mid, sid: r.sid, nom: r.nom, path: r.path, taille: r.taille, type: r.type, url: urls[r.path] || null, strokes: r.strokes || null, paper: r.paper || null }));
 }
 
+// Un nom de fichier accentué ou avec des caractères spéciaux (ex. "2èmes-V2018.pdf") peut arriver
+// corrompu une fois mis dans l'URL de la requête de Storage et se faire rejeter avec une 400 — on
+// n'utilise donc jamais `file.name` tel quel dans le chemin de stockage. Le nom d'origine reste
+// affiché normalement : il est gardé intact dans la colonne `nom`, seul le chemin est assaini.
+function sanitizeFilename(name) {
+  const stripped = name.normalize("NFD").replace(/[̀-ͯ]/g, "");
+  return stripped.replace(/[^A-Za-z0-9._-]/g, "_");
+}
 // `vector` (optionnel) = { strokes, paper } : présent uniquement pour une note manuscrite, permet
 // de la rouvrir en mode vectoriel (trait par trait) au lieu de recharger juste l'image aplatie.
 export async function uploadSeanceDoc(mid, sid, file, vector = null) {
-  const path = `${sync.user.id}/${mid}/${sid}/${Date.now()}-${file.name}`;
-  const { error: e1 } = await client().storage.from("docs").upload(path, file);
+  const c = client();
+  const path = `${sync.user.id}/${mid}/${sid}/${Date.now()}-${sanitizeFilename(file.name)}`;
+  const { error: e1 } = await c.storage.from("docs").upload(path, file);
   if (e1) throw e1;
-  const { error: e2 } = await client().from("seance_docs").insert({ user_id: sync.user.id, mid, sid, nom: file.name, path, taille: file.size, type: file.type || null, strokes: vector?.strokes || null, paper: vector?.paper || null });
+  const { error: e2 } = await c.from("seance_docs").insert({ user_id: sync.user.id, mid, sid, nom: file.name, path, taille: file.size, type: file.type || null, strokes: vector?.strokes || null, paper: vector?.paper || null });
   if (e2) throw e2;
 }
 
