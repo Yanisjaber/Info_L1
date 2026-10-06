@@ -188,11 +188,11 @@ export async function loadExercices() {
   if (!sync.client || !sync.user) return [];
   const { data, error } = await sync.client.from("exercices").select("*");
   if (error) { console.warn("loadExercices", error); return []; }
-  return data.map((r) => ({ id: r.id, matiere: r.matiere, seance: r.seance, titre: r.titre, difficulte: r.difficulte, enonce: r.enonce, indice: r.indice, corrige: r.corrige, type: r.type || "redaction", codeStarter: r.code_starter || "", codeTests: r.code_tests || "", reponse: r.reponse || "" }));
+  return data.map((r) => ({ id: r.id, matiere: r.matiere, seance: r.seance, titre: r.titre, difficulte: r.difficulte, enonce: r.enonce, indice: r.indice, corrige: r.corrige, type: r.type || "redaction", codeStarter: r.code_starter || "", codeTests: r.code_tests || "", reponse: r.reponse || "", reponses: r.reponses || [] }));
 }
 
 export async function saveExercice(item) {
-  const row = { user_id: sync.user.id, matiere: item.matiere, seance: item.seance || null, titre: item.titre || "", difficulte: item.difficulte || 1, enonce: item.enonce || "", indice: item.indice || "", corrige: item.corrige || "", type: item.type || "redaction", code_starter: item.codeStarter || "", code_tests: item.codeTests || "", reponse: item.reponse || "" };
+  const row = { user_id: sync.user.id, matiere: item.matiere, seance: item.seance || null, titre: item.titre || "", difficulte: item.difficulte || 1, enonce: item.enonce || "", indice: item.indice || "", corrige: item.corrige || "", type: item.type || "redaction", code_starter: item.codeStarter || "", code_tests: item.codeTests || "", reponse: item.reponse || "", reponses: item.reponses || [] };
   if (item.id) row.id = item.id;
   const { data, error } = await client().from("exercices").upsert(row, { onConflict: "user_id,id" }).select().single();
   if (error) throw error;
@@ -209,7 +209,7 @@ export async function loadEdt() {
   if (!sync.client || !sync.user) return { events: [] };
   const { data, error } = await sync.client.from("edt_events").select("*").order("d", { ascending: true }).order("s", { ascending: true });
   if (error) { console.warn("loadEdt", error); return { events: [] }; }
-  return { source: "Import personnel", events: data.map((r) => ({ id: r.id, d: r.d, s: (r.s || "").slice(0, 5), e: (r.e || "").slice(0, 5), t: r.t, m: r.m, r: r.r, p: r.p, g: r.g, n: r.n, allday: r.allday })) };
+  return { source: "Import personnel", events: data.map((r) => ({ id: r.id, d: r.d, s: (r.s || "").slice(0, 5), e: (r.e || "").slice(0, 5), t: r.t, m: r.m, r: r.r, p: r.p, g: r.g, n: r.n, cc: r.cc, allday: r.allday })) };
 }
 
 export async function clearEdt() {
@@ -217,10 +217,18 @@ export async function clearEdt() {
   if (error) throw error;
 }
 
-// Corrige un créneau importé à tort (ex. « CC » détecté sur un mot comme « Test » qui n'en
-// était pas un) : change son type sans toucher au reste de l'emploi du temps.
-export async function updateEdtEvent(id, patch) {
-  const { error } = await client().from("edt_events").update(patch).eq("id", id);
+// Création/modification manuelle d'un seul créneau (bouton "+" ou crayon sur la grille) —
+// à distinguer de saveEdtEvents (import .ics en masse, pas d'id, que des insert).
+export async function saveEdtEvent(ev) {
+  const row = { user_id: sync.user.id, d: ev.d, s: ev.s || "00:00", e: ev.e || "00:00", t: ev.t || "Cours", m: ev.m || null, r: ev.r || null, p: ev.p || null, g: ev.g || null, n: ev.n || null, cc: !!ev.cc, allday: !!ev.allday };
+  if (ev.id) row.id = ev.id;
+  const { data, error } = await client().from("edt_events").upsert(row, { onConflict: "user_id,id" }).select().single();
+  if (error) throw error;
+  return data.id;
+}
+
+export async function deleteEdtEvent(id) {
+  const { error } = await client().from("edt_events").delete().eq("id", id);
   if (error) throw error;
 }
 
@@ -243,11 +251,11 @@ export async function loadCC() {
   if (!sync.client || !sync.user) return { evenements: [], remarques: [] };
   const { data, error } = await sync.client.from("cc_events").select("*").order("date", { ascending: true });
   if (error) { console.warn("loadCC", error); return { evenements: [], remarques: [] }; }
-  return { evenements: data.map((r) => ({ id: r.id, matiere: r.matiere, titre: r.titre, date: r.date, poids: r.poids, type: r.type, statut: r.statut, detail: r.detail })), remarques: [] };
+  return { evenements: data.map((r) => ({ id: r.id, matiere: r.matiere, titre: r.titre, date: r.date, poids: r.poids, type: r.type, statut: r.statut, detail: r.detail, edtId: r.edt_id, seances: r.seances || [] })), remarques: [] };
 }
 
 export async function saveCCEvent(e) {
-  const row = { user_id: sync.user.id, matiere: e.matiere, titre: e.titre || "", date: e.date, poids: e.poids || "", type: e.type || "CC", statut: e.statut || "", detail: e.detail || "" };
+  const row = { user_id: sync.user.id, matiere: e.matiere, titre: e.titre || "", date: e.date, poids: e.poids || "", type: e.type || "CC", statut: e.statut || "", detail: e.detail || "", edt_id: e.edtId || null, seances: e.seances || [] };
   if (e.id) row.id = e.id;
   const { data, error } = await client().from("cc_events").upsert(row, { onConflict: "user_id,id" }).select().single();
   if (error) throw error;
@@ -287,7 +295,7 @@ export async function deleteTodo(id) {
 
 export async function saveEdtEvents(rows) {
   if (!rows.length) return;
-  const payload = rows.map((x) => ({ user_id: sync.user.id, d: x.d, s: x.s, e: x.e, t: x.t, m: x.m || null, r: x.r || null, p: x.p || null, g: x.g || null, n: x.n || null, allday: !!x.allday }));
+  const payload = rows.map((x) => ({ user_id: sync.user.id, d: x.d, s: x.s, e: x.e, t: x.t, m: x.m || null, r: x.r || null, p: x.p || null, g: x.g || null, n: x.n || null, cc: !!x.cc, allday: !!x.allday }));
   for (let i = 0; i < payload.length; i += 500) {
     const { error } = await client().from("edt_events").insert(payload.slice(i, i + 500));
     if (error) throw error;
@@ -370,23 +378,26 @@ function icsDate(v) {
   }
   return { d: `${m[1]}-${m[2]}-${m[3]}`, time: `${m[5]}:${m[6]}`, allday: false };
 }
+// Un CC n'est plus un type d'EDT à part entière : c'est un vrai créneau de cours (Cours/TD/TP, le
+// plus souvent Cours puisqu'un CC a généralement lieu en amphi) qui contient EN PLUS un contrôle
+// continu — d'où le drapeau `cc` séparé de `t`, détecté par guessCC ci-dessous.
 const TYPE_KEYWORDS = [
-  [/\b(CC\d*|EXAMEN|PARTIEL|CONTR[OÔ]LE|DEVOIR SURVEILL[EÉ]|DS|TEST)\b/i, "CC"],
   [/\bR[EÉ]UNION\b/i, "Réunion"],
   [/\bTD\b/i, "TD"],
   [/\bTP\b/i, "TP"],
   [/\b(F[EÉ]RI[EÉ]|FERMETURE)\b/i, "Férié"],
 ];
-// La description contient souvent des notes informatives (« CC1 sem 41 + 46... ») qui
-// annoncent des examens à venir SANS que la séance elle-même en soit une : le type « CC »
-// ne doit donc se déclencher que si le mot apparaît dans le résumé, pas juste en note.
 function guessType(summary, description) {
   for (const [re, t] of TYPE_KEYWORDS) {
-    if (t === "CC") { if (re.test(summary || "")) return t; continue; }
     if (re.test(`${summary || ""} ${description || ""}`)) return t;
   }
   return "Cours";
 }
+// La description contient souvent des notes informatives (« CC1 sem 41 + 46... ») qui annoncent
+// des examens à venir SANS que la séance elle-même en soit une : on ne se base donc que sur le
+// résumé, jamais sur la description, pour ne pas étiqueter à tort un cours normal.
+const CC_RE = /\b(CC\d*|EXAMEN|PARTIEL|CONTR[OÔ]LE|DEVOIR SURVEILL[EÉ]|DS|TEST)\b/i;
+const guessCC = (summary) => CC_RE.test(summary || "");
 // Retire le suffixe « type de séance » du résumé pour ne garder que le nom de la matière
 // (ex. « Bas - Réunion » → « Bas », « Devenir étudiant - Cours/TD » → « Devenir étudiant »).
 const TITRE_SUFFIX = /[-–—:]\s*(Cours\/TD|Cours\/TP|TD\/TP|Cours magistral|R[ée]union|Contr[ôo]le(?:\s+continu)?|Examen|Partiel|Test|TD|TP|CM|CC\d*|Cours)\s*\d*\s*$/i;
@@ -411,8 +422,7 @@ function summarizeEvents(events) {
     const c = byTitre.get(e.titre);
     if (e.t === "Cours") c.cm++; else if (e.t === "TD") c.td++; else if (e.t === "TP") c.tp++;
   }
-  // Les CC n'ont pas toujours de titre de matière clair : on les compte à part.
-  const ccCount = events.filter((e) => e.t === "CC").length;
+  const ccCount = events.filter((e) => e.cc).length;
   const dates = events.map((e) => e.d).sort();
   return { events, courses: [...byTitre.values()].sort((a, b) => a.nom.localeCompare(b.nom)), ccCount, range: dates.length ? [dates[0], dates[dates.length - 1]] : null };
 }
@@ -428,10 +438,11 @@ export function analyzeIcs(text) {
     const description = unescapeIcsText(ev.DESCRIPTION);
     const location = unescapeIcsText(ev.LOCATION);
     const type = guessType(summary, description);
-    const titre = type === "CC" || type === "Férié" ? null : guessTitle(summary);
+    const cc = guessCC(summary);
+    const titre = type === "Férié" ? null : guessTitle(summary);
     const dates = ev.RRULE ? expandRecurrence(start.d, ev.RRULE, ev.EXDATE) : [start.d];
     for (const d of dates) {
-      events.push({ d, s: start.time || "00:00", e: (end && end.time) || start.time || "23:59", t: type, titre, r: location || null, n: type === "CC" ? summary : null, allday: start.allday });
+      events.push({ d, s: start.time || "00:00", e: (end && end.time) || start.time || "23:59", t: type, titre, r: location || null, n: cc ? summary : null, cc, allday: start.allday });
     }
   }
   return summarizeEvents(events);
@@ -466,7 +477,7 @@ export async function commitIcsImport(analysis, currentMatieres) {
     titreToMid.set(c.nom, id);
     created++;
   }
-  const rows = analysis.events.map((e) => ({ d: e.d, s: e.s, e: e.e, t: e.t, m: e.titre ? titreToMid.get(e.titre) : null, r: e.r, p: e.p, g: e.g, n: e.n, allday: e.allday }));
+  const rows = analysis.events.map((e) => ({ d: e.d, s: e.s, e: e.e, t: e.t, m: e.titre ? titreToMid.get(e.titre) : null, r: e.r, p: e.p, g: e.g, n: e.n, cc: e.cc, allday: e.allday }));
   await clearEdt();
   await saveEdtEvents(rows);
   return { matieresCreees: created, evenements: rows.length };
