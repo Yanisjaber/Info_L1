@@ -66,6 +66,12 @@ export async function saveSeance(mid, s) {
 }
 
 export async function deleteSeance(mid, id) {
+  // Détache d'abord les sujets (QCM/cartes/exercices) et les créneaux d'EDT qui pointaient sur
+  // cette séance (pas supprimés).
+  const { error: e0 } = await client().from("sujets").update({ sid: null }).eq("mid", mid).eq("sid", id);
+  if (e0) throw e0;
+  const { error: e1 } = await client().from("edt_events").update({ sid: null }).eq("m", mid).eq("sid", id);
+  if (e1) throw e1;
   const { error } = await client().from("seances").delete().eq("mid", mid).eq("id", id);
   if (error) throw error;
 }
@@ -143,64 +149,89 @@ export async function deleteSeanceDoc(doc) {
   if (e2) throw e2;
 }
 
-// ───────────────────────── QCM, cartes, exercices ─────────────────────────
-export async function loadQCM() {
+// ───────────────────────── QCM, cartes, exercices (table unique `items`, discriminée par `kind`) ─────────────────────────
+// Les 3 natures partagent la même table (voir supabase/schema_items.sql) — seuls les champs
+// pertinents pour `kind` sont renseignés par `KIND_FIELDS`, le reste reste vide/null en base.
+const KIND_FIELDS = {
+  qcm: (item) => ({ type: item.type || "unique", q: item.q || "", choix: item.choix || [], rep: item.rep || [], expl: item.expl || "", niveau: item.niveau || 1 }),
+  carte: (item) => ({ recto: item.recto || "", verso: item.verso || "" }),
+  exercice: (item) => ({ titre: item.titre || "", difficulte: item.difficulte || 1, enonce: item.enonce || "", indice: item.indice || "", corrige: item.corrige || "", type: item.type || "redaction", code_starter: item.codeStarter || "", code_tests: item.codeTests || "", reponse: item.reponse || "", reponses: item.reponses || [] }),
+};
+
+export async function loadItems(kind) {
   if (!sync.client || !sync.user) return [];
-  const { data, error } = await sync.client.from("qcm_items").select("*");
-  if (error) { console.warn("loadQCM", error); return []; }
-  return data.map((r) => ({ id: r.id, matiere: r.matiere, seance: r.seance, type: r.type, q: r.q, choix: r.choix || [], rep: r.rep || [], expl: r.expl, niveau: r.niveau }));
+  const { data, error } = await sync.client.from("sujets").select("*").eq("kind", kind);
+  if (error) { console.warn("loadItems", kind, error); return []; }
+  return data.map((r) => ({
+    id: r.id, matiere: r.mid, seance: r.sid,
+    type: r.type, q: r.q, choix: r.choix || [], rep: r.rep || [], expl: r.expl, niveau: r.niveau,
+    recto: r.recto, verso: r.verso,
+    titre: r.titre, difficulte: r.difficulte, enonce: r.enonce, indice: r.indice, corrige: r.corrige,
+    codeStarter: r.code_starter || "", codeTests: r.code_tests || "", reponse: r.reponse || "", reponses: r.reponses || [],
+  }));
 }
 
-export async function saveQCM(item) {
-  const row = { user_id: sync.user.id, matiere: item.matiere, seance: item.seance || null, type: item.type || "unique", q: item.q || "", choix: item.choix || [], rep: item.rep || [], expl: item.expl || "", niveau: item.niveau || 1 };
+export async function saveItem(kind, item) {
+  const row = { user_id: sync.user.id, kind, mid: item.matiere, sid: item.seance || null, ...KIND_FIELDS[kind](item) };
   if (item.id) row.id = item.id;
-  const { data, error } = await client().from("qcm_items").upsert(row, { onConflict: "user_id,id" }).select().single();
+  const { data, error } = await client().from("sujets").upsert(row, { onConflict: "user_id,id" }).select().single();
   if (error) throw error;
   return data.id;
 }
 
-export async function deleteQCM(id) {
-  const { error } = await client().from("qcm_items").delete().eq("id", id);
+export async function deleteItem(kind, id) {
+  const { error } = await client().from("sujets").delete().eq("kind", kind).eq("id", id);
   if (error) throw error;
 }
 
-export async function loadFlashcards() {
-  if (!sync.client || !sync.user) return [];
-  const { data, error } = await sync.client.from("flashcards").select("*");
-  if (error) { console.warn("loadFlashcards", error); return []; }
-  return data.map((r) => ({ id: r.id, matiere: r.matiere, seance: r.seance, recto: r.recto, verso: r.verso }));
+// ───────────────────────── Résultats (QCM/cartes/exercices) & éval blanche ─────────────────────────
+// Une ligne par item = état courant (pas un historique d'événements), avec un lien optionnel vers
+// l'éval blanche qui l'a posé (`eval_id`) — supprimer cet eval supprime en cascade (FK, voir
+// supabase/schema_results.sql) les résultats d'exercice encore liés, au lieu de laisser des marques
+// fantômes comme avant (quand tout vivait dans des blobs jsonb sans traçabilité de provenance).
+export async function loadResults() {
+  const out = { qcm: {}, cards: {}, exos: {} };
+  if (!sync.client || !sync.user) return out;
+  const { data, error } = await sync.client.from("results").select("*");
+  if (error) { console.warn("loadResults", error); return out; }
+  for (const r of data) {
+    if (r.kind === "qcm") out.qcm[r.item_id] = { n: r.n || 0, ok: r.ok || 0, last: !!r.last, ts: +new Date(r.updated_at) };
+    else if (r.kind === "carte") out.cards[r.item_id] = { box: r.box || 0, n: r.n || 0, ok: r.ok || 0, due: +new Date(r.due), ts: +new Date(r.updated_at) };
+    else if (r.kind === "exercice") out.exos[r.item_id] = { v: r.mark, ts: +new Date(r.updated_at) };
+  }
+  return out;
 }
 
-export async function saveFlashcard(item) {
-  const row = { user_id: sync.user.id, matiere: item.matiere, seance: item.seance || null, recto: item.recto || "", verso: item.verso || "" };
-  if (item.id) row.id = item.id;
-  const { data, error } = await client().from("flashcards").upsert(row, { onConflict: "user_id,id" }).select().single();
+export async function saveResult(kind, itemId, data, evalId = null) {
+  const row = { user_id: sync.user.id, item_id: itemId, kind, eval_id: evalId };
+  if (kind === "qcm") Object.assign(row, { n: data.n, ok: data.ok, last: data.last });
+  else if (kind === "carte") Object.assign(row, { box: data.box, n: data.n, ok: data.ok, due: new Date(data.due).toISOString() });
+  else if (kind === "exercice") Object.assign(row, { mark: data.v });
+  const { error } = await client().from("results").upsert(row, { onConflict: "user_id,item_id" });
+  if (error) throw error;
+}
+
+// Un eval est une ligne `results` de plus (kind="eval", item_id null) — pas une table à part,
+// voir supabase/schema_results_merge.sql.
+export async function loadEvals() {
+  if (!sync.client || !sync.user) return {};
+  const { data, error } = await sync.client.from("results").select("*").eq("kind", "eval");
+  if (error) { console.warn("loadEvals", error); return {}; }
+  const out = {};
+  for (const r of data) out[r.id] = { id: r.id, mid: r.mid, n: r.n, ok: r.ok, score20: r.score20, dur: r.dur, seances: r.seances || {}, items: r.items || [], ts: +new Date(r.updated_at) };
+  return out;
+}
+
+export async function saveEval(rec) {
+  const row = { user_id: sync.user.id, kind: "eval", mid: rec.mid, n: rec.n, ok: rec.ok, score20: rec.score20, dur: rec.dur, seances: rec.seances || {}, items: rec.items || [] };
+  if (rec.id) row.id = rec.id;
+  const { data, error } = await client().from("results").upsert(row, { onConflict: "user_id,id" }).select().single();
   if (error) throw error;
   return data.id;
 }
 
-export async function deleteFlashcard(id) {
-  const { error } = await client().from("flashcards").delete().eq("id", id);
-  if (error) throw error;
-}
-
-export async function loadExercices() {
-  if (!sync.client || !sync.user) return [];
-  const { data, error } = await sync.client.from("exercices").select("*");
-  if (error) { console.warn("loadExercices", error); return []; }
-  return data.map((r) => ({ id: r.id, matiere: r.matiere, seance: r.seance, titre: r.titre, difficulte: r.difficulte, enonce: r.enonce, indice: r.indice, corrige: r.corrige, type: r.type || "redaction", codeStarter: r.code_starter || "", codeTests: r.code_tests || "", reponse: r.reponse || "", reponses: r.reponses || [] }));
-}
-
-export async function saveExercice(item) {
-  const row = { user_id: sync.user.id, matiere: item.matiere, seance: item.seance || null, titre: item.titre || "", difficulte: item.difficulte || 1, enonce: item.enonce || "", indice: item.indice || "", corrige: item.corrige || "", type: item.type || "redaction", code_starter: item.codeStarter || "", code_tests: item.codeTests || "", reponse: item.reponse || "", reponses: item.reponses || [] };
-  if (item.id) row.id = item.id;
-  const { data, error } = await client().from("exercices").upsert(row, { onConflict: "user_id,id" }).select().single();
-  if (error) throw error;
-  return data.id;
-}
-
-export async function deleteExercice(id) {
-  const { error } = await client().from("exercices").delete().eq("id", id);
+export async function deleteEval(id) {
+  const { error } = await client().from("results").delete().eq("kind", "eval").eq("id", id);
   if (error) throw error;
 }
 
@@ -209,7 +240,7 @@ export async function loadEdt() {
   if (!sync.client || !sync.user) return { events: [] };
   const { data, error } = await sync.client.from("edt_events").select("*").order("d", { ascending: true }).order("s", { ascending: true });
   if (error) { console.warn("loadEdt", error); return { events: [] }; }
-  return { source: "Import personnel", events: data.map((r) => ({ id: r.id, d: r.d, s: (r.s || "").slice(0, 5), e: (r.e || "").slice(0, 5), t: r.t, m: r.m, r: r.r, p: r.p, g: r.g, n: r.n, cc: r.cc, allday: r.allday })) };
+  return { source: "Import personnel", events: data.map((r) => ({ id: r.id, d: r.d, s: (r.s || "").slice(0, 5), e: (r.e || "").slice(0, 5), t: r.t, m: r.m, sid: r.sid, r: r.r, p: r.p, g: r.g, n: r.n, cc: r.cc, allday: r.allday })) };
 }
 
 export async function clearEdt() {
@@ -220,7 +251,7 @@ export async function clearEdt() {
 // Création/modification manuelle d'un seul créneau (bouton "+" ou crayon sur la grille) —
 // à distinguer de saveEdtEvents (import .ics en masse, pas d'id, que des insert).
 export async function saveEdtEvent(ev) {
-  const row = { user_id: sync.user.id, d: ev.d, s: ev.s || "00:00", e: ev.e || "00:00", t: ev.t || "Cours", m: ev.m || null, r: ev.r || null, p: ev.p || null, g: ev.g || null, n: ev.n || null, cc: !!ev.cc, allday: !!ev.allday };
+  const row = { user_id: sync.user.id, d: ev.d, s: ev.s || "00:00", e: ev.e || "00:00", t: ev.t || "Cours", m: ev.m || null, sid: ev.sid || null, r: ev.r || null, p: ev.p || null, g: ev.g || null, n: ev.n || null, cc: !!ev.cc, allday: !!ev.allday };
   if (ev.id) row.id = ev.id;
   const { data, error } = await client().from("edt_events").upsert(row, { onConflict: "user_id,id" }).select().single();
   if (error) throw error;

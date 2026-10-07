@@ -1,7 +1,7 @@
 import { $, $$, esc, icon, fmtDate, fmtLong, parseDay, startOfDay, daysUntil, pct, shuffle, plural, fmtMMSS, fmt1, toast, appConfirm, renderMath, download } from "./util.js";
 import { state, commit, bump, setEntry, onChange, sync, initSync, pull, push, signIn, signUp, magicLink, signOut, exportJSON, importJSON, resetAll, todayKey } from "./store.js";
 import { CALC } from "./grades.js";
-import { loadMatieres, loadSeances, saveMatiere, deleteMatiere, saveSeance, deleteSeance, loadEdt, saveEdtEvent, deleteEdtEvent, analyzeIcs, commitIcsImport, loadPeriodes, savePeriode, deletePeriode, wipeAccount, loadCC, saveCCEvent, deleteCCEvent, loadQCM, saveQCM, deleteQCM, loadFlashcards, saveFlashcard, deleteFlashcard, loadExercices, saveExercice, deleteExercice, loadSeanceDocs, loadSeanceDocSids, uploadSeanceDoc, updateSeanceDoc, deleteSeanceDoc, getSeanceDocBlobUrl, loadTodos, saveTodo, setTodoDone, deleteTodo } from "./content.js";
+import { loadMatieres, loadSeances, saveMatiere, deleteMatiere, saveSeance, deleteSeance, loadEdt, saveEdtEvent, deleteEdtEvent, analyzeIcs, commitIcsImport, loadPeriodes, savePeriode, deletePeriode, wipeAccount, loadCC, saveCCEvent, deleteCCEvent, loadItems, saveItem, deleteItem, loadResults, saveResult, loadEvals, saveEval, deleteEval, loadSeanceDocs, loadSeanceDocSids, uploadSeanceDoc, updateSeanceDoc, deleteSeanceDoc, getSeanceDocBlobUrl, loadTodos, saveTodo, setTodoDone, deleteTodo } from "./content.js";
 
 const D = { matieres: [], periodes: [], cal: { evenements: [], remarques: [] }, edt: { events: [] }, content: {}, docSids: new Set(), Q: [], F: [], E: [], todos: [], idx: null };
 let IDS = [];
@@ -40,6 +40,7 @@ function periodeLabel() {
 // vide (sûr) plutôt que de garder affichées les données du compte précédent (pas sûr).
 function resetContent() {
   D.matieres = []; D.periodes = []; D.content = {}; D.docSids = new Set(); D.Q = []; D.F = []; D.E = []; D.todos = []; IDS = []; D.edt = { events: [] }; D.cal = { evenements: [], remarques: [] };
+  state.qcm = {}; state.cards = {}; state.exos = {}; state.evals = {};
 }
 async function loadData() {
   resetContent();
@@ -48,9 +49,10 @@ async function loadData() {
     D.periodes = await loadPeriodes();
     D.matieres = await loadMatieres();
     const allIds = D.matieres.map((m) => m.id);
-    const [allSeances, allQcm, allFlash, allExo] = await Promise.all([
+    const [allSeances, allQcm, allFlash, allExo, results, evals] = await Promise.all([
       Promise.all(allIds.map((id) => loadSeances(id))),
-      loadQCM(), loadFlashcards(), loadExercices(),
+      loadItems("qcm"), loadItems("carte"), loadItems("exercice"),
+      loadResults(), loadEvals(),
     ]);
     allIds.forEach((id, i) => {
       D.content[id] = {
@@ -64,6 +66,8 @@ async function loadData() {
     D.cal = await loadCC();
     D.todos = await loadTodos();
     D.docSids = await loadSeanceDocSids();
+    state.qcm = results.qcm; state.cards = results.cards; state.exos = results.exos;
+    state.evals = evals;
   }
   IDS.forEach((id) => {
     C(id).qcm.forEach((q) => D.Q.push({ ...q, mid: id }));
@@ -1216,21 +1220,26 @@ function texteResultHtml(oks) {
   return `<div class="row small" style="margin-top:8px;gap:8px;flex-wrap:wrap">${oks.map((ok, i) => `<span class="chip ${ok ? "ok" : "ko"}">Réponse ${i + 1} ${ok ? "✓" : "✗"}</span>`).join("")}</div>`;
 }
 // Note le résultat d'une correction automatique (code ou texte) : progression + éval en cours si active.
-function autoMark(id, ok) {
+// Si un eval est en cours, la ligne `evals` est upsertée EN PREMIER (pour obtenir/retrouver son id
+// serveur) afin que le résultat de l'exercice porte bien `eval_id` — c'est ce lien qui permet à la
+// suppression de cet eval depuis l'historique de reprendre automatiquement (cascade) cette marque.
+async function autoMark(id, ok) {
   const ex = D.E.find((e) => e.id === id);
-  setEntry("exos", id, { v: ok ? "ok" : "redo" });
+  const mark = ok ? "ok" : "redo";
+  let it = null;
+  if (EV) {
+    it = EV.items.find((x) => x.e.id === id);
+    if (it) { it.mark = mark; await saveEvalRecord(); }
+  }
+  state.exos[id] = { v: mark, ts: Date.now() };
+  await saveResult("exercice", id, { v: mark }, it ? EV.id : null);
   bump(2, "exercice");
   if (ex) snapshotElo(ex.mid);
-  if (EV) {
-    const it = EV.items.find((x) => x.e.id === id);
-    if (it) {
-      it.mark = ok ? "ok" : "redo";
-      saveEvalRecord();
-      const idx = EV.items.indexOf(it);
-      const card = document.getElementById(`ev-${idx}`);
-      const chip = card?.querySelector(".chip");
-      if (chip) { chip.className = `chip ${it.mark === "ok" ? "ok" : "wa"}`; chip.textContent = it.mark === "ok" ? "réussi" : "à refaire"; }
-    }
+  if (it) {
+    const idx = EV.items.indexOf(it);
+    const card = document.getElementById(`ev-${idx}`);
+    const chip = card?.querySelector(".chip");
+    if (chip) { chip.className = `chip ${it.mark === "ok" ? "ok" : "wa"}`; chip.textContent = it.mark === "ok" ? "réussi" : "à refaire"; }
   }
 }
 function codeResultHtml(r) {
@@ -1488,6 +1497,7 @@ async function finishEval(timeout) {
   EV.done = true; EV.end = Date.now(); EV.timeout = !!timeout; EV.grading = true;
   if (cleanup) { cleanup(); cleanup = null; }
   rerender();
+  await saveEvalRecord();
   for (const it of EV.items) {
     const e = it.e;
     if (e.type === "code") {
@@ -1508,9 +1518,9 @@ async function finishEval(timeout) {
       setEntry("reponses", e.id, { values, oks, ok });
       it.mark = ok ? "ok" : "redo";
     }
-    if (it.mark) { setEntry("exos", e.id, { v: it.mark }); snapshotElo(e.mid); }
+    if (it.mark) { state.exos[e.id] = { v: it.mark, ts: Date.now() }; await saveResult("exercice", e.id, { v: it.mark }, EV.id); snapshotElo(e.mid); }
   }
-  saveEvalRecord();
+  await saveEvalRecord();
   EV.grading = false;
   rerender();
 }
@@ -1528,11 +1538,15 @@ function evalItemSnapshot(it) {
   else if (e.type === "texte") { const r = state.reponses[e.id]; snap.values = r?.values || []; snap.oks = r?.oks || []; }
   return snap;
 }
-function saveEvalRecord() {
+// Upserte la ligne `evals` (même id serveur réutilisé à chaque rappel, stocké sur EV.id dès la
+// première sauvegarde) : appelée avant toute correction d'exercice dans finishEval pour que
+// saveResult() puisse déjà rattacher ses résultats à cet eval via eval_id.
+async function saveEvalRecord() {
   const { n, ok } = evalScore();
   const by = {}; EV.items.forEach((it) => { const s = by[it.e.seance] || (by[it.e.seance] = [0, 0]); s[1]++; if (it.mark === "ok") s[0]++; });
-  const id = "ev" + EV.start;
-  setEntry("evals", id, { id, mid: EV.mid, n, ok, score20: (ok / n) * 20, dur: Math.round(((EV.end || Date.now()) - EV.start) / 1000), seances: by, items: EV.items.map(evalItemSnapshot) });
+  const rec = { id: EV.id, mid: EV.mid, n, ok, score20: (ok / n) * 20, dur: Math.round(((EV.end || Date.now()) - EV.start) / 1000), seances: by, items: EV.items.map(evalItemSnapshot) };
+  EV.id = await saveEval(rec);
+  state.evals[EV.id] = { ...rec, id: EV.id, ts: Date.now() };
   bump(3, "eval");
   commit();
 }
@@ -1592,10 +1606,12 @@ const okQ = (x) => x.ans.size === x.q.rep.length && x.q.rep.every((r) => x.ans.h
 // N'est appelée qu'en mode examen (voir finishQuiz) : l'entraînement (correction immédiate,
 // sans enjeu, pensé pour être fait n'importe où) ne doit laisser aucune trace, ni dans les stats
 // de précision/progression ni dans l'Elo — seul l'examen (chronométré, correction à la fin) compte.
-function recordQ(x) {
+async function recordQ(x) {
   const cur = state.qcm[x.q.id] || { n: 0, ok: 0, last: false };
   const good = okQ(x);
-  setEntry("qcm", x.q.id, { n: cur.n + 1, ok: cur.ok + (good ? 1 : 0), last: good });
+  const entry = { n: cur.n + 1, ok: cur.ok + (good ? 1 : 0), last: good };
+  state.qcm[x.q.id] = entry;
+  await saveResult("qcm", x.q.id, entry);
   snapshotElo(x.q.mid);
   bump(1, "qcm");
 }
@@ -1639,7 +1655,7 @@ function finishQuiz(timeout) {
   if (!Q || Q.done) return;
   Q.done = true; Q.end = Date.now(); Q.timeout = !!timeout;
   const exam = Q.mode === "exam";
-  if (exam) Q.qs.forEach((x) => { if (x.ans.size) { x.checked = true; recordQ(x); } });
+  if (exam) Q.qs.forEach((x) => { if (x.ans.size) { x.checked = true; recordQ(x).catch((err) => toast("Erreur : " + err.message)); } });
   const ok = Q.qs.filter(okQ).length, n = Q.qs.length;
   Q.ok = ok;
   commit();
@@ -1747,7 +1763,9 @@ function rate(r) {
   const f = FC.cards[FC.i], cur = state.cards[f.id] || { box: 0, n: 0, ok: 0 };
   let box = r === "again" ? 1 : Math.min(5, Math.max(1, cur.box) + (r === "easy" ? 2 : 1));
   if (cur.box === 0 && r !== "again") box = r === "easy" ? 3 : 2;
-  setEntry("cards", f.id, { box, n: cur.n + 1, ok: cur.ok + (r === "again" ? 0 : 1), due: r === "again" ? Date.now() : Date.now() + DAYS[box] * 864e5 });
+  const entry = { box, n: cur.n + 1, ok: cur.ok + (r === "again" ? 0 : 1), due: r === "again" ? Date.now() : Date.now() + DAYS[box] * 864e5 };
+  state.cards[f.id] = entry;
+  saveResult("carte", f.id, entry).catch((err) => toast("Erreur : " + err.message));
   bump(1, "carte");
   if (r === "again") { if (!FC.again.has(f.id)) { FC.again.add(f.id); FC.cards.push(f); } }
   else if (!FC.again.has(f.id)) FC.good++;
@@ -1777,11 +1795,15 @@ const seanceHasMaterial = (mid, s) => !!(s && (D.docSids.has(s.id) || (state.sea
 // type). Un CC n'est plus un type d'EDT à part (voir e.cc) : c'est un vrai créneau Cours/TD/TP qui
 // se comporte exactement pareil pour ce qui est de s'y attacher une séance.
 const EDT_TYPE_MAP = { Cours: "CM", TD: "TD", TP: "TP" };
+// `e.sid` (lien explicite, posé à la création de la séance — voir "creerseance") prime toujours.
+// Le matching par date+type+matière ne reste qu'un repli pour les créneaux pas encore liés
+// (anciens essais .ics, ou créés avant l'ajout de sid).
 function seanceFor(e) {
   const want = EDT_TYPE_MAP[e.t];
   if (!want || !e.m) return null;
   const c = C(e.m);
   if (!c) return null;
+  if (e.sid) { const s = c.seances.find((x) => x.id === e.sid); if (s) return s; }
   const cands = c.seances.filter((s) => s.date === e.d && s.type === want).sort((a, b) => a.numero - b.numero);
   if (!cands.length) return null;
   if (cands.length === 1) return cands[0];
@@ -1791,7 +1813,7 @@ function seanceFor(e) {
 function draftHrefFor(e) {
   const want = EDT_TYPE_MAP[e.t];
   if (!want || !e.m) return null;
-  return `#/todo?m=${e.m}&d=${e.d}&t=${encodeURIComponent(e.t)}&s=${e.s}&e=${e.e}&r=${encodeURIComponent(e.r || "")}&p=${encodeURIComponent(e.p || "")}&g=${encodeURIComponent(e.g || "")}`;
+  return `#/todo?id=${e.id}&m=${e.m}&d=${e.d}&t=${encodeURIComponent(e.t)}&s=${e.s}&e=${e.e}&r=${encodeURIComponent(e.r || "")}&p=${encodeURIComponent(e.p || "")}&g=${encodeURIComponent(e.g || "")}`;
 }
 function edtCard(e, now, top, height, left, width, px) {
   const st = edtState(e, now), sc = seanceFor(e), written = seanceHasContent(sc);
@@ -1963,11 +1985,17 @@ function openEdtModal(e) {
     const fd = new FormData(f);
     try {
       const d = fd.get("d");
-      const id = await saveEdtEvent({ id: fd.get("id") || undefined, d, s: fd.get("s"), e: fd.get("e"), t: fd.get("t"), m: fd.get("m") || null, r: fd.get("r"), p: fd.get("p"), g: fd.get("g"), n: fd.get("n"), cc: fd.get("cc") === "on", allday: fd.get("allday") === "on" });
+      const id = await saveEdtEvent({ id: fd.get("id") || undefined, d, s: fd.get("s"), e: fd.get("e"), t: fd.get("t"), m: fd.get("m") || null, sid: e?.sid, r: fd.get("r"), p: fd.get("p"), g: fd.get("g"), n: fd.get("n"), cc: fd.get("cc") === "on", allday: fd.get("allday") === "on" });
       // Un créneau déplacé/modifié répercute sa date sur l'échéance CC liée (edtId), pour que les
       // deux restent coordonnés sans avoir à les modifier séparément à chaque changement d'horaire.
       const linkedCC = D.cal.evenements.find((x) => x.edtId === id);
       if (linkedCC && linkedCC.date !== d) await saveCCEvent({ ...linkedCC, date: d });
+      // Même chose pour la séance de cours liée (lien explicite e.sid, plus besoin de deviner par
+      // date+type+matière) : sans ça elle reste sur l'ancienne date, se détache du créneau dans
+      // l'EDT (qui propose alors de "recréer" un cours) et continue de s'afficher à l'ancienne
+      // date dans la vue matière.
+      const linkedSeance = e?.sid && e.m ? C(e.m)?.seances.find((s) => s.id === e.sid) : null;
+      if (linkedSeance && d !== e.d) await saveSeance(e.m, { ...linkedSeance, date: d });
       toast("Créneau enregistré");
       closeEdtModal();
       await loadData(); rerender();
@@ -1999,7 +2027,7 @@ function edtDraft(q) {
       <p class="muted" style="margin:10px 0 4px">${esc(fmtLong(q.d))} · ${esc(q.s)}–${esc(q.e)}${meta ? " · " + esc(meta) : ""}</p>
       <p class="small muted">Ce créneau n'a pas encore de séance dans l'appli. La créer ajoute « ${esc(want)} ${numero} » à la matière avec un espace de travail vide (notes, documents) — tu pourras rédiger le cours plus tard, ou juste y déposer des documents.</p>
       <div class="row" style="margin-top:16px">
-        <button type="button" class="btn pri" data-a="creerseance" data-m="${esc(q.m)}" data-d="${esc(q.d)}" data-t="${esc(q.t)}">${icon("check")}Créer ${esc(want)} ${numero}</button>
+        <button type="button" class="btn pri" data-a="creerseance" data-id="${esc(q.id || "")}" data-m="${esc(q.m)}" data-d="${esc(q.d)}" data-t="${esc(q.t)}">${icon("check")}Créer ${esc(want)} ${numero}</button>
         <a class="btn ghost" href="#/edt">Annuler</a>
       </div>
     </div>`,
@@ -2404,7 +2432,7 @@ function bindQcmForm(mid, id) {
       if (!choix.length) return toast("Au moins un choix est requis");
       if (!rep.length) return toast("Coche au moins une bonne réponse");
       try {
-        await saveQCM({ id: id === "new" ? null : id, matiere: mid, seance: fd.get("seance") || null, type: rep.length > 1 ? "multiple" : "unique", q: fd.get("q"), choix, rep, expl: fd.get("expl"), niveau: +fd.get("niveau") || 1 });
+        await saveItem("qcm", { id: id === "new" ? null : id, matiere: mid, seance: fd.get("seance") || null, type: rep.length > 1 ? "multiple" : "unique", q: fd.get("q"), choix, rep, expl: fd.get("expl"), niveau: +fd.get("niveau") || 1 });
         toast("Question enregistrée");
         await loadData();
         location.hash = `#/aq/${mid}`;
@@ -2452,7 +2480,7 @@ function bindFlashForm(mid, id) {
       const fd = new FormData(e.target);
       if (!String(fd.get("recto") || "").trim()) return toast("Le recto est requis");
       try {
-        await saveFlashcard({ id: id === "new" ? null : id, matiere: mid, seance: fd.get("seance") || null, recto: fd.get("recto"), verso: fd.get("verso") });
+        await saveItem("carte", { id: id === "new" ? null : id, matiere: mid, seance: fd.get("seance") || null, recto: fd.get("recto"), verso: fd.get("verso") });
         toast("Carte enregistrée");
         await loadData();
         location.hash = `#/af/${mid}`;
@@ -2502,7 +2530,7 @@ function bindExoForm(mid, id) {
       if (!String(fd.get("titre") || "").trim()) return toast("Le titre est requis");
       try {
         const reponses = String(fd.get("reponses") || "").split("\n").map((s) => s.trim()).filter(Boolean);
-        await saveExercice({ id: id === "new" ? null : id, matiere: mid, seance: fd.get("seance") || null, titre: fd.get("titre"), difficulte: +fd.get("difficulte") || 1, enonce: fd.get("enonce"), indice: fd.get("indice"), corrige: fd.get("corrige"), type: fd.get("type") || "texte", codeStarter: fd.get("code_starter"), codeTests: fd.get("code_tests"), reponse: "", reponses });
+        await saveItem("exercice", { id: id === "new" ? null : id, matiere: mid, seance: fd.get("seance") || null, titre: fd.get("titre"), difficulte: +fd.get("difficulte") || 1, enonce: fd.get("enonce"), indice: fd.get("indice"), corrige: fd.get("corrige"), type: fd.get("type") || "texte", codeStarter: fd.get("code_starter"), codeTests: fd.get("code_tests"), reponse: "", reponses });
         toast("Exercice enregistré");
         await loadData();
         location.hash = `#/ax/${mid}`;
@@ -2679,9 +2707,10 @@ document.addEventListener("click", async (e) => {
   else if (a === "efinish") { const un = EV.items.length; if (!(await appConfirm(`Terminer l'épreuve (${EV.i + 1}/${un}) ?`))) return; finishEval(false); }
   else if (a === "emark") {
     const it = EV.items[+t.dataset.i]; it.mark = t.dataset.v;
-    setEntry("exos", it.e.id, { v: it.mark });
+    await saveEvalRecord();
+    state.exos[it.e.id] = { v: it.mark, ts: Date.now() };
+    await saveResult("exercice", it.e.id, { v: it.mark }, EV.id);
     snapshotElo(it.e.mid);
-    saveEvalRecord();
     rerenderKeep();
   }
   else if (a === "runcode") {
@@ -2700,7 +2729,7 @@ document.addEventListener("click", async (e) => {
       codeResults[id] = r;
       if (resEl) resEl.innerHTML = codeResultHtml(r);
       const ran = r.results.length || r.error;
-      if (ran) autoMark(id, !r.error && r.results.every((x) => x.ok));
+      if (ran) await autoMark(id, !r.error && r.results.every((x) => x.ok));
     } catch (err) {
       if (resEl) resEl.innerHTML = `<div class="warn prose" style="padding:8px 12px;margin-top:8px">Erreur de chargement de Python : ${esc(err.message)}</div>`;
     }
@@ -2718,11 +2747,11 @@ document.addEventListener("click", async (e) => {
     commit();
     const resEl = document.getElementById(`txres-${id}`);
     if (resEl) resEl.innerHTML = texteResultHtml(oks);
-    autoMark(id, ok);
+    await autoMark(id, ok);
   }
   else if (a === "flip") { FC.flip = !FC.flip; rerender(); }
   else if (a === "rate") rate(t.dataset.r);
-  else if (a === "exo") { setEntry("exos", t.dataset.id, { v: t.dataset.v }); bump(2, "exercice"); commit(); toast(t.dataset.v === "ok" ? "Bien joué" : "Noté à refaire"); }
+  else if (a === "exo") { state.exos[t.dataset.id] = { v: t.dataset.v, ts: Date.now() }; await saveResult("exercice", t.dataset.id, { v: t.dataset.v }); bump(2, "exercice"); commit(); toast(t.dataset.v === "ok" ? "Bien joué" : "Noté à refaire"); }
   else if (a === "toggleexo") { openExoId = openExoId === t.dataset.id ? null : t.dataset.id; rerenderKeep(); }
   else if (a === "calprev") { calMonth = new Date(calMonth.getFullYear(), calMonth.getMonth() - 1, 1); rerender(); }
   else if (a === "calnext") { calMonth = new Date(calMonth.getFullYear(), calMonth.getMonth() + 1, 1); rerender(); }
@@ -2749,9 +2778,13 @@ document.addEventListener("click", async (e) => {
         const numero = sameType.length ? Math.max(...sameType.map((x) => x.numero)) + 1 : 1;
         const id = `${want.toLowerCase()}-${numero}`;
         await saveSeance(mid, { id, type: want, numero, date: d, titre: `${want} ${numero}`, resume: "", contenu: "" });
-        await loadData();
         s = { id };
       }
+      // Pose le lien explicite EDT → séance sur le créneau d'origine, pour que seanceFor()
+      // n'ait plus besoin de deviner par date+type+matière.
+      const edtEv = D.edt.events.find((x) => x.id === t.dataset.id);
+      if (edtEv && edtEv.sid !== s.id) await saveEdtEvent({ ...edtEv, sid: s.id });
+      await loadData();
       location.hash = `#/c/${mid}/${s.id}`;
     } catch (err) { toast("Erreur : " + err.message); }
   }
@@ -2782,9 +2815,9 @@ document.addEventListener("click", async (e) => {
     } catch (err) { toast("Erreur : " + err.message); }
   }
   else if (a === "delseance") { if (await appConfirm("Supprimer cette séance ?")) { await deleteSeance(t.dataset.mid, t.dataset.sid); toast("Séance supprimée"); await loadData(); location.hash = `#/m/${t.dataset.mid}`; } }
-  else if (a === "delqcm") { if (await appConfirm("Supprimer cette question ?")) { await deleteQCM(t.dataset.id); toast("Question supprimée"); await loadData(); location.hash = `#/aq/${t.dataset.mid}`; } }
-  else if (a === "delflash") { if (await appConfirm("Supprimer cette carte ?")) { await deleteFlashcard(t.dataset.id); toast("Carte supprimée"); await loadData(); location.hash = `#/af/${t.dataset.mid}`; } }
-  else if (a === "delexo") { if (await appConfirm("Supprimer cet exercice ?")) { await deleteExercice(t.dataset.id); toast("Exercice supprimé"); await loadData(); location.hash = `#/ax/${t.dataset.mid}`; } }
+  else if (a === "delqcm") { if (await appConfirm("Supprimer cette question ?")) { await deleteItem("qcm", t.dataset.id); toast("Question supprimée"); await loadData(); location.hash = `#/aq/${t.dataset.mid}`; } }
+  else if (a === "delflash") { if (await appConfirm("Supprimer cette carte ?")) { await deleteItem("carte", t.dataset.id); toast("Carte supprimée"); await loadData(); location.hash = `#/af/${t.dataset.mid}`; } }
+  else if (a === "delexo") { if (await appConfirm("Supprimer cet exercice ?")) { await deleteItem("exercice", t.dataset.id); toast("Exercice supprimé"); await loadData(); location.hash = `#/ax/${t.dataset.mid}`; } }
   else if (a === "confirmics") { if (!icsPreview) return; toast("Import en cours…"); try { const r = await commitIcsImport(icsPreview, D.matieres); icsPreview = null; toast(`Importé : ${plural(r.matieresCreees, "matière créée", "matières créées")}, ${plural(r.evenements, "créneau")}`); await loadData(); refreshShell(); } catch (err) { toast("Erreur : " + err.message); } }
   else if (a === "cancelics") { icsPreview = null; rerender(); }
   else if (a === "editcc") { const ev = D.cal.evenements.find((x) => x.id === t.dataset.id); if (ev) openCCModal(ev); }
@@ -2793,15 +2826,12 @@ document.addEventListener("click", async (e) => {
   else if (a === "delcc") { if (await appConfirm("Supprimer cette échéance ?")) { try { await deleteCCEvent(t.dataset.id); toast("Échéance supprimée"); closeCCModal(); await loadData(); rerender(); } catch (err) { toast("Erreur : " + err.message); } } }
   else if (a === "delevaL") {
     if (await appConfirm("Supprimer cet essai d'éval blanche ? (abandonné, test, ou à ne pas garder dans l'historique)")) {
-      delete state.evals[t.dataset.id];
-      commit();
-      // La sync vers Supabase est normalement débouncée (1.5s) : pour une suppression, on force l'envoi
-      // immédiat, sinon un refresh pendant la fenêtre d'attente fait réapparaître l'entrée (le pull
-      // suivant la remerge depuis la copie distante pas encore mise à jour — rien ne marque un id comme
-      // "supprimé", une entrée absente en local est traitée comme "jamais vue" et recopiée).
-      if (sync.user) await push();
+      // Les résultats d'exercice encore liés à cet eval sont supprimés en cascade côté base
+      // (FK eval_id, voir supabase/schema_results.sql) : loadData() les recharge donc déjà à jour.
+      await deleteEval(t.dataset.id);
       toast("Essai supprimé");
-      rerenderKeep();
+      await loadData();
+      rerender();
     }
   }
   else if (a === "deltodo") { if (await appConfirm("Supprimer cette tâche ?")) { try { await deleteTodo(t.dataset.id); toast("Tâche supprimée"); await loadData(); rerender(); } catch (err) { toast("Erreur : " + err.message); } } }

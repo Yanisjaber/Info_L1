@@ -3,11 +3,14 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 const KEY = "l1s1_v1";
 const OWNER_KEY = "l1s1_owner";
-const MAPS = ["read", "qcm", "cards", "exos", "notes", "evals", "activity", "reponses", "elo", "seanceNotes"];
+const MAPS = ["read", "notes", "activity", "reponses", "elo", "seanceNotes"];
 const listeners = new Set();
 
 function blank() {
-  const s = { prefs: { theme: "auto", ts: 0 } };
+  // qcm/cards/exos/evals vivent dans de vraies tables Supabase (results/evals, voir content.js) et
+  // sont rechargées à chaque session par loadData() — pas dans MAPS (pas de sync jsonb générique
+  // pour elles), mais toujours initialisées ici pour ne jamais être `undefined` avant ce chargement.
+  const s = { prefs: { theme: "auto", ts: 0 }, qcm: {}, cards: {}, exos: {}, evals: {} };
   MAPS.forEach((k) => (s[k] = {}));
   return s;
 }
@@ -106,7 +109,7 @@ export async function pull() {
   if (!sync.client || !sync.user) return;
   sync.status = "sync";
   emit();
-  const { data, error } = await sync.client.from("progress").select("key,value");
+  const { data, error } = await sync.client.from("state").select("key,value");
   if (error) { sync.status = "error"; sync.error = error.message; emit(); return; }
   for (const row of data || []) {
     if (MAPS.includes(row.key)) mergeInto(state[row.key], row.value, row.key === "activity");
@@ -121,7 +124,7 @@ export async function push() {
   sync.status = "sync"; emit();
   const now = new Date().toISOString();
   const rows = [...MAPS, "prefs"].map((k) => ({ key: k, value: state[k], updated_at: now, user_id: sync.user.id }));
-  const { error } = await sync.client.from("progress").upsert(rows, { onConflict: "user_id,key" });
+  const { error } = await sync.client.from("state").upsert(rows, { onConflict: "user_id,key" });
   if (error) { sync.status = "error"; sync.error = error.message; }
   else { sync.status = "ok"; sync.last = Date.now(); sync.error = ""; }
   emit();
