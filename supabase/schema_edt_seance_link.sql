@@ -1,15 +1,10 @@
--- ============================================================
---  Lien explicite EDT ↔ séance : `edt_events.sid` remplace le matching heuristique
---  (même matière+type+date, voir seanceFor() dans js/app.js) par une vraie FK. Idem pour
---  seance_docs.sid, qui avait déjà la colonne mais pas la contrainte.
---  À coller dans SQL Editor après schema_matieres.sql. Idempotent.
--- ============================================================
+-- Lie chaque créneau d'EDT à sa séance par une clé étrangère (edt_events.sid). Rejouable.
+-- À exécuter après schema_matieres.sql.
 
+-- Colonne du lien vers la séance.
 alter table public.edt_events add column if not exists sid text;
 
--- Backfill des créneaux existants : pour chaque créneau Cours/TD/TP, cherche la séance de
--- même matière+type+date (numero le plus bas en cas d'ambiguïté — approximation raisonnable
--- pour une migration ponctuelle, un lien incorrect se corrige en rouvrant le créneau).
+-- Rattache les créneaux existants à la séance de même matière, type et date (la plus petite en cas de doublon).
 update public.edt_events e
 set sid = sub.sid
 from (
@@ -23,11 +18,10 @@ from (
 ) sub
 where e.id = sub.edt_id and e.user_id = sub.user_id and sub.sid is not null;
 
+-- Clé étrangère créneau -> séance.
 alter table public.edt_events drop constraint if exists edt_events_sid_fkey;
 alter table public.edt_events add constraint edt_events_sid_fkey foreign key (user_id, m, sid) references public.seances(user_id, mid, id);
 
--- seance_docs avait déjà sid/mid mais aucune contrainte. Ajoutée NOT VALID : une note manuscrite
--- existante pointe vers une séance depuis supprimée (orphelin réel, pas une erreur de migration) —
--- NOT VALID n'empêche ni ne supprime cette ligne, mais valide toute nouvelle écriture désormais.
+-- Même clé pour les documents de séance. NOT VALID garde les anciennes lignes orphelines mais contrôle les nouvelles.
 alter table public.seance_docs drop constraint if exists seance_docs_sid_fkey;
 alter table public.seance_docs add constraint seance_docs_sid_fkey foreign key (user_id, mid, sid) references public.seances(user_id, mid, id) not valid;

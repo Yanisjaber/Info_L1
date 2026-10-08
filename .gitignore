@@ -1,0 +1,6 @@
+# Cache du Supabase CLI (identifiant du projet, versions) : propre à ta machine
+.temp/
+
+# Fichiers de ton système / éditeur
+.DS_Store
+.idea/

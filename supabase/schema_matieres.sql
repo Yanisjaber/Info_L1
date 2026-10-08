@@ -1,13 +1,7 @@
--- ============================================================
---  Révisions L1 — matières & séances (contenu des cours), par utilisateur
---  À coller dans SQL Editor (après setup.sql), puis « Run ».
---  Chaque utilisateur a ses propres matières et séances ; RLS garantit
---  que personne ne voit les données d'un autre compte.
--- ============================================================
+-- Contenu des cours, par utilisateur : périodes, matières, séances, QCM, cartes, exercices, CC et emploi du temps.
+-- À exécuter après setup.sql.
 
--- Périodes (semestre, année...) : permet de suivre plusieurs semestres/niveaux dans le
--- temps sans que tout s'accumule dans un seul menu. Une matière rattachée à une période
--- « terminée » sort du menu principal mais reste consultable depuis les archives.
+-- Périodes (semestres) : une période terminée archive ses matières.
 create table if not exists public.periodes (
   user_id    uuid        not null default auth.uid() references auth.users(id) on delete cascade,
   id         text        not null,
@@ -17,6 +11,7 @@ create table if not exists public.periodes (
   primary key (user_id, id)
 );
 
+-- Matières de l'utilisateur.
 create table if not exists public.matieres (
   user_id    uuid        not null default auth.uid() references auth.users(id) on delete cascade,
   id         text        not null,
@@ -33,15 +28,15 @@ create table if not exists public.matieres (
   created_at timestamptz not null default now(),
   primary key (user_id, id)
 );
--- Colonnes ajoutées après la création initiale de la table : sans effet si déjà présentes.
+-- Colonnes ajoutées après coup (sans effet si déjà présentes), puis clé étrangère vers la période.
 alter table public.matieres add column if not exists ects int not null default 0 check (ects >= 0);
 alter table public.matieres add column if not exists periode text;
 alter table public.matieres drop constraint if exists matieres_periode_fkey;
--- Pas de "on delete set null" ici : sur une clé composée (user_id, periode), Postgres
--- mettrait aussi user_id à NULL, ce qui viole sa contrainte NOT NULL. On détache donc les
--- matières manuellement (UPDATE periode = NULL) avant de supprimer une période, côté code.
+-- Pas de "on delete set null" : sur une clé composée il viderait aussi user_id.
+-- Le code détache les matières avant de supprimer une période.
 alter table public.matieres add constraint matieres_periode_fkey foreign key (user_id, periode) references public.periodes(user_id, id);
 
+-- Séances d'une matière (CM, TD, TP) avec leur contenu HTML.
 create table if not exists public.seances (
   user_id    uuid        not null default auth.uid() references auth.users(id) on delete cascade,
   mid        text        not null,
@@ -58,7 +53,7 @@ create table if not exists public.seances (
   foreign key (user_id, mid) references public.matieres(user_id, id) on delete cascade
 );
 
--- QCM, cartes (flashcards) et exercices : entraînement par matière, par utilisateur.
+-- QCM, cartes mémoire et exercices (regroupés ensuite dans la table items, voir schema_items.sql).
 create table if not exists public.qcm_items (
   user_id    uuid        not null default auth.uid() references auth.users(id) on delete cascade,
   id         uuid        not null default gen_random_uuid(),
@@ -105,17 +100,16 @@ create table if not exists public.exercices (
   primary key (user_id, id),
   foreign key (user_id, matiere) references public.matieres(user_id, id) on delete cascade
 );
--- Colonnes ajoutées après la création initiale : sans effet si déjà présentes.
+-- Colonnes ajoutées après coup : type d'exercice, code de départ et tests.
 alter table public.exercices add column if not exists type text not null default 'redaction';
 alter table public.exercices drop constraint if exists exercices_type_check;
 alter table public.exercices add constraint exercices_type_check check (type in ('redaction','code','texte'));
 alter table public.exercices add column if not exists code_starter text not null default '';
 alter table public.exercices add column if not exists code_tests text not null default '';
--- « texte » : exercice à réponse courte, corrigé automatiquement par comparaison à `reponse`
--- (plusieurs formes acceptées possibles, séparées par « | », ex. « 6|6.0|six »).
+-- Réponse courte corrigée automatiquement ; formes acceptées séparées par « | » (ex. 6|6.0|six).
 alter table public.exercices add column if not exists reponse text not null default '';
 
--- Calendrier des CC (contrôles continus, examens), par utilisateur.
+-- Échéances de contrôle continu et d'examen.
 create table if not exists public.cc_events (
   user_id    uuid        not null default auth.uid() references auth.users(id) on delete cascade,
   id         uuid        not null default gen_random_uuid(),
@@ -131,6 +125,7 @@ create table if not exists public.cc_events (
   foreign key (user_id, matiere) references public.matieres(user_id, id) on delete cascade
 );
 
+-- Créneaux de l'emploi du temps.
 create table if not exists public.edt_events (
   user_id    uuid        not null default auth.uid() references auth.users(id) on delete cascade,
   id         uuid        not null default gen_random_uuid(),
@@ -148,13 +143,12 @@ create table if not exists public.edt_events (
   primary key (user_id, id),
   constraint edt_events_m_fkey foreign key (user_id, m) references public.matieres(user_id, id)
 );
--- Idem que pour matieres.periode : pas de "on delete set null" possible proprement sur une
--- clé composée (cf. plus haut) ; on corrige la contrainte si la table existait déjà avec
--- l'ancienne version (nom auto-généré par Postgres pour une FK inline non nommée).
+-- Recrée la clé vers la matière sans "on delete set null" (même raison que pour periode).
 alter table public.edt_events drop constraint if exists edt_events_user_id_m_fkey;
 alter table public.edt_events drop constraint if exists edt_events_m_fkey;
 alter table public.edt_events add constraint edt_events_m_fkey foreign key (user_id, m) references public.matieres(user_id, id);
 
+-- Sécurité : chaque utilisateur n'accède qu'à ses propres lignes.
 alter table public.periodes  enable row level security;
 alter table public.matieres  enable row level security;
 alter table public.seances   enable row level security;
@@ -236,6 +230,7 @@ create policy "exercices_insert_own" on public.exercices for insert to authentic
 create policy "exercices_update_own" on public.exercices for update to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
 create policy "exercices_delete_own" on public.exercices for delete to authenticated using (auth.uid() = user_id);
 
+-- Aucun accès anonyme ; droits complets pour les utilisateurs connectés (limités à leurs lignes par RLS).
 revoke all on public.periodes  from anon;
 revoke all on public.matieres  from anon;
 revoke all on public.seances   from anon;

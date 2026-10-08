@@ -21,7 +21,7 @@ puis ouvre http://localhost:8000
 1. Crée un compte gratuit sur https://supabase.com, puis **New project** (choisis une région proche, ex. Paris ; note le mot de passe de la base, tu n'en auras pas besoin ensuite).
 2. Dans le projet : **SQL Editor → New query**, colle le contenu de `supabase/setup.sql`, clique **Run**. Ça crée la table `progress` avec la sécurité par ligne.
 3. **Project Settings → API** : copie **Project URL** et la clé **anon public**.
-4. Colle-les dans `js/config.js` :
+4. Colle-les dans `src/core/config.js` :
    ```js
    export const SUPABASE_URL = "https://xxxx.supabase.co";
    export const SUPABASE_ANON_KEY = "eyJ...";
@@ -47,25 +47,85 @@ puis ouvre http://localhost:8000
 
 ## 4. Mettre à jour le contenu
 
-Chaque matière est un fichier `data/content/<matiere>.json` (QCM, flashcards, exercices) + un dossier `data/content/<matiere>/` (une page HTML par séance). Les PDF sont dans `pdf/`. Le calendrier est `data/calendrier.json` (dates des CC) : modifie-le quand une date est confirmée (Bas : numéro des CCI, Devenir étudiant).
+Le contenu (matières, séances, QCM, flashcards, exercices, emploi du temps, échéances de CC) vit dans Supabase : tout se modifie depuis le site (Compte, pages d'administration, import .ics de l'EDT). Il n'y a plus de fichiers de données dans le dépôt. Les PDF sont dans `pdf/` et les images des cours dans `assets/` (référencés par le contenu en base).
 
-L'emploi du temps (page « Emploi du temps » + bloc « Aujourd'hui » de l'accueil) vient de `data/edt.json`, exporté depuis l'EDT UPS (Celcat). Il est figé à la date d'export : redemande un export à Claude quand l'EDT change (cours déplacés, salles).
-Pousse le changement sur GitHub : le site se met à jour tout seul.
+## 5. Calculateur de notes (configurable par matière)
+
+La page « Notes & CC » n'a plus de formules écrites dans le code : chaque matière porte sa propre configuration (épreuves, poids, barème, note de 2e chance), stockée dans la colonne `grading` de la table `matieres`.
+
+1. **Une fois**, dans Supabase → **SQL Editor**, exécute `supabase/schema_grading.sql`. Il ajoute la colonne et reprend les 6 formules du semestre (Algo 1, Bas, Math1-bases2, Math1-calc1, Science du numérique, Devenir étudiant). Tu peux le relancer sans risque : il ne remplace pas une configuration déjà saisie.
+2. Pour une nouvelle matière : **Compte → la matière → « Calcul de la note »**. Une ligne par épreuve avec son poids, éventuellement « Note sur » (barème ≠ 20) et « Moyenne de » (plusieurs notes qui comptent pour une seule épreuve), puis le type de 2e chance : aucune, facultative (remplace une note plus faible) ou obligatoire (compte aussi dans la moyenne).
+
+Tant que le script SQL n'est pas exécuté, le site fonctionne comme avant, mais sans calculateur.
+
+## 6. Réglages par utilisateur (rien d'institutionnel dans le code)
+
+Tout ce qui change d'un utilisateur, d'un établissement ou d'un cursus à l'autre est stocké dans la table `user_settings` (une ligne par compte) et s'édite dans **Compte → Réglages** : types de séance (CM/TD/TP ou autres, avec leur libellé), types de créneau de l'emploi du temps et correspondance avec les types de séance, règles de détection de l'import .ics (mots-clés → type, motif d'un CC/examen), note de validation et son libellé, texte sous l'emploi du temps, préfixe des fichiers exportés.
+
+1. **Une fois**, dans Supabase → **SQL Editor**, exécute `supabase/schema_settings.sql`. Il crée la table (avec ses règles de sécurité), retire la limite « CM, TD ou TP » sur les séances, et reprend pour les comptes existants les valeurs qui étaient auparavant écrites dans le code. Relançable sans risque.
+2. Un nouveau compte (ou tant que le script n'est pas exécuté) utilise des valeurs de repli neutres définies dans `src/features/settings/settings.defaults.js` : CM/TD/TP, note de validation 10, aucun nom d'établissement.
+
+Ce qui reste dans le code est propre à l'application, pas à l'utilisateur : barème des niveaux Elo, couleurs du thème, seuils de l'interface, clés de stockage local.
+
+## 7. Fichiers (PDF, images) dans le stockage Supabase
+
+Les PDF de séance, les fiches CC et les images des cours ne vivent plus dans le dépôt : ils sont envoyés dans ton espace privé Supabase (bucket `docs`, dossier à ton `user_id`, mêmes règles de sécurité que tes documents de séance, donc aucun script SQL à lancer). En base, un fichier est référencé par `storage:files/<dossier>/<nom>` et affiché via une URL signée (valable 7 jours, renouvelée à chaque chargement).
+
+- **Ajouter un PDF** : champ « PDF » du formulaire d'une séance ou d'une matière. **Remplacer / retirer** : nouveau fichier ou case « retirer » (l'ancien est supprimé du stockage).
+- **Ajouter une image dans un cours** : bouton « Insérer une image » sous l'éditeur de la séance ; la balise `<img>` est insérée à l'endroit du curseur.
+- **Migrer l'existant** (une fois) : **Compte → Fichiers (PDF, images) → Migrer vers mon stockage**. Chaque fichier de `pdf/` et `assets/` est lu depuis le site puis envoyé ; les références en base ne sont réécrites qu'une fois l'envoi réussi. Relançable sans risque. Quand la section affiche « À jour », les dossiers `pdf/` et `assets/` du dépôt ne servent plus et peuvent être supprimés.
+
+## 8. Bibliothèques externes (`vendor/`)
+
+Code écrit par d'autres, copié tel quel dans le dépôt pour que le site marche sans dépendre d'un CDN. Les noms de dossiers sont ceux des bibliothèques : ne pas les renommer ni modifier leurs fichiers (elles retrouvent leurs polices et leurs fichiers internes par ces chemins).
+
+| Dossier | Ce que c'est | Taille | Obligatoire ? |
+|---|---|---|---|
+| `vendor/katex/` | **KaTeX** : affiche les formules de maths (`\(A \cup B\)` devient la vraie notation). Utilisé dans les cours, QCM, cartes et exercices. | ~0,6 Mo | Oui en pratique : sans lui les formules s'affichent en texte brut. |
+| `vendor/supabase.js` | Client **Supabase** : connexion au compte, lecture/écriture en base, stockage de fichiers. | ~0,2 Mo | Oui pour tout ce qui est synchronisé (en mode local, la progression reste dans le navigateur). |
+| `vendor/pyodide/` | **Pyodide** : un Python complet compilé en WebAssembly (`pyodide.asm.js` + `pyodide.asm.wasm` = l'interpréteur, `pyodide.js` = le chargeur). Sert uniquement à exécuter le code des exercices de type « code ». Chargé seulement à la première exécution. | ~14 Mo | Non. Sans lui tout marche sauf l'exécution des exercices de code. À garder ou supprimer en entier, jamais en partie. |
 
 ## Structure
 
+L'app est découpée **par fonctionnalité** (« Feature-Driven Architecture ») : chaque dossier de `src/features/` contient tout ce qui concerne un sujet (page, composants, calculs, accès Supabase, actions des boutons). Le code est le même que la version à fichier unique, juste rangé autrement : aucun changement de comportement.
+
 ```
-index.html            page unique (navigation par #/…)
-css/style.css         thème clair/sombre, mobile
-js/app.js             vues et logique (QCM, éval, cartes, calendrier…)
-js/store.js           progression locale + synchro Supabase
-js/grades.js          formules de calcul des notes de chaque UE
-js/config.js          URL + clé Supabase (à remplir, facultatif)
-data/                 matières, calendrier, edt.json (emploi du temps), contenu
-pdf/                  fiches PDF originales
-vendor/               KaTeX (formules) et supabase-js (embarqués, pas de CDN)
-supabase/setup.sql    table + règles de sécurité
+index.html                    page unique (navigation par #/…), charge src/app.js
+public/
+  css/style.css               thème clair/sombre, mobile
+  icons/                      icônes de l'app (icon-180.png = écran d'accueil du téléphone)
+src/
+  app.js                      point d'entrée : branche les actions puis démarre (boot)
+  core/                       briques partagées par toutes les fonctionnalités
+    config.js                 URL + clé Supabase
+    utils/                    dom.js ($, esc…), format.js (dates, %), math.js (KaTeX)
+    components/               icons, toast, dialog (confirmation), shell (menu + barre), date-picker, ring, tag…
+    services/                 store.js (progression locale + synchro), supabase.client.js, app-data.js (données
+                              en mémoire), data-loader.js (chargement), stats.js, theme.js, actions.js
+                              (dispatch des clics data-a), items.service.js, results.service.js
+  routing/                    router.js (route → page), navigation.js (rerender…), router.store.js
+  features/
+    auth/                     page Compte, connexion, export/import/effacement
+    dashboard/                accueil
+    matieres/                 liste, page matière, administration matières/périodes
+    seances/                  page d'une séance (cours), administration d'une séance
+    documents/                documents déposés + éditeur d'écriture manuscrite
+    quiz/ flashcards/ eval/ exercices/    entraînement (page, session, composants, admin)
+    elo/                      score de maîtrise + préparation d'un CC
+    edt/                      emploi du temps, import .ics, créneaux
+    calendar/                 calendrier des CC, échéances
+    todos/ notes/ search/     to-do list, notes & calculateur (grades.js = moteur, grading-editor.js = éditeur), recherche
+    files/                    PDF et images : envoi dans le stockage, URLs signées, migration des anciens fichiers
+    settings/                 réglages par utilisateur (chargement, éditeur, valeurs de repli, accesseurs)
+    admin/                    utilitaires communs aux formulaires d'administration
+assets/ et pdf/               anciens fichiers du dépôt (à supprimer une fois la migration vers le stockage faite, voir section 7)
+vendor/                       bibliothèques externes embarquées : KaTeX, supabase-js, Pyodide (voir section 8)
+supabase/                     scripts SQL (tables + règles de sécurité)
 ```
+
+Convention de nommage dans un dossier de fonctionnalité : `*.page.js` (écran), `*.components.js` (morceaux d'interface), `*.utils.js` (calculs purs), `*.service.js` (accès Supabase), `*.session.js` (déroulé d'une session QCM / éval / cartes), `*.store.js` (état partagé modifiable), `*.actions.js` (ce que font les boutons `data-a="…"` de la fonctionnalité).
+
+**Ajouter un bouton** : poser `data-a="monaction"` dans le HTML, puis déclarer `monaction: async (t, e) => { … }` dans la section `click` du `*.actions.js` de la fonctionnalité. **Ajouter une page** : créer son `*.page.js` et ajouter une ligne dans `src/routing/router.js`.
 
 ## Notes sur les données
 

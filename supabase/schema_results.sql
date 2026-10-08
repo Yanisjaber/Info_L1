@@ -1,18 +1,7 @@
--- ============================================================
---  Résultats des items (QCM/cartes/exercices) + historique des éval blanches.
---  Avant ce fichier, ces données vivaient dans des blobs jsonb génériques
---  (table `progress`, clés "qcm"/"cards"/"exos"/"evals"), synchronisés en
---  "le plus récent gagne" — voir js/store.js. Problème concret : supprimer
---  un essai d'éval blanche de l'historique ne touchait jamais aux marques
---  d'exercice (`exos`) que cet essai avait posées, qui restaient fantômes.
---  `results.eval_id` (FK on delete cascade vers `evals`) corrige ça : supprimer
---  un eval supprime automatiquement les résultats encore liés.
---  À coller dans SQL Editor (après schema_matieres.sql et schema_items.sql).
---  Idempotent pour la création de table/RLS ; la migration de données (bloc do $$)
---  ne s'exécute qu'une fois (elle se désactive d'elle-même si `results`/`evals`
---  contiennent déjà des lignes).
--- ============================================================
+-- Résultats par item (QCM, cartes, exercices) et historique des éval blanches, dans de vraies tables.
+-- Les deux tables sont ensuite fusionnées par schema_results_merge.sql. Création rejouable ; à exécuter après schema_items.sql.
 
+-- Une ligne par éval blanche.
 create table if not exists public.evals (
   user_id    uuid        not null default auth.uid() references auth.users(id) on delete cascade,
   id         uuid        not null default gen_random_uuid(),
@@ -28,6 +17,7 @@ create table if not exists public.evals (
   foreign key (user_id, mid) references public.matieres(user_id, id) on delete cascade
 );
 
+-- Dernier résultat de chaque item. Supprimer une éval supprime en cascade les résultats qui y sont liés.
 create table if not exists public.results (
   user_id    uuid        not null default auth.uid() references auth.users(id) on delete cascade,
   item_id    uuid        not null,
@@ -37,7 +27,7 @@ create table if not exists public.results (
   n          int,
   ok         int,
   last       boolean,
-  -- Carte (flashcard)
+  -- Carte
   box        int,
   due        timestamptz,
   -- Exercice
@@ -48,6 +38,7 @@ create table if not exists public.results (
   foreign key (user_id, eval_id) references public.evals(user_id, id) on delete cascade
 );
 
+-- Sécurité : accès limité aux lignes de l'utilisateur.
 alter table public.evals   enable row level security;
 alter table public.results enable row level security;
 
@@ -69,23 +60,20 @@ create policy "results_insert_own" on public.results for insert to authenticated
 create policy "results_update_own" on public.results for update to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
 create policy "results_delete_own" on public.results for delete to authenticated using (auth.uid() = user_id);
 
+-- Aucun accès anonyme.
 revoke all on public.evals   from anon;
 revoke all on public.results from anon;
 grant select, insert, update, delete on public.evals   to authenticated;
 grant select, insert, update, delete on public.results to authenticated;
 
--- ============================================================
---  Migration ponctuelle depuis progress.value (jsonb_each par clé) — ignore les
---  entrées orphelines (item/matière supprimé depuis, ou restes de l'ancien format
---  statique pré-Supabase dont les clés n'étaient pas des uuid, ex. "devenir-q001").
---  Pas de eval_id rétroactif sur les résultats migrés : cette traçabilité
---  n'existait pas avant. Les CTE sont `materialized` pour garantir que le filtre
---  regex élimine les clés non-uuid AVANT toute tentative de cast ::uuid en aval.
--- ============================================================
+-- Migration unique des anciens résultats stockés dans progress (clés qcm, cards, exos, evals).
+-- Ignore les entrées sans item correspondant et les clés qui ne sont pas des uuid.
+-- Ne s'exécute que si results et evals sont vides.
 do $$
 begin
   if not exists (select 1 from public.results) and not exists (select 1 from public.evals) then
 
+    -- Les CTE materialized garantissent que le filtre uuid passe avant le cast ::uuid.
     with valid_qcm as materialized (
       select p.user_id, kv.key as item_id, kv.value
       from public.progress p cross join lateral jsonb_each(p.value) kv

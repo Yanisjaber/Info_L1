@@ -1,22 +1,17 @@
--- ============================================================
---  Fusion de `results` + `evals` en une seule table `results` (kind='qcm'/'carte'/
---  'exercice'/'eval') — même logique que la fusion qcm_items/flashcards/exercices → items.
---  Un eval est maintenant juste une ligne `results` de plus (item_id null, mid renseigné,
---  score20/dur/seances/items renseignés) ; `eval_id` référence désormais cette même table
---  (auto-référence) — supprimer la ligne eval cascade automatiquement sur les résultats
---  d'exercice encore liés, dans une seule table au lieu de deux.
---  À exécuter après schema_results.sql (qui a créé les tables `results`/`evals` d'origine).
---  Idempotent : si `results_old`/`evals_old` existent déjà (déjà exécuté), ne fait rien.
--- ============================================================
+-- Fusionne evals dans results (kind : qcm, carte, exercice ou eval). Une éval est une ligne sans item_id.
+-- Anciennes tables conservées en results_old et evals_old. S'exécute une fois (sans effet si results_old existe).
+-- À exécuter après schema_results.sql.
 
 do $$
 begin
   if exists (select 1 from information_schema.tables where table_schema='public' and table_name='evals')
      and not exists (select 1 from information_schema.tables where table_schema='public' and table_name='results_old') then
 
+    -- Met de côté les anciennes tables.
     alter table public.results rename to results_old;
     alter table public.evals rename to evals_old;
 
+    -- Nouvelle table results : eval_id pointe vers la ligne eval (suppression en cascade).
     create table public.results (
       user_id    uuid        not null default auth.uid() references auth.users(id) on delete cascade,
       id         uuid        not null default gen_random_uuid(),
@@ -24,16 +19,16 @@ begin
       item_id    uuid,
       eval_id    uuid,
       mid        text,
-      -- QCM (+ n/ok réutilisés par 'eval' : nombre d'exercices / nombre réussis de la session)
+      -- QCM (n et ok servent aussi aux évals : questions posées et réussies)
       n          int,
       ok         int,
       last       boolean,
-      -- Carte (flashcard)
+      -- Carte
       box        int,
       due        timestamptz,
       -- Exercice
       mark       text check (mark in ('ok','redo')),
-      -- Eval (score de session)
+      -- Éval (score de la session)
       score20    numeric,
       dur        int,
       seances    jsonb,
@@ -44,13 +39,14 @@ begin
       foreign key (user_id, eval_id) references public.results(user_id, id) on delete cascade,
       foreign key (user_id, mid) references public.matieres(user_id, id) on delete cascade
     );
+    -- Un seul résultat par item et par utilisateur.
     create unique index results_item_uniq on public.results(user_id, item_id) where item_id is not null;
 
-    -- Les lignes eval gardent leur id d'origine (evals_old.id) : les eval_id déjà posés sur
-    -- results_old restent valides tels quels, aucune remise à jour nécessaire.
+    -- Reprend les évals en gardant leur id : les eval_id déjà posés restent valides.
     insert into public.results (user_id, id, kind, mid, n, ok, score20, dur, seances, items, updated_at)
       select user_id, id, 'eval', mid, n, ok, score20, dur, seances, items, created_at from public.evals_old;
 
+    -- Reprend les résultats des QCM, cartes et exercices.
     insert into public.results (user_id, id, kind, item_id, eval_id, n, ok, last, updated_at)
       select user_id, gen_random_uuid(), 'qcm', item_id, eval_id, n, ok, last, updated_at from public.results_old where kind = 'qcm';
     insert into public.results (user_id, id, kind, item_id, eval_id, box, n, ok, due, updated_at)
@@ -58,6 +54,7 @@ begin
     insert into public.results (user_id, id, kind, item_id, eval_id, mark, updated_at)
       select user_id, gen_random_uuid(), 'exercice', item_id, eval_id, mark, updated_at from public.results_old where kind = 'exercice';
 
+    -- Sécurité et droits, comme pour les autres tables.
     alter table public.results enable row level security;
     create policy "results_select_own" on public.results for select to authenticated using (auth.uid() = user_id);
     create policy "results_insert_own" on public.results for insert to authenticated with check (auth.uid() = user_id);

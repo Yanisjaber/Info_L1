@@ -1,14 +1,12 @@
--- ============================================================
---  Espace de travail par séance : documents déposés (PDF, photos de slides…) et notes
---  personnelles libres, pour les séances sans fiche de cours rédigée (ou en plus de celle-ci).
---  À coller dans SQL Editor (après schema_matieres.sql), puis « Run ».
--- ============================================================
+-- Documents et notes manuscrites déposés par séance, rangés dans le bucket privé "docs". Rejouable.
+-- À exécuter après schema_matieres.sql.
 
--- Bucket de stockage privé (pas d'accès public direct — RLS ci-dessous par utilisateur).
+-- Bucket privé : aucun accès public.
 insert into storage.buckets (id, name, public)
 values ('docs', 'docs', false)
 on conflict (id) do nothing;
 
+-- Un document ou une note par ligne ; le fichier est dans le bucket (colonne path).
 create table if not exists public.seance_docs (
   user_id    uuid        not null default auth.uid() references auth.users(id) on delete cascade,
   id         uuid        not null default gen_random_uuid(),
@@ -22,11 +20,9 @@ create table if not exists public.seance_docs (
   primary key (user_id, id),
   foreign key (user_id, mid) references public.matieres(user_id, id) on delete cascade
 );
+-- Sécurité : accès limité aux lignes de l'utilisateur.
 alter table public.seance_docs enable row level security;
--- Notes manuscrites : données vectorielles (traits rejouables) en plus du PNG aplati stocké dans
--- Storage (le PNG reste la version "aperçu/export" ; `strokes` permet de rouvrir une page pour la
--- modifier trait par trait, sans jamais recharger l'image). Colonnes ajoutées après coup, sans
--- effet si déjà présentes.
+-- Notes manuscrites : traits rejouables (strokes) et fond de page (paper), en plus de l'image PNG.
 alter table public.seance_docs add column if not exists strokes jsonb;
 alter table public.seance_docs add column if not exists paper text;
 
@@ -42,10 +38,8 @@ create policy "seance_docs_delete_own" on public.seance_docs for delete to authe
 revoke all on public.seance_docs from anon;
 grant select, insert, update, delete on public.seance_docs to authenticated;
 
--- Fichiers rangés sous <user_id>/<mid>/<sid>/<nom> dans le bucket "docs" : chacun ne peut
--- voir/déposer/modifier/effacer que ses propres fichiers (premier dossier du chemin = son
--- user_id). La policy update est nécessaire même pour un simple upload avec { upsert: true } :
--- Supabase Storage fait un vrai UPDATE en interne quand l'objet existe déjà.
+-- Chacun n'accède qu'aux fichiers de son dossier <user_id>/… dans le bucket.
+-- La règle update est nécessaire aussi pour un upload avec upsert.
 drop policy if exists "docs_select_own" on storage.objects;
 drop policy if exists "docs_insert_own" on storage.objects;
 drop policy if exists "docs_update_own" on storage.objects;

@@ -1,9 +1,4 @@
--- ============================================================
---  Révisions L1 — schéma Supabase (à coller dans SQL Editor, puis « Run »)
---  Une seule table : ta progression (QCM, cartes, notes…) par utilisateur.
---  La sécurité par ligne (RLS) garantit que chacun ne voit QUE ses lignes,
---  même si la clé « anon » du site est publique.
--- ============================================================
+-- Table de progression (QCM, cartes, notes) : une ligne par utilisateur et par clé.
 
 create table if not exists public.progress (
   user_id    uuid        not null default auth.uid() references auth.users(id) on delete cascade,
@@ -13,6 +8,7 @@ create table if not exists public.progress (
   primary key (user_id, key)
 );
 
+-- Chaque utilisateur ne lit et n'écrit que ses propres lignes (RLS).
 alter table public.progress enable row level security;
 
 drop policy if exists "progress_select_own" on public.progress;
@@ -25,6 +21,6 @@ create policy "progress_insert_own" on public.progress for insert to authenticat
 create policy "progress_update_own" on public.progress for update to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
 create policy "progress_delete_own" on public.progress for delete to authenticated using (auth.uid() = user_id);
 
--- Les utilisateurs non connectés n'ont aucun accès :
+-- Aucun accès pour les visiteurs non connectés.
 revoke all on public.progress from anon;
 grant select, insert, update, delete on public.progress to authenticated;
