@@ -3,7 +3,7 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 const KEY = "l1s1_v1";
 const OWNER_KEY = "l1s1_owner";
-const MAPS = ["read", "notes", "activity", "reponses", "elo", "seanceNotes"];
+const MAPS = ["read", "notes", "activity", "reponses", "elo", "seanceNotes", "ccProg"];
 const listeners = new Set();
 
 function blank() {

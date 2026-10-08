@@ -152,8 +152,13 @@ function ccReadiness(ev) {
   const has = c.qcm.some(inScope) || c.exercices.some(inScope) || c.flashcards.some(inScope);
   if (!has) return null;
   const rating = getElo(ev.matiere, want);
-  return { rating, tier: tierFor(rating) };
+  // Tant que les séances au programme ont un vrai cours rédigé, le % de connaissance (coverage,
+  // simple fraction maîtrisée) est plus lisible que l'Elo (qui mélange coverage et bonus difficile
+  // sur une échelle /1500 pas toujours intuitive) — l'Elo reste affiché en repli sinon.
+  const filled = c.seances.filter((s) => want.has(s.id)).every(seanceHasContent);
+  return { rating, tier: tierFor(rating), pct: Math.round(coverage(ev.matiere, want) * 100), filled };
 }
+const pctCls = (pct) => (pct >= 80 ? "ok" : pct >= 40 ? "wa" : "gr");
 // Empile un point d'historique (au plus un par jour par matière) pour tracer l'évolution dans le temps.
 function snapshotElo(mid) {
   if (!mid) return;
@@ -164,6 +169,21 @@ function snapshotElo(mid) {
   if (last && todayKey(new Date(last.ts)) === todayKey()) last.rating = rating;
   else hist.push({ ts: Date.now(), rating });
   if (hist.length > 120) hist.shift();
+  commit();
+}
+// Même principe que snapshotElo, mais un point par CC dont la séance concernée fait partie du
+// programme — alimente le graphique d'évolution de la page "Se préparer" (voir ccPrepPage).
+function snapshotCcProg(mid, seance) {
+  if (!mid || !seance) return;
+  D.cal.evenements.filter((ev) => ev.matiere === mid && ev.seances?.includes(seance)).forEach((ev) => {
+    const p = Math.round(coverage(mid, new Set(ev.seances)) * 100);
+    if (!state.ccProg[ev.id]) state.ccProg[ev.id] = { history: [] };
+    const hist = state.ccProg[ev.id].history;
+    const last = hist[hist.length - 1];
+    if (last && todayKey(new Date(last.ts)) === todayKey()) last.pct = p;
+    else hist.push({ ts: Date.now(), pct: p });
+    if (hist.length > 120) hist.shift();
+  });
   commit();
 }
 // Petit graphique en aire, en SVG pur (pas de dépendance externe) : points = [{ts, v}].
@@ -182,6 +202,44 @@ function sparklineSvg(points, opts = {}) {
     <path d="${areaD}" fill="var(--acc)" opacity="0.12"></path>
     <path d="${pathD}" fill="none" stroke="var(--acc)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"></path>
     <circle cx="${(pad + (points.length - 1) * stepX).toFixed(1)}" cy="${y(last.v).toFixed(1)}" r="4" fill="var(--acc)"></circle>
+  </svg>`;
+}
+// Graphique d'évolution avec vrais axes : points = [{ts, v}] (% cumulé, croissant dans le temps),
+// courbe pleine reliant chaque vraie mesure, marqueurs + valeur au-dessus de chacun, grille
+// horizontale en pointillés avec repères %, axe des dates en bas. Un segment pointillé mène d'un
+// point de départ synthétique à 0 % (quelques jours avant la première vraie mesure) jusqu'au
+// premier point réel, pour donner un vrai fil de continuité même avec une seule mesure enregistrée
+// — sans jamais faire passer ce segment-là pour une donnée réelle (pointillé + pas de marqueur).
+function lineChartSvg(points, opts = {}) {
+  const w = opts.w || 800, h = opts.h || 260;
+  if (!points.length) return `<div class="empty" style="padding:20px">Pas encore de données.</div>`;
+  const padL = 36, padR = 16, padTop = 28, padBottom = 28;
+  const min = opts.min ?? 0, max = opts.max ?? 100;
+  const plotW = w - padL - padR, plotH = h - padTop - padBottom;
+  const lead = { ts: points[0].ts - 12 * 86400000, v: 0, synthetic: true };
+  const all = [lead, ...points];
+  const x = (i) => padL + (all.length > 1 ? (i / (all.length - 1)) * plotW : plotW / 2);
+  const y = (v) => padTop + plotH - ((v - min) / (max - min)) * plotH;
+  const grid = [0, 25, 50, 75, 100].map((gv) => `
+    <line x1="${padL}" y1="${y(gv).toFixed(1)}" x2="${w - padR}" y2="${y(gv).toFixed(1)}" stroke="var(--line)" stroke-width="1" stroke-dasharray="3,3"></line>
+    <text x="${(padL - 8).toFixed(1)}" y="${(y(gv) + 4).toFixed(1)}" text-anchor="end" font-size="10" fill="var(--muted)">${gv}%</text>`).join("");
+  const dottedD = `M ${x(0).toFixed(1)} ${y(all[0].v).toFixed(1)} L ${x(1).toFixed(1)} ${y(all[1].v).toFixed(1)}`;
+  const solidD = points.map((p, i) => `${i === 0 ? "M" : "L"} ${x(i + 1).toFixed(1)} ${y(p.v).toFixed(1)}`).join(" ");
+  const areaD = `${solidD} L ${x(all.length - 1).toFixed(1)} ${(h - padBottom).toFixed(1)} L ${x(1).toFixed(1)} ${(h - padBottom).toFixed(1)} Z`;
+  const dayLabel = (ts) => new Date(ts).toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
+  const showEvery = Math.max(1, Math.ceil(all.length / 8));
+  const xLabels = all.map((p, i) => (i % showEvery === 0 || i === all.length - 1
+    ? `<text x="${x(i).toFixed(1)}" y="${h - 8}" text-anchor="middle" font-size="10" fill="var(--muted)">${p.synthetic ? "départ" : dayLabel(p.ts)}</text>` : "")).join("");
+  const markers = points.map((p, i) => `
+    <circle cx="${x(i + 1).toFixed(1)}" cy="${y(p.v).toFixed(1)}" r="4" fill="var(--acc)" stroke="var(--surface)" stroke-width="2"><title>${dayLabel(p.ts)} : ${p.v}%</title></circle>
+    <text x="${x(i + 1).toFixed(1)}" y="${(y(p.v) - 11).toFixed(1)}" text-anchor="middle" font-size="11" font-weight="700" fill="var(--text)">${p.v}%</text>`).join("");
+  return `<svg viewBox="0 0 ${w} ${h}" width="100%" height="${h}" preserveAspectRatio="none" style="display:block">
+    ${grid}
+    <path d="${areaD}" fill="var(--acc)" opacity="0.08"></path>
+    <path d="${dottedD}" fill="none" stroke="var(--muted)" stroke-width="2" stroke-dasharray="4,4" stroke-linecap="round"></path>
+    <path d="${solidD}" fill="none" stroke="var(--acc)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"></path>
+    ${markers}
+    ${xLabels}
   </svg>`;
 }
 function eloCardHtml(m) {
@@ -244,6 +302,76 @@ function eloDetail(mid) {
     ${evalPts.length > 1 ? `<h3 style="margin-top:20px">Notes aux évals blanches (/20)</h3><div class="card">${sparklineSvg(evalPts, { w: 800, h: 140, min: 0, max: 20 })}</div>` : ""}
     <h3 style="margin-top:20px">Par séance <span class="tiny muted">(dans l'ordre du cours)</span></h3>
     <div class="card list">${seances.map(({ s, pct }) => `<a class="item" href="#/c/${mid}/${s.id}"><div class="sp"><b>${esc(s.type)} ${s.numero}</b> — ${esc(strip(s.titre))}<div class="bar" style="margin-top:6px"><i style="width:${pct}%;background:${m.couleur}"></i></div></div><span class="tiny muted" style="margin-left:10px">${pct}%</span></a>`).join("") || '<div class="empty">Pas encore de données.</div>'}</div>`,
+  };
+}
+
+// Page "Se préparer" d'un CC : remplace le simple bouton "Éval blanche" de la popup CC par un
+// vrai écran de révision scopé au programme de l'échéance (coverage %, évolution dans le temps via
+// snapshotCcProg, détail par séance avec accès direct QCM/exercices/cartes de chacune).
+function ccPrepPage(ccId) {
+  const ev = D.cal.evenements.find((e) => e.id === ccId);
+  if (!ev) return { html: `<div class="empty">Échéance introuvable.</div>` };
+  const m = M(ev.matiere); if (!m) return { html: `<div class="empty">Matière inconnue.</div>` };
+  const mid = ev.matiere, want = new Set(ev.seances || []), c = C(mid);
+  const seances = c.seances.filter((s) => want.has(s.id));
+  if (!seances.length) {
+    return { html: `<div class="crumbs"><a href="#/cal">Calendrier</a> › Se préparer</div><h1 style="margin:0">${esc(ev.titre)}</h1>
+      <div class="empty" style="margin-top:14px">Aucune séance au programme pour cette échéance — renseigne-les depuis CC &amp; notes → cette échéance → séances.</div>` };
+  }
+  const filled = seances.every(seanceHasContent);
+  // Cœur de la page : pas un pourcentage abstrait mais le vrai reliquat — chaque QCM pas encore
+  // réussi au dernier essai, chaque exercice pas encore "ok", chaque carte pas encore maîtrisée
+  // (box≥4), groupés par séance. "Prêt" = cette liste est vide, pas un seuil arbitraire.
+  const bySeance = seances.map((s) => {
+    const qs = c.qcm.filter((q) => q.seance === s.id), exs = c.exercices.filter((e) => e.seance === s.id), fs = c.flashcards.filter((f) => f.seance === s.id);
+    const remQ = qs.filter((q) => !state.qcm[q.id]?.last);
+    const remE = exs.filter((e) => state.exos[e.id]?.v !== "ok");
+    const remF = fs.filter((f) => !(state.cards[f.id]?.box >= 4));
+    // Charge de travail réelle, pas juste un compte de notions : un QCM (réponse instantanée, pur
+    // par cœur) ne pèse pas comme un exercice (12 à 25 min selon la difficulté) — sans ça, 300 QCM
+    // quasi identiques gonflent le total autant qu'un vrai exercice de 25 min chacun.
+    const remMin = remQ.length * QCM_MINUTES + remE.reduce((a, e) => a + (EXO_MINUTES[e.difficulte] || EXO_MINUTES[1]), 0) + remF.length * CARD_MINUTES;
+    // Durée réelle du cours (créneau EDT lié à cette séance, s'il y en a un — plusieurs possibles
+    // si le cours a été redécoupé) ; 90 min de repli (créneau CM/TD/TP standard) sinon, pour que
+    // l'objectif de révision reste calculable même sur une séance créée à la main sans EDT.
+    const edtMin = D.edt.events.filter((e) => e.sid === s.id && e.m === mid).reduce((a, e) => a + Math.max(0, toMin(e.e) - toMin(e.s)), 0);
+    const courseMin = edtMin || 90;
+    return { s, total: qs.length + exs.length + fs.length, remQ, remE, remF, remN: remQ.length + remE.length + remF.length, remMin, courseMin };
+  });
+  const totalItems = bySeance.reduce((a, x) => a + x.total, 0);
+  const remainingN = bySeance.reduce((a, x) => a + x.remN, 0);
+  const remainingMin = bySeance.reduce((a, x) => a + x.remMin, 0);
+  // Règle de révision classique : 1h de cours ≈ 1h30 de travail (QCM+exercices+cartes) pour bien
+  // maîtriser une séance — sert de repère pour juger si la charge restante est "normale" ou pas,
+  // plutôt que de laisser un chiffre d'heures sans rien pour le comparer.
+  const targetMin = bySeance.reduce((a, x) => a + x.courseMin, 0) * 1.5;
+  const covPct = totalItems ? Math.round(((totalItems - remainingN) / totalItems) * 100) : 0;
+  const ready = totalItems > 0 && remainingN === 0;
+  const hist = (state.ccProg[ev.id]?.history || []).map((h) => ({ ts: h.ts, v: h.pct }));
+  const histDelta = hist.length ? hist[hist.length - 1].v - hist[0].v : 0;
+  const checklist = bySeance.filter((x) => x.remN > 0).map(({ s, remQ, remE, remF, remN, remMin }, i) => `
+    <details class="card" style="margin:10px 0" ${i < 2 ? "open" : ""}>
+      <summary style="cursor:pointer"><b>${esc(s.type)} ${s.numero}</b> — ${esc(strip(s.titre))} <span class="tiny muted">${plural(remN, "notion")} restante${remN > 1 ? "s" : ""} · ~${fmtDuration(remMin)}</span></summary>
+      <div class="list" style="margin-top:6px">
+        ${remQ.map((q) => `<a class="item" href="#/qcm?m=${mid}&s=${s.id}"><span class="chip gr">QCM</span><span class="sp">${q.q}</span></a>`).join("")}
+        ${remE.map((e) => `<a class="item" href="#/m/${mid}/exos?s=${s.id}"><span class="chip gr">Exo</span><span class="sp">${esc(e.titre)}</span></a>`).join("")}
+        ${remF.length ? `<a class="item" href="#/cards?m=${mid}&s=${s.id}"><span class="chip gr">Cartes</span><span class="sp">${plural(remF.length, "carte")} pas encore maîtrisée${remF.length > 1 ? "s" : ""}</span></a>` : ""}
+      </div>
+    </details>`).join("");
+  return {
+    html: `<div class="crumbs"><a href="#/cal">Calendrier</a> › Se préparer</div>
+    <h1 style="margin:0;display:flex;align-items:center;gap:10px"><i class="dot" style="--c:${m.couleur}"></i>${esc(ev.titre)}</h1>
+    <div class="row small muted" style="gap:6px;flex-wrap:wrap;margin-top:4px">${esc(m.nom)} · ${esc(fmtLong(ev.date))}<span class="chip gr">${esc(fmtPoids(ev.poids))}</span><span class="chip ${daysUntil(ev.date) < 0 ? "gr" : "ok"}">${cd(ev)}</span></div>
+
+    ${ready
+      ? `<div class="card" style="margin:16px 0;border-left:4px solid var(--ok);display:flex;align-items:center;gap:16px"><div style="font-size:2.2rem">🎯</div><div><b style="font-size:1.1rem">Prêt pour l'épreuve.</b><div class="small muted">Tout le programme est maîtrisé — vise le 20/20.</div></div><div class="sp"></div><a class="btn pri" href="#/eval?m=${mid}&cc=${esc(ev.id)}">${icon("clock")}Passer l'éval blanche</a></div>`
+      : `<div class="card row" style="gap:22px;margin:16px 0;align-items:center;flex-wrap:wrap">${ring(covPct, m.couleur)}<div><div style="font-size:1.6rem;font-weight:800">${covPct}% prêt</div><div class="small muted">${plural(remainingN, "notion")} encore à maîtriser avant d'être prêt pour l'épreuve.</div></div><div class="sp"></div><div style="text-align:right"><div class="tiny muted">Objectif <span title="Règle classique : 1h de cours ≈ 1h30 de révision pour bien la maîtriser">(1h cours = 1h30 app)</span></div><div style="font-size:1.3rem;font-weight:700">${fmtDuration(targetMin)}</div></div><div style="text-align:right"><div class="tiny muted">Il reste</div><div style="font-size:1.3rem;font-weight:700;color:${remainingMin > targetMin ? "var(--ko)" : "var(--text)"}">${fmtDuration(remainingMin)}</div></div></div>`}
+    ${!filled ? `<div class="note" style="margin-bottom:14px">Certaines séances au programme n'ont pas encore de cours rédigé — le reliquat ne porte que sur les QCM/cartes/exercices déjà en place pour elles.</div>` : ""}
+
+    ${checklist ? `<h3>Ce qu'il te reste</h3>${checklist}` : ""}
+
+    <h3 style="margin-top:20px">Évolution${hist.length > 1 ? ` <span class="small" style="font-weight:700;color:var(--ok)">${histDelta >= 0 ? "+" : ""}${histDelta}%</span><span class="tiny muted"> depuis le début du suivi</span>` : ""}</h3>
+    <div class="card">${hist.length ? lineChartSvg(hist, { w: 800, h: 260 }) : `<div class="empty" style="padding:20px">Entraîne-toi sur ce programme pour voir ta progression.</div>`}</div>`,
   };
 }
 
@@ -349,6 +477,7 @@ async function route() {
     else if (p[0] === "notes") ({ html, after } = notes());
     else if (p[0] === "elo" && !p[1]) ({ html, after } = eloPage());
     else if (p[0] === "elo" && p[1]) ({ html, after } = eloDetail(p[1]));
+    else if (p[0] === "ccprep" && p[1]) ({ html, after } = ccPrepPage(p[1]));
     else if (p[0] === "mm" && p[1] && !p[2]) ({ html, after } = mmSeances(p[1]));
     else if (p[0] === "mm" && p[1] && p[2]) ({ html, after } = mmSeanceForm(p[1], p[2]));
     else if (p[0] === "aq" && p[1] && !p[2]) ({ html, after } = qcmAdminList(p[1]));
@@ -1132,17 +1261,27 @@ async function cours(mid, sid) {
 // parcourir. Trois niveaux à la place : des cartes de séance (une par CM/TD/TP), une liste de
 // titres repliés en cliquant une carte, et un exercice qui ne se déplie (énoncé + zone de réponse)
 // qu'en cliquant son titre — `openExoId` retient lequel, un seul ouvert à la fois.
+// Tri : officiels d'abord (reflètent le vrai sujet, priorité de révision), puis bonus ; au sein de
+// chaque groupe, par ordre d'apparition dans le cours — les titres officiels suivent tous le format
+// "Exercice N - ..." du document source, donc N == la chronologie réelle du TD/TP/CM.
+function exoNum(e) {
+  const m = /exercice\s+(\d+)/i.exec(e.titre || "");
+  return m ? +m[1] : Infinity;
+}
+function sortExos(list) {
+  return [...list].sort((a, b) => (b.officiel - a.officiel) || (exoNum(a) - exoNum(b)) || a.titre.localeCompare(b.titre));
+}
 let openExoId = null;
 function exoCardHtml(e, mid, open) {
   const st = state.exos[e.id]?.v, s = seanceOf(mid, e.seance);
   const isCode = e.type === "code", isTexte = e.type === "texte", isAuto = isCode || isTexte;
-  const head = `<div class="row" data-a="toggleexo" data-id="${e.id}" style="cursor:pointer"><span class="chip gr">${s.type} ${s.numero}</span><span class="chip" title="difficulté">${"★".repeat(e.difficulte)}${"·".repeat(3 - e.difficulte)}</span>${isCode ? '<span class="chip gr">code Python</span>' : isTexte ? '<span class="chip gr">réponse courte</span>' : ""}<div class="sp"></div>${st === "ok" ? '<span class="chip ok">réussi</span>' : st === "redo" ? '<span class="chip wa">à refaire</span>' : ""}</div>
+  const head = `<div class="row" data-a="toggleexo" data-id="${e.id}" style="cursor:pointer"><span class="chip gr">${s.type} ${s.numero}</span>${e.officiel ? '<span class="chip" title="Exercice extrait du sujet de TD fourni">Officiel</span>' : ""}<span class="chip" title="difficulté">${"★".repeat(e.difficulte)}${"·".repeat(3 - e.difficulte)}</span>${isCode ? '<span class="chip gr">code Python</span>' : isTexte ? '<span class="chip gr">réponse courte</span>' : ""}<div class="sp"></div>${st === "ok" ? '<span class="chip ok">réussi</span>' : st === "redo" ? '<span class="chip wa">à refaire</span>' : ""}</div>
     <h3 data-a="toggleexo" data-id="${e.id}" style="margin:.6em 0 0;cursor:pointer">${e.titre}</h3>`;
   if (!open) return `<div class="card" style="margin:14px 0" id="${e.id}">${head}</div>`;
   return `<div class="card" style="margin:14px 0" id="${e.id}">${head}<div class="prose" style="margin-top:.3em">${e.enonce}</div>
     ${e.indice ? `<details><summary>Indice</summary><div class="prose">${e.indice}</div></details>` : ""}
     ${isCode ? codeBlockHtml(e) : isTexte ? texteBlockHtml(e, true) : ""}
-    <details><summary>Voir le corrigé</summary><div class="prose">${e.corrige}</div>${isAuto ? "" : `<div class="row" style="margin-top:12px"><span class="small muted">Alors ?</span><button class="btn sm" data-a="exo" data-id="${e.id}" data-v="ok">Je l'avais</button><button class="btn sm" data-a="exo" data-id="${e.id}" data-v="redo">À refaire</button></div>`}</details></div>`;
+    <details><summary>Voir le corrigé</summary>${expectedAnswersHtml(e)}<div class="prose">${e.corrige}</div>${isAuto ? "" : `<div class="row" style="margin-top:12px"><span class="small muted">Alors ?</span><button class="btn sm" data-a="exo" data-id="${e.id}" data-v="ok">Je l'avais</button><button class="btn sm" data-a="exo" data-id="${e.id}" data-v="redo">À refaire</button></div>`}</details></div>`;
 }
 function seanceExoCardHtml(s, L, mid) {
   const ok = L.filter((e) => state.exos[e.id]?.v === "ok").length;
@@ -1157,7 +1296,7 @@ function exosHtml(mid, sid0) {
   const okCount = (list) => list.filter((e) => state.exos[e.id]?.v === "ok").length;
   if (sid) {
     const s = c.seances.find((x) => x.id === sid);
-    const L = c.exercices.filter((e) => e.seance === sid);
+    const L = sortExos(c.exercices.filter((e) => e.seance === sid));
     return `<div class="row" style="align-items:center"><a class="btn sm ghost" href="#/m/${mid}/exos">${icon("back")}Toutes les séances</a><div class="sp"></div><span class="muted small">${L.length} exercices · ${okCount(L)} réussis</span></div>
     <h2 style="margin:16px 0 2px">${s ? `${esc(s.type)} ${s.numero}` : ""}</h2>${s ? `<p class="tiny muted" style="margin:0 0 12px">${esc(strip(s.titre))}</p>` : ""}
     ${L.map((e) => exoCardHtml(e, mid, openExoId === e.id)).join("") || '<div class="empty">Aucun exercice pour cette séance.</div>'}`;
@@ -1180,7 +1319,8 @@ function codeBlockHtml(e) {
 }
 // Normalise une réponse texte pour une comparaison tolérante (casse, accents, espaces).
 function normText(s) {
-  return String(s ?? "").trim().toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/\s+/g, " ");
+  // Les espaces autour de la ponctuation ne comptent pas : « [1,3,5] » = « [1, 3, 5] », « f(a, b) » = « f(a,b) ».
+  return String(s ?? "").trim().toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/\s+/g, " ").replace(/\s*([,;:()\[\]{}])\s*/g, "$1");
 }
 function toNum(s) {
   const t = String(s ?? "").trim().replace(",", ".");
@@ -1199,6 +1339,14 @@ function checkTextAnswer(input, expected) {
 // l'énoncé) — `reponse` (singulier) est l'ancien format à une seule réponse, conservé en repli pour
 // les exercices jamais réédités depuis, afin de ne rien casser sans migration de données.
 const expectedAnswers = (e) => (e.reponses?.length ? e.reponses : e.reponse ? [e.reponse] : []);
+// Réponses attendues affichées en tête du corrigé (exercices "texte") : le corrigé rédigé ne les
+// redonne pas toujours, alors qu'elles servent déjà à la correction auto. Formes multiples « a|b » → « a ou b ».
+function expectedAnswersHtml(e) {
+  if (e.type !== "texte") return "";
+  const a = expectedAnswers(e); if (!a.length) return "";
+  const fmt = (r) => String(r).split("|").map((x) => `<code>${esc(x.trim())}</code>`).join(" ou ");
+  return `<div class="prose"><b>${a.length > 1 ? "Réponses attendues" : "Réponse attendue"}</b>${a.length > 1 ? `<ol>${a.map((r) => `<li>${fmt(r)}</li>`).join("")}</ol>` : ` : ${fmt(a[0])}`}</div>`;
+}
 // Les chips ✓/✗ par sous-réponse vivent dans #txres (comme l'unique résultat de l'ancien format à
 // une réponse), pas à côté de chaque champ : "Vérifier" ne patch que cette div en place (voir
 // checktexte plus bas), jamais tout le bloc, donc tout ce qui doit changer après coup doit y être.
@@ -1234,7 +1382,7 @@ async function autoMark(id, ok) {
   state.exos[id] = { v: mark, ts: Date.now() };
   await saveResult("exercice", id, { v: mark }, it ? EV.id : null);
   bump(2, "exercice");
-  if (ex) snapshotElo(ex.mid);
+  if (ex) { snapshotElo(ex.mid); snapshotCcProg(ex.mid, ex.seance); }
   if (it) {
     const idx = EV.items.indexOf(it);
     const card = document.getElementById(`ev-${idx}`);
@@ -1378,6 +1526,19 @@ function balanced(pool, n) {
 // Temps moyen estimé par exercice selon le niveau choisi, pour déduire automatiquement
 // combien d'exercices composent l'épreuve à partir de la seule durée voulue.
 const EXO_MINUTES = { 1: 12, 2: 18, 3: 25 };
+// QCM/cartes : réponse quasi instantanée (pur par cœur, voir la règle QCM dans le contenu généré),
+// bien plus courts qu'un exercice — sert à estimer la charge de travail réelle sur "Se préparer"
+// (ccPrepPage) plutôt que de compter des notions sans donner d'idée du temps que ça représente.
+const QCM_MINUTES = 0.5, CARD_MINUTES = 0.4;
+function fmtDuration(mins) {
+  // Arrondi au quart d'heure : les minutes servant au calcul (0,5 min par QCM, repli de 90 min sans
+  // créneau EDT…) sont déjà des estimations grossières — afficher "28 h 53" prétendrait à une
+  // précision à la minute près que le calcul n'a pas vraiment.
+  const m = Math.round(mins / 15) * 15;
+  if (m < 1) return "moins d'1 min";
+  if (m < 60) return `${m} min`;
+  return `${Math.floor(m / 60)} h ${String(m % 60).padStart(2, "0")}`;
+}
 function poolE({ mids, niv, seances = null }) {
   // Priorise les exercices du niveau demandé ; complète avec les niveaux les plus proches si le
   // cours n'en a pas assez à ce niveau précis pour remplir la durée choisie. `seances` restreint en
@@ -1394,11 +1555,11 @@ function matCardsHtmlSingle(mid) {
 }
 // Options du menu "Portée" : un CC n'apparaît que s'il a des séances au programme renseignées
 // (sinon rien à cibler dessus) — même source que ccReadiness.
-function ccOptionsHtml(mid) {
+function ccOptionsHtml(mid, selId = "") {
   const ccs = D.cal.evenements.filter((e) => e.matiere === mid && e.seances?.length);
-  return `<label><input type="radio" name="cc" value="" checked><span>Toute la matière</span></label>${ccs.map((c) => `<label><input type="radio" name="cc" value="${esc(c.id)}"><span>${esc(c.titre)}</span></label>`).join("")}`;
+  return `<label><input type="radio" name="cc" value="" ${selId ? "" : "checked"}><span>Toute la matière</span></label>${ccs.map((c) => `<label><input type="radio" name="cc" value="${esc(c.id)}" ${c.id === selId ? "checked" : ""}><span>${esc(c.titre)}</span></label>`).join("")}`;
 }
-function evalTicketHtml(mid, mins) {
+function evalTicketHtml(mid, mins, ccSel = "") {
   return `<div class="tb" id="etk">
       <button type="button" class="tbbtn" data-edit="dur"><span class="ic">⏱️</span><span class="v" id="tk-dur"></span>
         <div class="pop" data-panel="dur"><div class="field" style="min-width:150px;gap:4px"><label class="tiny muted">Durée (minutes)</label><input type="number" name="t" min="10" max="180" step="5" value="${mins}"></div></div>
@@ -1411,7 +1572,7 @@ function evalTicketHtml(mid, mins) {
         </div></div>
       </button>
       <button type="button" class="tbbtn" data-edit="cc"><span class="ic">🎯</span>Portée : <span class="v" id="tk-cc"></span>
-        <div class="pop" data-panel="cc"><div class="poplist" id="cc-list">${ccOptionsHtml(mid)}</div></div>
+        <div class="pop" data-panel="cc"><div class="poplist" id="cc-list">${ccOptionsHtml(mid, ccSel)}</div></div>
       </button>
     </div>`;
 }
@@ -1419,12 +1580,13 @@ function evalSetup(q) {
   const mid = q.m && M(q.m) ? q.m : (IDS[0] || D.matieres[0]?.id);
   if (!mid) return { html: `<h1>Éval blanche</h1><div class="empty">Ajoute d'abord une matière avec des exercices.</div>` };
   const m = M(mid);
+  const ccSel = q.cc && D.cal.evenements.some((e) => e.id === q.cc && e.matiere === mid) ? q.cc : "";
   const last = Object.values(state.evals).sort((a, b) => b.ts - a.ts).slice(0, 6);
   return {
     html: `<h1>Éval blanche</h1><p class="muted">Choisis une durée et un niveau, ou cible directement un CC dont tu as renseigné les séances au programme (CC & notes → l'échéance → séances). L'app compose un sujet d'exercices à réponse rédigée qui tient dans ce temps, sans correction avant la fin.</p>
     <form class="card" id="ef" style="display:flex;flex-direction:column;gap:16px">
       <div class="field"><label>Matière</label>${matCardsHtmlSingle(mid)}</div>
-      ${evalTicketHtml(mid, m.eval.minutes)}
+      ${evalTicketHtml(mid, m.eval.minutes, ccSel)}
       <div class="row"><button class="btn pri" type="submit">Démarrer l'épreuve</button><span class="muted small" id="epc"></span></div></form>
     ${last.length ? `<h3>Historique</h3><div class="card list">${last.map((e) => `<div class="item"><span class="badge">${fmt1(e.score20)}</span><div class="sp"><b>${esc(M(e.mid)?.court || e.mid)}</b> — ${fmt1(e.score20)}/20 (${e.ok}/${e.n})<div class="tiny muted">${new Date(e.ts).toLocaleString("fr-FR", { dateStyle: "medium", timeStyle: "short" })}</div></div></div>`).join("")}</div>` : ""}`,
     after: (el) => {
@@ -1518,7 +1680,7 @@ async function finishEval(timeout) {
       setEntry("reponses", e.id, { values, oks, ok });
       it.mark = ok ? "ok" : "redo";
     }
-    if (it.mark) { state.exos[e.id] = { v: it.mark, ts: Date.now() }; await saveResult("exercice", e.id, { v: it.mark }, EV.id); snapshotElo(e.mid); }
+    if (it.mark) { state.exos[e.id] = { v: it.mark, ts: Date.now() }; await saveResult("exercice", e.id, { v: it.mark }, EV.id); snapshotElo(e.mid); snapshotCcProg(e.mid, e.seance); }
   }
   await saveEvalRecord();
   EV.grading = false;
@@ -1574,7 +1736,7 @@ function evalReviewPage(id) {
       <h3 style="margin:.6em 0 .3em">${esc(e.titre)}</h3><div class="prose">${e.enonce}</div>
       ${e.type === "code" ? `<div class="field" style="margin-top:10px"><label>Ta réponse</label><pre style="${TA_STYLE};white-space:pre-wrap">${esc(snap.code || "(rien de soumis)")}</pre></div>${snap.results ? codeResultHtml(snap.results) : ""}`
         : e.type === "texte" ? `<div class="field" style="margin-top:10px">${texteReviewHtml(e, snap)}</div>` : ""}
-      <details style="margin-top:10px" open><summary>Voir le corrigé</summary><div class="prose" style="margin-top:8px">${e.corrige}</div></details>
+      <details style="margin-top:10px" open><summary>Voir le corrigé</summary><div style="margin-top:8px">${expectedAnswersHtml(e)}</div><div class="prose" style="margin-top:8px">${e.corrige}</div></details>
       </div>`;
     }).join("") : `<div class="empty">Le détail de cette copie n'a pas été enregistré (essai antérieur à cette fonctionnalité).</div>`}`,
   };
@@ -1589,7 +1751,7 @@ function evalResult() {
       <h3 style="margin:.6em 0 .3em">${esc(e.titre)}</h3><div class="prose">${e.enonce}</div>
       ${e.type === "code" ? codeBlockHtml(e) : e.type === "texte" ? texteBlockHtml(e, true) : ""}
       ${e.indice ? `<details style="margin-top:10px"><summary>Indice</summary><div class="prose" style="margin-top:8px">${e.indice}</div></details>` : ""}
-      <details style="margin-top:10px" ${it.mark ? "open" : ""}><summary>Voir le corrigé</summary><div class="prose" style="margin-top:8px">${e.corrige}</div></details>
+      <details style="margin-top:10px" ${it.mark ? "open" : ""}><summary>Voir le corrigé</summary><div style="margin-top:8px">${expectedAnswersHtml(e)}</div><div class="prose" style="margin-top:8px">${e.corrige}</div></details>
       ${isAuto ? "" : `<div class="row" style="margin-top:12px"><button class="btn sm ${it.mark === "ok" ? "pri" : ""}" data-a="emark" data-i="${k}" data-v="ok">${icon("check")}Réussi</button><button class="btn sm ${it.mark === "redo" ? "pri" : ""}" data-a="emark" data-i="${k}" data-v="redo">À refaire</button></div>`}
     </div>`; }).join("")}`,
   };
@@ -1613,6 +1775,7 @@ async function recordQ(x) {
   state.qcm[x.q.id] = entry;
   await saveResult("qcm", x.q.id, entry);
   snapshotElo(x.q.mid);
+  snapshotCcProg(x.q.mid, x.q.seance);
   bump(1, "qcm");
 }
 function quizView() {
@@ -2155,11 +2318,11 @@ function openCCInfoModal(ev) {
     <div class="row nowrap" style="margin-bottom:4px"><i class="dot" style="--c:${m.couleur}"></i><b>${esc(m.nom)}</b><div class="sp"></div><button type="button" class="btn sm ghost" data-a="cancelcc" aria-label="Fermer">✕</button></div>
     <h3 style="margin:4px 0 2px">${esc(ev.titre)}</h3>
     <div class="row small muted" style="gap:6px;flex-wrap:wrap">${esc(fmtLong(ev.date))}<span class="chip gr">${esc(fmtPoids(ev.poids))}</span>${ev.type === "2e" ? '<span class="chip wa">2e chance</span>' : ""}${ev.statut === "provisoire" ? '<span class="chip wa">date provisoire</span>' : ""}<span class="chip ${daysUntil(ev.date) < 0 ? "gr" : "ok"}">${cd(ev)}</span>${daysUntil(ev.date) < 0 && ccNote(ev) ? ccNoteChip(ccNote(ev)) : ""}</div>
-    ${rd ? `<div class="row small" style="margin-top:8px;gap:6px"><span class="muted">Préparation (${ev.seances.length} séance${ev.seances.length > 1 ? "s" : ""})</span><span class="chip ${rd.tier.cls}">${rd.rating} · ${esc(rd.tier.name)}</span></div>` : ""}
+    ${rd ? `<div class="row small" style="margin-top:8px;gap:6px"><span class="muted">Préparation (${ev.seances.length} séance${ev.seances.length > 1 ? "s" : ""})</span><span class="chip ${rd.filled ? pctCls(rd.pct) : rd.tier.cls}">${rd.filled ? `${rd.pct}% connu` : `${rd.rating} · ${esc(rd.tier.name)}`}</span></div>` : ""}
     ${ev.detail ? `<p class="small" style="margin-top:10px">${esc(ev.detail)}</p>` : ""}
     ${sc ? `<a class="btn sm ghost" style="margin-top:6px" href="#/m/${ev.matiere}">${icon("book")}Voir la matière</a>` : ""}
     <div class="row" style="margin-top:14px">
-      <a class="btn sm pri" href="#/eval?m=${ev.matiere}">Éval blanche</a>
+      <a class="btn sm pri" href="#/ccprep/${esc(ev.id)}">${icon("flag")}Se préparer</a>
       <a class="btn sm" href="#/qcm?m=${ev.matiere}">QCM</a>
       <a class="btn sm" href="#/m/${ev.matiere}/cc">Fiche CC</a>
       <div class="sp"></div>
@@ -2212,7 +2375,7 @@ function calendar(q) {
   const monthName = new Intl.DateTimeFormat("fr-FR", { month: "long", year: "numeric" }).format(calMonth);
   const upcoming = D.cal.evenements.filter((e) => daysUntil(e.date) >= 0);
   const past = D.cal.evenements.filter((e) => daysUntil(e.date) < 0);
-  const line = (e) => { const sc = ccSeance(e), nt = daysUntil(e.date) < 0 ? ccNote(e) : null, rd = !nt ? ccReadiness(e) : null; return `<div class="item cc-line" style="--c:${M(e.matiere).couleur}"><span class="badge" style="background:color-mix(in srgb,${M(e.matiere).couleur} 15%,var(--surface));color:${M(e.matiere).couleur};font-size:.66rem">${fmtDate(e.date).split(" ").slice(1).join(" ")}</span><div class="sp"><b>${esc(M(e.matiere).court)}</b> — ${esc(e.titre)} <span class="chip gr">${esc(fmtPoids(e.poids))}</span>${e.type === "2e" ? ' <span class="chip wa">2e chance</span>' : ""}${e.statut && e.poids !== "à confirmer" ? ` <span class="chip wa">${e.statut === "provisoire" ? "date provisoire" : "à confirmer"}</span>` : ""}${rd ? ` <span class="chip ${rd.tier.cls}" title="Préparation sur les séances au programme">${rd.rating} Elo</span>` : ""}<div class="tiny muted">${fmtLong(e.date)} · ${esc(e.detail)}</div></div>${nt ? ccNoteChip(nt) : `<span class="count small muted">${daysUntil(e.date) >= 0 ? "J-" + daysUntil(e.date) : "passé"}</span>`}${sc ? `<a class="btn sm ghost" href="#/m/${e.matiere}" aria-label="Voir la matière">${icon("book")}</a>` : ""}<button type="button" class="btn sm ghost" data-a="editcc" data-id="${esc(e.id)}" aria-label="Modifier ${esc(e.titre)}">${icon("edit")}</button><button type="button" class="btn sm ghost" data-a="delcc" data-id="${esc(e.id)}" aria-label="Supprimer ${esc(e.titre)}">✕</button></div>`; };
+  const line = (e) => { const sc = ccSeance(e), nt = daysUntil(e.date) < 0 ? ccNote(e) : null, rd = !nt ? ccReadiness(e) : null; return `<div class="item cc-line" style="--c:${M(e.matiere).couleur}"><span class="badge" style="background:color-mix(in srgb,${M(e.matiere).couleur} 15%,var(--surface));color:${M(e.matiere).couleur};font-size:.66rem">${fmtDate(e.date).split(" ").slice(1).join(" ")}</span><div class="sp"><b>${esc(M(e.matiere).court)}</b> — ${esc(e.titre)} <span class="chip gr">${esc(fmtPoids(e.poids))}</span>${e.type === "2e" ? ' <span class="chip wa">2e chance</span>' : ""}${e.statut && e.poids !== "à confirmer" ? ` <span class="chip wa">${e.statut === "provisoire" ? "date provisoire" : "à confirmer"}</span>` : ""}${rd ? ` <span class="chip ${rd.filled ? pctCls(rd.pct) : rd.tier.cls}" title="Préparation sur les séances au programme">${rd.filled ? `${rd.pct}% connu` : `${rd.rating} Elo`}</span>` : ""}<div class="tiny muted">${fmtLong(e.date)} · ${esc(e.detail)}</div></div>${nt ? ccNoteChip(nt) : `<span class="count small muted">${daysUntil(e.date) >= 0 ? "J-" + daysUntil(e.date) : "passé"}</span>`}${sc ? `<a class="btn sm ghost" href="#/m/${e.matiere}" aria-label="Voir la matière">${icon("book")}</a>` : ""}<button type="button" class="btn sm ghost" data-a="editcc" data-id="${esc(e.id)}" aria-label="Modifier ${esc(e.titre)}">${icon("edit")}</button><button type="button" class="btn sm ghost" data-a="delcc" data-id="${esc(e.id)}" aria-label="Supprimer ${esc(e.titre)}">✕</button></div>`; };
   return {
     html: `<h1>Calendrier</h1>
     ${ccSuggestionsHtml()}
@@ -2530,7 +2693,7 @@ function bindExoForm(mid, id) {
       if (!String(fd.get("titre") || "").trim()) return toast("Le titre est requis");
       try {
         const reponses = String(fd.get("reponses") || "").split("\n").map((s) => s.trim()).filter(Boolean);
-        await saveItem("exercice", { id: id === "new" ? null : id, matiere: mid, seance: fd.get("seance") || null, titre: fd.get("titre"), difficulte: +fd.get("difficulte") || 1, enonce: fd.get("enonce"), indice: fd.get("indice"), corrige: fd.get("corrige"), type: fd.get("type") || "texte", codeStarter: fd.get("code_starter"), codeTests: fd.get("code_tests"), reponse: "", reponses });
+        await saveItem("exercice", { id: id === "new" ? null : id, matiere: mid, seance: fd.get("seance") || null, titre: fd.get("titre"), difficulte: +fd.get("difficulte") || 1, enonce: fd.get("enonce"), indice: fd.get("indice"), corrige: fd.get("corrige"), type: fd.get("type") || "texte", codeStarter: fd.get("code_starter"), codeTests: fd.get("code_tests"), reponse: "", reponses, officiel: fd.get("officiel") === "on" });
         toast("Exercice enregistré");
         await loadData();
         location.hash = `#/ax/${mid}`;
@@ -2543,7 +2706,7 @@ function exoAdminForm(mid, id) {
   const isNew = id === "new";
   const it = isNew ? null : C(mid).exercices.find((x) => x.id === id);
   if (!isNew && !it) return { html: `<div class="empty">Exercice introuvable.</div>` };
-  const v = it || { seance: "", titre: "", difficulte: 1, enonce: "", indice: "", corrige: "", type: "texte", codeStarter: "", codeTests: "", reponse: "", reponses: [] };
+  const v = it || { seance: "", titre: "", difficulte: 1, enonce: "", indice: "", corrige: "", type: "texte", codeStarter: "", codeTests: "", reponse: "", reponses: [], officiel: false };
   return { html: `<div class="crumbs"><a href="#/compte">Paramètres</a> › <a href="#/ax/${mid}">${esc(m.court)} — Exercices</a> › ${isNew ? "Nouveau" : "Modifier"}</div>
     <h1 style="margin:0">${isNew ? "Nouvel exercice" : "Modifier l'exercice"}</h1>
     <p class="small muted">Chaque exercice est corrigé automatiquement par l'app : une réponse courte comparée au texte attendu, ou du code Python vérifié par des tests.</p>
@@ -2554,6 +2717,7 @@ function exoAdminForm(mid, id) {
         <div class="field"><label>Difficulté</label><input type="number" name="difficulte" min="1" max="3" value="${v.difficulte}"></div>
         <div class="field"><label>Type</label><select name="type">${v.type === "redaction" ? '<option value="redaction" selected disabled>Rédaction (ancien format, à convertir)</option>' : ""}<option value="texte" ${v.type === "texte" ? "selected" : ""}>Zone de texte (réponse courte, corrigée auto)</option><option value="code" ${v.type === "code" ? "selected" : ""}>Code Python (corrigé auto par des tests)</option></select></div>
       </div>
+      <div class="field" style="margin-top:10px"><label><input type="checkbox" name="officiel" ${v.officiel ? "checked" : ""}> Officiel — énoncé réellement extrait d'un sujet de TD fourni (pas un exercice ajouté en plus)</label></div>
       <div class="field" style="margin-top:10px"><label>Énoncé — HTML</label><textarea name="enonce" rows="8" style="${TA_STYLE}">${esc(v.enonce)}</textarea></div>
       <div class="field" style="margin-top:10px"><label>Indice (optionnel) — HTML</label><textarea name="indice" rows="3" style="${TA_STYLE}">${esc(v.indice)}</textarea></div>
       <div class="field" style="margin-top:10px"><label>Corrigé — HTML (explication, affichée après correction)</label><textarea name="corrige" rows="8" style="${TA_STYLE}">${esc(v.corrige)}</textarea></div>
@@ -2711,6 +2875,7 @@ document.addEventListener("click", async (e) => {
     state.exos[it.e.id] = { v: it.mark, ts: Date.now() };
     await saveResult("exercice", it.e.id, { v: it.mark }, EV.id);
     snapshotElo(it.e.mid);
+    snapshotCcProg(it.e.mid, it.e.seance);
     rerenderKeep();
   }
   else if (a === "runcode") {
@@ -2771,7 +2936,15 @@ document.addEventListener("click", async (e) => {
   }
   else if (a === "creerseance") {
     const mid = t.dataset.m, d = t.dataset.d, want = EDT_TYPE_MAP[t.dataset.t];
-    let s = C(mid).seances.find((x) => x.type === want && x.date === d);
+    const edtEv = D.edt.events.find((x) => x.id === t.dataset.id);
+    // Deux créneaux du même type peuvent tomber le même jour (ex. deux CM à la suite) : se contenter
+    // de "la première séance de ce type à cette date" les faisait tous les deux retomber sur la même
+    // séance, indétachables l'un de l'autre (bug trouvé et corrigé le 2026-10-07). Même ordre
+    // temps → numero que seanceFor() : on choisit, parmi les séances déjà créées ce jour-là pour ce
+    // type, celle à la position du créneau cliqué dans l'ordre chronologique des créneaux du jour.
+    const cands = C(mid).seances.filter((x) => x.type === want && x.date === d).sort((a, b) => a.numero - b.numero);
+    const sameDay = D.edt.events.filter((x) => x.d === d && x.m === mid && x.t === t.dataset.t).sort((a, b) => toMin(a.s) - toMin(b.s));
+    let s = cands[sameDay.findIndex((x) => x.id === edtEv?.id)];
     try {
       if (!s) {
         const sameType = C(mid).seances.filter((x) => x.type === want);
@@ -2782,7 +2955,6 @@ document.addEventListener("click", async (e) => {
       }
       // Pose le lien explicite EDT → séance sur le créneau d'origine, pour que seanceFor()
       // n'ait plus besoin de deviner par date+type+matière.
-      const edtEv = D.edt.events.find((x) => x.id === t.dataset.id);
       if (edtEv && edtEv.sid !== s.id) await saveEdtEvent({ ...edtEv, sid: s.id });
       await loadData();
       location.hash = `#/c/${mid}/${s.id}`;

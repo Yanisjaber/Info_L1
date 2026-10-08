@@ -155,7 +155,7 @@ export async function deleteSeanceDoc(doc) {
 const KIND_FIELDS = {
   qcm: (item) => ({ type: item.type || "unique", q: item.q || "", choix: item.choix || [], rep: item.rep || [], expl: item.expl || "", niveau: item.niveau || 1 }),
   carte: (item) => ({ recto: item.recto || "", verso: item.verso || "" }),
-  exercice: (item) => ({ titre: item.titre || "", difficulte: item.difficulte || 1, enonce: item.enonce || "", indice: item.indice || "", corrige: item.corrige || "", type: item.type || "redaction", code_starter: item.codeStarter || "", code_tests: item.codeTests || "", reponse: item.reponse || "", reponses: item.reponses || [] }),
+  exercice: (item) => ({ titre: item.titre || "", difficulte: item.difficulte || 1, enonce: item.enonce || "", indice: item.indice || "", corrige: item.corrige || "", type: item.type || "redaction", code_starter: item.codeStarter || "", code_tests: item.codeTests || "", reponse: item.reponse || "", reponses: item.reponses || [], officiel: !!item.officiel }),
 };
 
 export async function loadItems(kind) {
@@ -167,7 +167,7 @@ export async function loadItems(kind) {
     type: r.type, q: r.q, choix: r.choix || [], rep: r.rep || [], expl: r.expl, niveau: r.niveau,
     recto: r.recto, verso: r.verso,
     titre: r.titre, difficulte: r.difficulte, enonce: r.enonce, indice: r.indice, corrige: r.corrige,
-    codeStarter: r.code_starter || "", codeTests: r.code_tests || "", reponse: r.reponse || "", reponses: r.reponses || [],
+    codeStarter: r.code_starter || "", codeTests: r.code_tests || "", reponse: r.reponse || "", reponses: r.reponses || [], officiel: !!r.officiel,
   }));
 }
 
