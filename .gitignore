@@ -4,4 +4,7 @@
 # Fichiers de ton système / éditeur
 .DS_Store
 .idea/
+
+# Réglages Claude Code propres à ta machine
+.claude/settings.local.json
 CLAUDE.md
