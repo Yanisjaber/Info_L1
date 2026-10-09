@@ -6,13 +6,12 @@ import { fmt1 } from "../../core/utils/format.js";
 import { SET } from "../settings/settings.js";
 import { calcFor } from "./grades.js";
 
-// Nom d'une épreuve, tel que tu l'as écrit. S'il ne dit pas déjà sa part dans la note, on l'ajoute entre
-// parenthèses (« CC1 — QCM 1 (10 %) »), ou dans les parenthèses existantes (« … (/40, 35 %) »).
+// Une seule règle d'affichage pour toutes les matières : « Nom (coef %) », ou « Nom (facultative) » sans coef.
+// Le coef vient toujours du poids de l'éditeur : un « (10 %) » ou « (facultative) » écrit à la fin du nom est retiré.
 function labelHtml(label, share) {
-  if (share === undefined || /%/.test(label) || (share === null && /facultativ/i.test(label))) return esc(label);
-  const extra = share === null ? "facultative" : `${String(share).replace(".", ",")} %`;
-  const m = String(label).match(/^(.*)\(([^)]*)\)\s*$/);
-  return esc(m ? `${m[1]}(${m[2]}, ${extra})` : `${label} (${extra})`);
+  if (share === undefined) return esc(label); // calculateur d'une ancienne version encore en cache
+  const name = String(label).replace(/\s*\((?:[^)]*%|facultative)\)\s*$/i, "").trim();
+  return esc(`${name} (${share === null ? "facultative" : `${String(share).replace(".", ",")} %`})`);
 }
 
 export function notesCard(mid) {
