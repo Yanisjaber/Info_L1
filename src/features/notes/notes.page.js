@@ -6,13 +6,13 @@ import { fmt1 } from "../../core/utils/format.js";
 import { SET } from "../settings/settings.js";
 import { calcFor } from "./grades.js";
 
-// Nom d'une épreuve suivi de sa part dans la note, au même format pour toutes les matières (« CC1 — QCM 1 · 10 % »).
-// Un ancien « (10 %) » écrit dans le nom est retiré à l'affichage : la part vient du poids réel.
+// Nom d'une épreuve, tel que tu l'as écrit. S'il ne dit pas déjà sa part dans la note, on l'ajoute entre
+// parenthèses (« CC1 — QCM 1 (10 %) »), ou dans les parenthèses existantes (« … (/40, 35 %) »).
 function labelHtml(label, share) {
-  if (share === undefined) return esc(label);
-  const name = esc(String(label).replace(/\s*\([^)]*%\)\s*$/, "").trim());
-  if (share === null && /facultativ/i.test(label)) return name;
-  return `${name} <span style="font-weight:400">· ${share === null ? "facultative" : `${String(share).replace(".", ",")} %`}</span>`;
+  if (share === undefined || /%/.test(label) || (share === null && /facultativ/i.test(label))) return esc(label);
+  const extra = share === null ? "facultative" : `${String(share).replace(".", ",")} %`;
+  const m = String(label).match(/^(.*)\(([^)]*)\)\s*$/);
+  return esc(m ? `${m[1]}(${m[2]}, ${extra})` : `${label} (${extra})`);
 }
 
 export function notesCard(mid) {
