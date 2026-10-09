@@ -1,6 +1,7 @@
 // Éditeur du calcul de la note d'une matière (page Notes & CC, et formulaire « matière » dans Compte).
 // Produit la configuration lue par features/notes/grades.js (colonne `grading`).
 import { $, $$, esc } from "../../core/utils/dom.js";
+import { shareLabel } from "./grades.js";
 
 const fmt = (x) => String(Math.round(x * 10) / 10).replace(".", ",");
 
@@ -43,18 +44,16 @@ export function bindGradingEditor(form) {
     try { g = readGradingEditor(form); } catch (err) { tot.className = "chip wa gr-total"; tot.textContent = "À compléter"; sum.textContent = err.message; return; }
     if (!g) { tot.className = "chip gr-total"; tot.textContent = "Aucune épreuve"; sum.textContent = "Ajoute une épreuve pour voir comment ta note sera calculée."; return; }
     const sec = g.second, w = g.items.reduce((s, it) => s + it.weight, 0) + (sec && sec.required ? sec.weight : 0);
-    const ok = Math.abs(w - 100) < 0.01, pct = (x) => `${fmt((x / w) * 100)} %`;
+    const ok = Math.abs(w - 100) < 0.01, part = (x) => Math.round((x / w) * 1000) / 10;
     tot.className = `chip ${ok ? "ok" : "wa"} gr-total`;
     tot.textContent = ok ? "Total : 100 %" : `Total : ${fmt(w)} (ramené à 100 %)`;
-    // Une ligne par épreuve, dans l'ordre où tu les as écrites : son nom, ce qui la particularise, sa part dans la note.
-    const line = (name, meta, share) => `<div class="gr-line"><span>${esc(name)}${meta.length ? ` <span class="tiny muted">${meta.join(" · ")}</span>` : ""}</span><b>${share}</b></div>`;
+    // Une ligne par épreuve, dans l'ordre de tes lignes, avec la même règle d'affichage que la page Notes.
     let next = 0;
     const rows = $$(".gr-row", form).filter((r) => $(".gr-label", r).value.trim()).map((r) => {
-      if (sec && $(".gr-sec", r).checked) return line(sec.label, ["2e chance", ...(sec.max ? [`sur ${fmt(sec.max)}`] : [])], sec.required ? pct(sec.weight) : "facultative");
-      const it = g.items[next++];
-      return line(it.label, [...(it.parts ? [`moyenne de ${it.parts.length} notes`] : []), ...(it.max ? [`sur ${fmt(it.max)}`] : [])], pct(it.weight));
+      const it = sec && $(".gr-sec", r).checked ? sec : g.items[next++];
+      return `<div class="gr-line"><span>${esc(shareLabel(it.label, it === sec && !sec.required ? null : part(it.weight)))}</span></div>`;
     });
-    if (sec) rows.push(`<div class="tiny muted" style="padding-top:8px">${sec.required ? `« ${esc(sec.label)} » compte aussi dans la note, et remplace chaque note plus faible si elle est meilleure.` : `2e chance facultative : « ${esc(sec.label)} » remplace une note plus faible, si elle est meilleure.`}</div>`);
+    if (sec) rows.push(`<div class="tiny muted" style="padding-top:8px">La 2e chance remplace une note plus faible, si elle est meilleure.</div>`);
     sum.innerHTML = rows.join("");
   };
   form.addEventListener("click", (e) => {

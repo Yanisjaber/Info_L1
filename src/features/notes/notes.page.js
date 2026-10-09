@@ -4,14 +4,11 @@ import { commit, setEntry, state } from "../../core/services/store.js";
 import { $, $$, esc } from "../../core/utils/dom.js";
 import { fmt1 } from "../../core/utils/format.js";
 import { SET } from "../settings/settings.js";
-import { calcFor } from "./grades.js";
+import { calcFor, shareLabel } from "./grades.js";
 
-// Une seule règle d'affichage pour toutes les matières : « Nom (coef %) », ou « Nom (facultative) » sans coef.
-// Le coef vient toujours du poids de l'éditeur : un « (10 %) » ou « (facultative) » écrit à la fin du nom est retiré.
+// Nom d'une épreuve : la règle d'affichage unique de `shareLabel` (grades.js), la même que dans l'éditeur.
 function labelHtml(label, share) {
-  if (share === undefined) return esc(label); // calculateur d'une ancienne version encore en cache
-  const name = String(label).replace(/\s*\((?:[^)]*%|facultative)\)\s*$/i, "").trim();
-  return esc(`${name} (${share === null ? "facultative" : `${String(share).replace(".", ",")} %`})`);
+  return esc(share === undefined ? label : shareLabel(label, share)); // undefined : ancien calculateur encore en cache
 }
 
 export function notesCard(mid) {
