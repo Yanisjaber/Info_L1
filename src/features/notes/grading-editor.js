@@ -69,40 +69,62 @@ export function bindGradingEditor(form) {
     refresh();
   });
   // Déplacer une épreuve : on attrape la poignée (souris ou doigt) et on la fait glisser ; flèches haut/bas au clavier.
+  // Déplacer une épreuve à la souris ou au doigt. Pour rester fluide, les positions sont mesurées une seule fois,
+  // à la prise : pendant le glissement seules des translations bougent (la ligne attrapée et ses voisines),
+  // une fois par image d'écran. L'ordre réel des lignes ne change qu'au relâchement.
   box.addEventListener("pointerdown", (e) => {
     const grip = e.target.closest(".gr-grip");
     if (!grip) return;
     e.preventDefault();
-    const row = grip.closest(".gr-row");
+    const rows = $$(".gr-row", box), row = grip.closest(".gr-row"), from = rows.indexOf(row);
     // Réglage « moins d'animations » du système : on garde le déplacement, sans les glissements.
     const slide = matchMedia("(prefers-reduced-motion: reduce)").matches ? "none" : "transform .16s ease";
-    const grab = e.clientY - row.getBoundingClientRect().top; // à quelle hauteur de la ligne on l'a attrapée
+    const r = rows.map((x) => x.getBoundingClientRect());
+    const gap = rows.length > 1 ? r[1].top - r[0].bottom : 0;
+    const size = r.map((b) => b.height + gap); // place qu'occupe chaque ligne, espace compris
+    const startY = e.clientY, minDy = r[0].top - r[from].top, maxDy = r[rows.length - 1].bottom - r[from].bottom;
+    let lastY = startY, to = from, frame = 0;
+    box.classList.add("gr-moving");
     row.classList.add("gr-dragging");
-    // La ligne attrapée suit le pointeur en continu (sa place « normale » dans la liste sert de repère).
-    const follow = (y) => { row.style.transform = ""; row.style.transform = `translateY(${y - grab - row.getBoundingClientRect().top}px)`; };
-    const move = (ev) => {
-      const others = $$(".gr-row", box).filter((r) => r !== row);
-      const target = others.find((r) => { const b = r.getBoundingClientRect(); return ev.clientY < b.top + b.height / 2; }) || null;
-      if (target ? row.nextElementSibling !== target : box.lastElementChild !== row) {
-        // Les autres lignes glissent de leur ancienne place vers la nouvelle au lieu de sauter.
-        const from = new Map(others.map((r) => [r, r.getBoundingClientRect().top]));
-        others.forEach((r) => { r.style.transition = "none"; r.style.transform = ""; });
-        if (target) box.insertBefore(row, target); else box.appendChild(row);
-        others.forEach((r) => { const dy = from.get(r) - r.getBoundingClientRect().top; if (dy) r.style.transform = `translateY(${dy}px)`; });
-        void box.offsetHeight; // force le calcul avant de lancer l'animation
-        others.forEach((r) => { r.style.transition = slide; r.style.transform = ""; });
-      }
-      follow(ev.clientY);
+    rows.forEach((x) => { if (x !== row) x.style.transition = slide; });
+
+    // La ligne attrapée suit le pointeur ; chaque voisine qu'elle a dépassée se décale d'une place.
+    const place = () => {
+      frame = 0;
+      const dy = Math.min(maxDy, Math.max(minDy, lastY - startY));
+      row.style.transform = `translateY(${dy}px)`;
+      to = from;
+      rows.forEach((x, j) => {
+        if (j === from) return;
+        const mid = r[j].top + r[j].height / 2; // une ligne change de place quand le pointeur passe son milieu
+        const shift = j < from && lastY < mid ? size[from] : j > from && lastY > mid ? -size[from] : 0;
+        x.style.transform = shift ? `translateY(${shift}px)` : "";
+        if (shift > 0) to--; else if (shift < 0) to++;
+      });
     };
+    const move = (ev) => { lastY = ev.clientY; if (!frame) frame = requestAnimationFrame(place); };
     const end = () => {
       window.removeEventListener("pointermove", move);
       window.removeEventListener("pointerup", end);
       window.removeEventListener("pointercancel", end);
-      // La ligne se pose doucement à sa place.
-      row.style.transition = slide; row.style.transform = "";
-      const done = () => { row.classList.remove("gr-dragging"); row.style.transition = ""; };
+      cancelAnimationFrame(frame);
+      place();
+      // La ligne se pose doucement sur sa nouvelle place, puis l'ordre réel est mis à jour sans à-coup.
+      let off = 0;
+      if (to > from) for (let j = from + 1; j <= to; j++) off += size[j];
+      else for (let j = to; j < from; j++) off -= size[j];
+      row.style.transition = slide;
+      row.style.transform = `translateY(${off}px)`;
+      const done = () => {
+        rows.forEach((x) => { x.style.transition = "none"; x.style.transform = ""; });
+        row.classList.remove("gr-dragging");
+        if (to !== from) box.insertBefore(row, to > from ? rows[to].nextElementSibling : rows[to]);
+        void box.offsetHeight; // applique le tout avant de réactiver les transitions
+        rows.forEach((x) => { x.style.transition = ""; });
+        box.classList.remove("gr-moving");
+        refresh();
+      };
       if (slide === "none") done(); else setTimeout(done, 170);
-      refresh();
     };
     // Mouvement et relâchement écoutés sur toute la fenêtre : on ne reste jamais « coincé » en cours de déplacement.
     window.addEventListener("pointermove", move);
