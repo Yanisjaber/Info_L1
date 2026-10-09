@@ -47,7 +47,7 @@ puis ouvre http://localhost:8000
 
 ## 4. Mettre à jour le contenu
 
-Le contenu (matières, séances, QCM, flashcards, exercices, emploi du temps, échéances de CC) vit dans Supabase : tout se modifie depuis le site (Compte, pages d'administration, import .ics de l'EDT). Il n'y a plus de fichiers de données dans le dépôt. Les PDF sont dans `pdf/` et les images des cours dans `assets/` (référencés par le contenu en base).
+Le contenu (matières, séances, QCM, flashcards, exercices, emploi du temps, échéances de CC) vit dans Supabase : tout se modifie depuis le site (Compte, pages d'administration, import .ics de l'EDT). Il n'y a plus de fichiers de données dans le dépôt. Les PDF et les images des cours sont dans ton stockage Supabase (voir section 7).
 
 ## 5. Calculateur de notes (configurable par matière)
 
@@ -73,7 +73,7 @@ Les PDF de séance, les fiches CC et les images des cours ne vivent plus dans le
 
 - **Ajouter un PDF** : champ « PDF » du formulaire d'une séance ou d'une matière. **Remplacer / retirer** : nouveau fichier ou case « retirer » (l'ancien est supprimé du stockage).
 - **Ajouter une image dans un cours** : bouton « Insérer une image » sous l'éditeur de la séance ; la balise `<img>` est insérée à l'endroit du curseur.
-- **Migrer l'existant** (une fois) : **Compte → Fichiers (PDF, images) → Migrer vers mon stockage**. Chaque fichier de `pdf/` et `assets/` est lu depuis le site puis envoyé ; les références en base ne sont réécrites qu'une fois l'envoi réussi. Relançable sans risque. Quand la section affiche « À jour », les dossiers `pdf/` et `assets/` du dépôt ne servent plus et peuvent être supprimés.
+- **Ancien dépôt** : les anciens dossiers `pdf/` et `assets/` ont été migrés puis supprimés du dépôt. S'il reste une vieille référence (`pdf/…`, `assets/…`) en base, **Compte → Fichiers (PDF, images)** l'indique, mais le bouton « Migrer vers mon stockage » ne pourra plus l'envoyer (il lit les fichiers depuis le site, où ils n'existent plus) : il faut alors ré-uploader le fichier depuis le formulaire.
 
 ## 8. Bibliothèques externes (`vendor/`)
 
@@ -118,7 +118,6 @@ src/
     files/                    PDF et images : envoi dans le stockage, URLs signées, migration des anciens fichiers
     settings/                 réglages par utilisateur (chargement, éditeur, valeurs de repli, accesseurs)
     admin/                    utilitaires communs aux formulaires d'administration
-assets/ et pdf/               anciens fichiers du dépôt (à supprimer une fois la migration vers le stockage faite, voir section 7)
 vendor/                       bibliothèques externes embarquées : KaTeX, supabase-js, Pyodide (voir section 8)
 supabase/                     scripts SQL (tables + règles de sécurité)
 ```
