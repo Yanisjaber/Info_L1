@@ -13,7 +13,7 @@ import { calcFor } from "./grades.js";
 
 export function notesCard(mid) {
   const K = calcFor(mid), m = M(mid), v = state.notes[mid]?.v || {};
-  return `<div class="card notes" data-m="${mid}" style="--acc:${m.couleur}"><p class="small muted" style="margin-top:0">${esc(K.formule)}</p>
+  return `<div class="card notes" data-m="${mid}" style="--acc:${m.couleur}">
     <div class="row">${K.champs.map(([k, l, mx]) => `<div class="field"><label for="n-${mid}-${k}">${esc(l)}</label><input id="n-${mid}-${k}" type="number" inputmode="decimal" min="0" max="${mx || 20}" step="0.25" data-k="${k}" value="${v[k] ?? ""}" placeholder="—"></div>`).join("")}</div>
     <div class="nres" style="margin-top:12px"></div></div>`;
 }
