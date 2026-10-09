@@ -1,5 +1,5 @@
 import { icon } from "../../core/components/icons.js";
-import { D, M, activeMatieres, periodeLabel } from "../../core/services/app-data.js";
+import { D, M, activeMatieres } from "../../core/services/app-data.js";
 import { stats } from "../../core/services/stats.js";
 import { sync } from "../../core/services/store.js";
 import { esc } from "../../core/utils/dom.js";
@@ -10,15 +10,14 @@ import { ELO_MAX_PER_MATIERE, getElo, tierFor } from "../elo/elo.utils.js";
 import { todoPreviewCard } from "../todos/todos.components.js";
 
 export function home() {
-  const ne = nextEvents(1)[0];
   const ms = activeMatieres();
-  const hiddenH1 = `<h1 class="sr-only">${ne ? esc(`${M(ne.matiere).court} — ${ne.titre}`) : esc(periodeLabel())}</h1>`;
+  const hiddenH1 = `<h1 class="sr-only">Accueil</h1>`;
   const onboard = !sync.user
     ? `<div class="card" style="margin-bottom:16px;border-left:4px solid var(--acc)"><b>Connecte-toi pour voir tes matières et tes cours.</b><p class="small muted" style="margin:4px 0 10px">Chaque compte a ses propres matières, cours, QCM et emploi du temps.</p><a class="btn pri" href="#/compte">${icon("user")}Se connecter / créer un compte</a></div>`
     : !ms.length
       ? `<div class="card" style="margin-bottom:16px;border-left:4px solid var(--acc)"><b>${D.matieres.length ? "Aucune matière active." : "Aucune matière pour l'instant."}</b><p class="small muted" style="margin:4px 0 10px">${D.matieres.length ? "Toutes tes matières sont archivées — remets-en une active, ou crées-en une nouvelle." : "Ajoute ta première matière depuis les paramètres."}</p><a class="btn pri" href="#/compte">${icon("edit")}${D.matieres.length ? "Gérer mes matières" : "Ajouter une matière"}</a></div>`
       : "";
-  if (!sync.user || !ms.length) return { html: `<h1 class="sr-only">${esc(periodeLabel())}</h1>${onboard}` };
+  if (!sync.user || !ms.length) return { html: `${hiddenH1}${onboard}` };
 
   const up = nextEvents(5).map((e) => `<a class="item" href="#/cal"><span class="badge" style="--acc:${M(e.matiere).couleur};background:color-mix(in srgb,${M(e.matiere).couleur} 15%,var(--surface));color:${M(e.matiere).couleur}">${fmtDate(e.date).split(" ").slice(1).join(" ")}</span><div class="sp"><b>${esc(M(e.matiere).court)}</b> — ${esc(e.titre)}<div class="tiny muted">${esc(fmtPoids(e.poids))} · ${cd(e)}${e.statut && e.poids !== "à confirmer" ? " · <span class='chip wa'>date provisoire</span>" : ""}</div></div></a>`).join("");
 
