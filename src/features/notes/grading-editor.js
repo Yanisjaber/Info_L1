@@ -74,21 +74,37 @@ export function bindGradingEditor(form) {
     if (!grip) return;
     e.preventDefault();
     const row = grip.closest(".gr-row");
+    // Réglage « moins d'animations » du système : on garde le déplacement, sans les glissements.
+    const slide = matchMedia("(prefers-reduced-motion: reduce)").matches ? "none" : "transform .16s ease";
+    const grab = e.clientY - row.getBoundingClientRect().top; // à quelle hauteur de la ligne on l'a attrapée
     row.classList.add("gr-dragging");
-    // Mouvement et relâchement écoutés sur toute la fenêtre : on ne reste jamais « coincé » en cours de déplacement.
+    // La ligne attrapée suit le pointeur en continu (sa place « normale » dans la liste sert de repère).
+    const follow = (y) => { row.style.transform = ""; row.style.transform = `translateY(${y - grab - row.getBoundingClientRect().top}px)`; };
     const move = (ev) => {
       const others = $$(".gr-row", box).filter((r) => r !== row);
-      const before = others.find((r) => { const b = r.getBoundingClientRect(); return ev.clientY < b.top + b.height / 2; });
-      if (before) { if (row.nextElementSibling !== before) box.insertBefore(row, before); }
-      else if (box.lastElementChild !== row) box.appendChild(row);
+      const target = others.find((r) => { const b = r.getBoundingClientRect(); return ev.clientY < b.top + b.height / 2; }) || null;
+      if (target ? row.nextElementSibling !== target : box.lastElementChild !== row) {
+        // Les autres lignes glissent de leur ancienne place vers la nouvelle au lieu de sauter.
+        const from = new Map(others.map((r) => [r, r.getBoundingClientRect().top]));
+        others.forEach((r) => { r.style.transition = "none"; r.style.transform = ""; });
+        if (target) box.insertBefore(row, target); else box.appendChild(row);
+        others.forEach((r) => { const dy = from.get(r) - r.getBoundingClientRect().top; if (dy) r.style.transform = `translateY(${dy}px)`; });
+        void box.offsetHeight; // force le calcul avant de lancer l'animation
+        others.forEach((r) => { r.style.transition = slide; r.style.transform = ""; });
+      }
+      follow(ev.clientY);
     };
     const end = () => {
-      row.classList.remove("gr-dragging");
       window.removeEventListener("pointermove", move);
       window.removeEventListener("pointerup", end);
       window.removeEventListener("pointercancel", end);
+      // La ligne se pose doucement à sa place.
+      row.style.transition = slide; row.style.transform = "";
+      const done = () => { row.classList.remove("gr-dragging"); row.style.transition = ""; };
+      if (slide === "none") done(); else setTimeout(done, 170);
       refresh();
     };
+    // Mouvement et relâchement écoutés sur toute la fenêtre : on ne reste jamais « coincé » en cours de déplacement.
     window.addEventListener("pointermove", move);
     window.addEventListener("pointerup", end);
     window.addEventListener("pointercancel", end);
