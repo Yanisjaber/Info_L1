@@ -25,7 +25,9 @@ function addHeader(fp) {
     list.dataset.k = btn.dataset.k;
     list.style.left = btn.offsetLeft + "px";
     list.hidden = false;
-    list.querySelector(".on")?.scrollIntoView({ block: "center" });
+    // On centre la valeur choisie en faisant défiler la liste seule (scrollIntoView ferait glisser toute la page).
+    const on = list.querySelector(".on");
+    if (on) list.scrollTop = on.offsetTop - (list.clientHeight - on.offsetHeight) / 2;
   };
   wrap.addEventListener("click", (e) => {
     const b = e.target.closest(".fp-dd-btn"), it = e.target.closest(".fp-dd-item");
