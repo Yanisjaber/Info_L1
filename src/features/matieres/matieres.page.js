@@ -65,7 +65,7 @@ export function matiere(mid, tab) {
   } else {
     const evs = D.cal.evenements.filter((e) => e.matiere === mid);
     const rem = D.cal.remarques.filter((r) => r.matiere === mid);
-    body = `<div class="card">
+    body = `<div class="card"><p class="muted small" style="margin-top:0">${esc(m.cc)}</p>
       <div class="list">${evs.map((e) => `<div class="item"><span class="badge" style="font-size:.66rem">${fmtDate(e.date).split(" ").slice(1).join(" ")}</span><div class="sp"><b>${esc(e.titre)}</b> <span class="chip gr">${esc(fmtPoids(e.poids))}</span>${e.type === "2e" ? ' <span class="chip wa">2e chance</span>' : ""}<div class="tiny muted">${esc(e.detail)}</div></div></div>`).join("") || '<div class="muted small">Pas de date fixée pour l\'instant.</div>'}</div>
       ${rem.map((r) => `<div class="note" style="margin-top:10px"><b>À noter —</b> ${esc(r.texte)}</div>`).join("")}
       ${m.pdfCC ? `<a class="btn sm" href="${esc(fileUrl(m.pdfCC))}" download>${icon("dl")}Fiche CC (PDF)</a>` : ""}</div>
