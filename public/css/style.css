@@ -437,3 +437,4 @@ span.flatpickr-weekday{color:var(--muted);font-weight:600;font-size:.74rem;text-
 /* Champs numériques : aucune flèche (ni native ni maison), on tape la valeur ; les touches haut/bas du clavier marchent toujours */
 input[type=number]{-moz-appearance:textfield;appearance:textfield}
 input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.nt-top{align-items:center;margin-bottom:.5em}.nt-top h1{margin-bottom:0}
