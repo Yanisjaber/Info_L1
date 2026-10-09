@@ -6,7 +6,7 @@ import { fmt1 } from "../../core/utils/format.js";
 import { SET } from "../settings/settings.js";
 import { calcFor, shareLabel } from "./grades.js";
 
-// Nom d'une épreuve : la règle d'affichage unique de `shareLabel` (grades.js), la même que dans l'éditeur.
+// Nom d'une épreuve, puis son coef : la règle d'affichage unique de `shareLabel` (grades.js), la même que dans l'éditeur.
 function labelHtml(label, share) {
   return esc(share === undefined ? label : shareLabel(label, share)); // undefined : ancien calculateur encore en cache
 }

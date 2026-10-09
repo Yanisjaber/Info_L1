@@ -1,7 +1,7 @@
 // Éditeur du calcul de la note d'une matière (page Notes & CC, et formulaire « matière » dans Compte).
 // Produit la configuration lue par features/notes/grades.js (colonne `grading`).
 import { $, $$, esc } from "../../core/utils/dom.js";
-import { shareName, shareText } from "./grades.js";
+import { shareText } from "./grades.js";
 
 const fmt = (x) => String(Math.round(x * 10) / 10).replace(".", ",");
 
@@ -56,7 +56,7 @@ export function bindGradingEditor(form) {
     let next = 0;
     const rows = $$(".gr-row", form).filter((r) => $(".gr-label", r).value.trim()).map((r) => {
       const it = sec && $(".gr-sec", r).checked ? sec : g.items[next++];
-      return `<div class="gr-line"><span>${esc(shareName(it.label))}</span><b>${shareText(it === sec && !sec.required ? null : part(it.weight))}</b></div>`;
+      return `<div class="gr-line"><span>${esc(it.label)}</span><b>${shareText(it === sec && !sec.required ? null : part(it.weight))}</b></div>`;
     });
     if (sec) rows.push(`<div class="tiny muted" style="padding-top:8px">La 2e chance remplace une note plus faible, si elle est meilleure.</div>`);
     sum.innerHTML = rows.join("");
