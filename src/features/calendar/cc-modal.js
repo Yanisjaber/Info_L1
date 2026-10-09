@@ -11,7 +11,6 @@ import { seanceFor } from "../edt/edt.utils.js";
 import { ccReadiness, pctCls } from "../elo/elo.utils.js";
 import { calcFor } from "../notes/grades.js";
 import { epreuveOf, freeEpreuves, listEpreuves } from "../notes/grading.utils.js";
-import { linkProposals, matchByTitle } from "./cc-link.utils.js";
 import { rerender } from "../../routing/navigation.js";
 import { routerState } from "../../routing/router.store.js";
 
@@ -128,17 +127,16 @@ export function ccSuggestionsHtml() {
     <div class="list">${sugg.map(({ e, mid }) => `<div class="item"><div class="sp"><b>${esc(M(mid)?.court || "")}</b> — ${esc((e.n || "Examen").replace(/^.*?[-–—]\s*/, ""))}<div class="tiny muted">${fmtLong(e.d)} · ${e.s}–${e.e}</div></div><button class="btn sm" data-a="addccsugg" data-m="${esc(mid)}" data-date="${e.d}" data-titre="${esc(e.n || "CC")}" data-edt-id="${esc(e.id)}">${icon("check")}Ajouter</button></div>`).join("")}</div></div>`;
 }
 
-// Échéances créées avant le lien par identifiant : on propose de les relier à l'épreuve qu'on reconnaît à coup sûr
-// (même code de titre : « CC2 » ↔ « CCI2 — Systèmes »), et on signale les autres comme « à compléter ».
+// Échéances pas encore reliées à une épreuve du calculateur : on les liste, et c'est TOI qui choisis l'épreuve
+// (bouton « Relier » → le formulaire s'ouvre, tu sélectionnes l'épreuve). Rien n'est deviné d'après le titre.
 export function ccLinkHtml() {
-  const { proposals, orphans } = linkProposals(D.cal.evenements, D.matieres);
-  if (!proposals.length && !orphans.length) return "";
+  const orphans = D.cal.evenements.filter((e) => !e.epreuve && M(e.matiere));
+  if (!orphans.length) return "";
   const nm = (ev) => `<b>${esc(M(ev.matiere)?.court || "")}</b> — ${esc(ev.titre)}`;
-  return `<div class="card" style="margin-bottom:14px"><div class="row nowrap"><h3 style="margin:0">Relier tes échéances à leurs épreuves</h3><div class="sp"></div>${proposals.length > 1 ? `<button class="btn pri sm" type="button" data-a="linkallcc">Tout relier (${proposals.length})</button>` : ""}</div>
+  return `<div class="card" style="margin-bottom:14px"><h3 style="margin:0">Échéances à relier à une épreuve</h3>
     <p class="small muted" style="margin:6px 0 10px">Chaque CC doit être relié à une épreuve du calculateur : le nom, le poids et la note viennent alors de l'épreuve.</p>
     <div class="list">
-      ${proposals.map(({ ev, epreuve }) => `<div class="item"><div class="sp">${nm(ev)}<div class="tiny muted">${esc(fmtLong(ev.date))} · sera relié à « ${esc(epreuve.label)} »</div></div><button class="btn sm" type="button" data-a="linkcc" data-id="${esc(ev.id)}" data-e="${esc(epreuve.id)}">${icon("check")}Relier</button></div>`).join("")}
-      ${orphans.map((ev) => `<div class="item"><div class="sp">${nm(ev)}<div class="tiny muted">${esc(fmtLong(ev.date))} · à compléter (poids, noté sur…)</div></div><button class="btn sm" type="button" data-a="editcc" data-id="${esc(ev.id)}">Compléter</button></div>`).join("")}
+      ${orphans.map((ev) => `<div class="item"><div class="sp">${nm(ev)}<div class="tiny muted">${esc(fmtLong(ev.date))} · pas encore reliée</div></div><button class="btn sm" type="button" data-a="editcc" data-id="${esc(ev.id)}">Relier</button></div>`).join("")}
     </div></div>`;
 }
 
@@ -236,11 +234,8 @@ export function openCCInfoModal(ev) {
   routerState.cleanup = closeCCModal;
 }
 
-// Note obtenue à une épreuve CC, retrouvée dans le calculateur (state.notes). Si l'échéance est reliée à une épreuve,
-// c'est par son identifiant. Sinon (échéance ancienne, pas encore reliée) : on rapproche le
-// code du titre (« CC2 », « CCI1 », « Note 3 »…, avant le tiret) de celui des champs du
-// calculateur ; si plusieurs champs partagent le code (Algo CC1 — QCM 1 / QCM 2), on départage
-// avec le reste du titre. Renvoie { v, max } ou null si pas de champ ou pas de note saisie.
+// Note obtenue à une épreuve CC, retrouvée dans le calculateur (state.notes) par l'identifiant de l'épreuve reliée.
+// Une échéance non reliée n'a pas de note (aucun rapprochement par le titre). Renvoie { v, max } ou null.
 export function ccNote(ev) {
   const K = calcFor(ev.matiere); if (!K) return null;
   // Échéance reliée à une épreuve : on retrouve sa note par l'identifiant (moyenne des saisies si l'épreuve en a plusieurs).
@@ -250,10 +245,7 @@ export function ccNote(ev) {
     if (vals.some((x) => x === "" || x === null || x === undefined || isNaN(+x))) return null;
     return { v: vals.reduce((t, x) => t + +x, 0) / vals.length, max: K.champs.find(([k]) => k === ids[0])?.[2] || 20 };
   }
-  const cands = matchByTitle(ev.titre, K.champs.map(([k, label, mx]) => ({ k, label, mx })));
-  if (cands.length !== 1) return null;
-  const { k, mx } = cands[0], v = state.notes[ev.matiere]?.v?.[k];
-  return v === "" || v === null || v === undefined || isNaN(+v) ? null : { v: +v, max: mx || 20 };
+  return null;
 }
 
 export const ccNoteChip = (n) => `<span class="chip ${n.v >= n.max / 2 ? "ok" : "ko"}">${fmt1(n.v)}/${n.max}</span>`;

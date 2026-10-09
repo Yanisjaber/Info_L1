@@ -12,9 +12,8 @@ import { saveSeance } from "../seances/seances.service.js";
 import { rerender } from "../../routing/navigation.js";
 import { routerState } from "../../routing/router.store.js";
 
-// L'échéance CC d'un créneau : celle reliée par `edtId`, sinon (adoption, seulement pour un créneau marqué CC) une échéance
-// de la même matière le même jour qui n'est reliée à aucun créneau. `slot` : { id, m, d, cc }.
-const ccOfSlot = (slot) => (slot.id && D.cal.evenements.find((x) => x.edtId === slot.id)) || (slot.cc && slot.m && D.cal.evenements.find((x) => x.matiere === slot.m && x.date === slot.d && !x.edtId)) || null;
+// L'échéance CC d'un créneau : uniquement celle reliée par `edtId` (aucune adoption d'une échéance « qui ressemble »).
+const ccOfSlot = (slot) => (slot.id && D.cal.evenements.find((x) => x.edtId === slot.id)) || null;
 
 // Formulaire unique pour ajouter OU modifier un créneau à la main (bouton "+" du header, ou
 // crayon sur une carte de la grille) — remplace l'ancien sélecteur "changer le type" isolé.
