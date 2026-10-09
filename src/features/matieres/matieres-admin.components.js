@@ -25,7 +25,7 @@ function paletteHtml(v) {
 
 function matiereFormHtml(m) {
   const isNew = !m;
-  const v = m || { id: "", nom: "", court: "", ue: "", couleur: PALETTE[0], desc: "", cc: "", pdfCC: "", ects: 0, periode: D.periodes.find((p) => p.statut === "actif")?.id || "", eval: { n: 15, minutes: 15 } };
+  const v = m || { id: "", nom: "", court: "", ue: "", couleur: PALETTE[0], desc: "", pdfCC: "", ects: 0, periode: D.periodes.find((p) => p.statut === "actif")?.id || "", eval: { n: 15, minutes: 15 } };
   return `<form data-a="savematiere">
     <input type="hidden" name="id" value="${esc(v.id)}">
     <div class="grid g2">
@@ -39,7 +39,6 @@ function matiereFormHtml(m) {
         <div class="field"><label>Nom court (menu)</label><input type="text" name="court" value="${esc(v.court)}" placeholder="par défaut : identique au nom"></div>
         <div class="field"><label>UE / sous-titre</label><input type="text" name="ue" value="${esc(v.ue)}"></div>
         <div class="field"><label>Description courte</label><input type="text" name="desc" value="${esc(v.desc)}"></div>
-        <div class="field"><label>Barème CC (texte libre)</label><input type="text" name="cc" value="${esc(v.cc)}"></div>
         ${fileFieldHtml("pdfCC", "PDF fiche CC (optionnel)", v.pdfCC)}
         <div class="field"><label>Questions par éval blanche</label><input type="number" name="evaln" min="1" value="${v.eval.n}"></div>
         <div class="field"><label>Durée éval blanche (min)</label><input type="number" name="evalmin" min="1" value="${v.eval.minutes}"></div>
@@ -63,7 +62,7 @@ export function bindMM(el) {
     try { grading = readGradingEditor(f); } catch (err) { return toast(err.message); }
     try {
       const pdfCC = await readFileField(fd, "pdfCC", `${id}/pdf`);
-      const payload = { id, nom, court: fd.get("court") || nom, ue: fd.get("ue"), couleur: fd.get("couleur") || PALETTE[0], desc: fd.get("desc"), cc: fd.get("cc"), pdfCC: pdfCC.value, ects: Math.max(0, +fd.get("ects") || 0), periode: fd.get("periode") || null, eval: { n: +fd.get("evaln") || 15, minutes: +fd.get("evalmin") || 15 } };
+      const payload = { id, nom, court: fd.get("court") || nom, ue: fd.get("ue"), couleur: fd.get("couleur") || PALETTE[0], desc: fd.get("desc"), pdfCC: pdfCC.value, ects: Math.max(0, +fd.get("ects") || 0), periode: fd.get("periode") || null, eval: { n: +fd.get("evaln") || 15, minutes: +fd.get("evalmin") || 15 } };
       // La colonne `grading` n'existe qu'après supabase/schema_grading.sql : tant qu'elle est inconnue
       // et que rien n'est configuré, on n'envoie rien (sinon la base refuserait l'enregistrement).
       if (grading !== undefined && (grading !== null || D.matieres.some((x) => x.grading !== undefined))) payload.grading = grading;

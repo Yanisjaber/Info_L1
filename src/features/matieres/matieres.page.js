@@ -6,7 +6,6 @@ import { state, sync } from "../../core/services/store.js";
 import { esc } from "../../core/utils/dom.js";
 import { fmt1, fmtDate, pct, plural } from "../../core/utils/format.js";
 import { bindExos, exosHtml } from "../exercices/exercices.components.js";
-import { fileUrl } from "../files/files.js";
 import { calcFor } from "../notes/grades.js";
 import { typeColumns, typeLabel } from "../settings/settings.js";
 import { bindNotes, gradeBadge, notesCard } from "../notes/notes.page.js";
@@ -62,11 +61,8 @@ export function matiere(mid, tab) {
   } else if (tab === "exos") {
     body = exosHtml(mid, "");
   } else {
-    const rem = D.cal.remarques.filter((r) => r.matiere === mid);
-    // Les CC eux-mêmes (noms, poids, dates) sont dans le calculateur ci-dessous ; cette carte ne garde que le barème écrit, les remarques et la fiche PDF.
-    const info = [m.cc ? `<p class="muted small" style="margin:0">${esc(m.cc)}</p>` : "", ...rem.map((r) => `<div class="note"><b>À noter —</b> ${esc(r.texte)}</div>`), m.pdfCC ? `<a class="btn sm" href="${esc(fileUrl(m.pdfCC))}" download>${icon("dl")}Fiche CC (PDF)</a>` : ""].filter(Boolean);
-    body = `${info.length ? `<div class="card" style="display:grid;gap:10px;justify-items:start">${info.join("")}</div>` : ""}
-      ${calcFor(mid) ? `<h3>Calculateur de note</h3>${notesCard(mid, { inline: false })}` : ""}`;
+    // L'onglet ne montre que le calculateur : noms, poids et dates des CC y sont déjà (plus de carte de barème écrit).
+    body = `${calcFor(mid) ? `<h3>Calculateur de note</h3>${notesCard(mid, { inline: false })}` : ""}`;
   }
   return {
     html: `<div class="crumbs"><a href="#/m">Matières</a> › ${esc(m.court)}</div>
