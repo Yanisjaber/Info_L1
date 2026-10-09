@@ -31,7 +31,6 @@ const pctText = (w, total) => `${Math.round((w / total) * 1000) / 10} %`.replace
 // Une seule règle d'affichage d'une épreuve, partout dans l'app : le nom tel qu'il est écrit, puis son coef
 // calculé depuis le poids (« 10 % », ou « facultative » sans coef). Rien n'est retiré du texte du nom.
 export const shareText = (share) => (share === null ? "facultative" : `${String(share).replace(".", ",")} %`);
-export const shareLabel = (label, share) => `${String(label).trim()} · ${shareText(share)}`;
 
 // Phrase décrivant la formule, générée depuis la configuration.
 export function describeFormula(g) {
