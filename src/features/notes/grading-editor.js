@@ -1,11 +1,17 @@
 // Éditeur du calcul de la note d'une matière (page Notes & CC, et formulaire « matière » dans Compte).
 // Produit la configuration lue par features/notes/grades.js (colonne `grading`).
 import { $, $$, esc } from "../../core/utils/dom.js";
-import { describeFormula } from "./grades.js";
 
 // Même grille pour l'en-tête et pour chaque ligne : nom de l'épreuve · poids · note sur · retirer.
 const COLS = "display:grid;grid-template-columns:minmax(0,1fr) 84px 72px 36px;gap:8px;align-items:center";
 const fmt = (x) => String(Math.round(x * 10) / 10).replace(".", ",");
+// Nom sans le « (10 %) » qu'on trouve dans les anciens libellés : le poids a déjà sa colonne.
+const short = (l) => String(l || "").replace(/\s*\([^)]*%\)\s*$/, "").trim();
+const HELP = {
+  none: "Pas de rattrapage : chaque épreuve compte une seule fois.",
+  opt: "Facultative : si elle est meilleure, elle remplace une note plus faible.",
+  req: "Obligatoire : elle compte aussi dans la note, avec son propre poids.",
+};
 
 function rowHtml(it) {
   const n = it.parts && it.parts.length > 1 ? it.parts.length : 1;
@@ -23,21 +29,19 @@ function rowHtml(it) {
 export function gradingEditorHtml(m, { open = false, title = "Calcul de la note (page Notes &amp; CC)" } = {}) {
   const g = m && m.grading, items = (g && g.items) || [], sec = (g && g.second) || null;
   const mode = !sec ? "none" : sec.required ? "req" : "opt";
-  const radio = (v, t, d) => `<label style="display:flex;gap:8px;align-items:flex-start;margin:6px 0;cursor:pointer"><input type="radio" name="g2mode" value="${v}" ${mode === v ? "checked" : ""} style="margin-top:3px"><span><b>${t}</b>${d ? `<br><span class="tiny muted">${d}</span>` : ""}</span></label>`;
+  const seg = (v, t) => `<label><input type="radio" name="g2mode" value="${v}" ${mode === v ? "checked" : ""}>${t}</label>`;
   return `<details class="gr-ed" ${open ? "open" : ""} style="margin-top:10px" data-current="${esc(JSON.stringify(g || null))}"><summary>${title}</summary>
     <p class="small muted" style="margin:10px 0">Une ligne par épreuve : son nom, son <b>poids</b> dans la note finale (en %) et sa note maximale. Laisse tout vide pour ne pas avoir de calculateur pour cette matière.</p>
     <div class="tiny muted" style="${COLS};margin-bottom:6px"><span>Épreuve</span><span>% de la note</span><span>Sur</span><span></span></div>
     <div class="gr-items">${(items.length ? items : [{ label: "", weight: "", max: 20 }]).map(rowHtml).join("")}</div>
     <div class="row" style="margin:4px 0 8px"><button type="button" class="btn sm" data-gr="add">+ Ajouter une épreuve</button><button type="button" class="btn sm ghost" data-gr="adv">Moyenne de plusieurs notes…</button></div>
-    <div class="card" style="margin:12px 0;padding:12px 14px"><span class="chip gr-total"></span><p class="small gr-sum" style="margin:8px 0 0"></p></div>
-    <fieldset style="border:0;padding:0;margin:12px 0 0"><legend class="small" style="font-weight:600;padding:0">Y a-t-il une 2e chance (rattrapage) ?</legend>
-      ${radio("none", "Non", "")}
-      ${radio("opt", "Oui, facultative", "elle remplace une note plus faible, si elle est meilleure")}
-      ${radio("req", "Oui, obligatoire", "elle compte aussi dans la note, avec son propre poids")}
-    </fieldset>
-    <div class="grid g2 gr-second" style="margin-top:8px">
-      <div class="field"><label>Nom de la 2e chance</label><input type="text" name="g2label" value="${esc(sec ? sec.label : "")}" placeholder="ex. CC4 — 2e chance"></div>
-      <div class="field gr-g2w"><label>Poids de la 2e chance (%)</label><input type="number" name="g2w" min="0" step="any" value="${sec && sec.weight ? sec.weight : ""}"></div>
+    <div class="card" style="margin:12px 0;padding:12px 14px"><span class="chip gr-total"></span><div class="gr-sum" style="margin-top:8px"></div></div>
+    <div class="small" style="font-weight:600;margin:14px 0 6px">Y a-t-il une 2e chance (rattrapage) ?</div>
+    <div class="seg" role="radiogroup" aria-label="2e chance">${seg("none", "Non")}${seg("opt", "Facultative")}${seg("req", "Obligatoire")}</div>
+    <p class="small muted gr-help" style="margin:8px 0 0"></p>
+    <div class="gr-second">
+      <div class="field" style="flex:1;min-width:0"><label>Nom de la 2e chance</label><input type="text" name="g2label" value="${esc(sec ? sec.label : "")}" placeholder="ex. CC4 — 2e chance"></div>
+      <div class="field gr-g2w" style="flex:none;width:160px;min-width:0"><label>Poids (%)</label><input type="number" name="g2w" min="0" step="any" value="${sec && sec.weight ? sec.weight : ""}"></div>
     </div>
     <input type="hidden" name="g2id" value="${esc(sec ? sec.id : "")}">
   </details>`;
@@ -51,15 +55,24 @@ export function bindGradingEditor(form) {
     const mode = (form.querySelector('input[name="g2mode"]:checked') || {}).value || "none";
     $(".gr-second", form).hidden = mode === "none";
     $(".gr-g2w", form).hidden = mode !== "req";
+    $(".gr-help", form).textContent = HELP[mode];
     const tot = $(".gr-total", form), sum = $(".gr-sum", form);
     let g;
     try { g = readGradingEditor(form); } catch (err) { tot.className = "chip wa gr-total"; tot.textContent = "À compléter"; sum.textContent = err.message; return; }
-    if (!g) { tot.className = "chip gr-total"; tot.textContent = "Aucune épreuve"; sum.textContent = "Ajoute une épreuve pour voir ta formule de calcul."; return; }
-    const w = g.items.reduce((s, it) => s + it.weight, 0) + (g.second && g.second.required ? g.second.weight : 0);
-    const ok = Math.abs(w - 100) < 0.01;
+    if (!g) { tot.className = "chip gr-total"; tot.textContent = "Aucune épreuve"; sum.textContent = "Ajoute une épreuve pour voir comment ta note sera calculée."; return; }
+    const sec = g.second, w = g.items.reduce((s, it) => s + it.weight, 0) + (sec && sec.required ? sec.weight : 0);
+    const ok = Math.abs(w - 100) < 0.01, pct = (x) => `${fmt((x / w) * 100)} %`;
     tot.className = `chip ${ok ? "ok" : "wa"} gr-total`;
     tot.textContent = ok ? "Total : 100 %" : `Total : ${fmt(w)} (ramené à 100 %)`;
-    sum.textContent = describeFormula(g);
+    // Une ligne par épreuve : son nom, ce qui la particularise, sa part dans la note.
+    const line = (name, meta, share) => `<div class="gr-line"><span>${esc(short(name))}${meta.length ? ` <span class="tiny muted">${meta.join(" · ")}</span>` : ""}</span><b>${share}</b></div>`;
+    const rows = g.items.map((it) => line(it.label, [
+      ...(it.parts ? [`moyenne de ${it.parts.length} notes`] : []),
+      ...(it.max ? [`sur ${fmt(it.max)}`] : []),
+    ], pct(it.weight)));
+    if (sec && sec.required) rows.push(line(sec.label, ["2e chance"], pct(sec.weight)));
+    if (sec) rows.push(`<div class="tiny muted" style="padding-top:8px">${sec.required ? "La 2e chance remplace aussi chaque note plus faible, si elle est meilleure." : `2e chance facultative : « ${esc(short(sec.label))} » remplace une note plus faible, si elle est meilleure.`}</div>`);
+    sum.innerHTML = rows.join("");
   };
   form.addEventListener("click", (e) => {
     const b = e.target.closest("[data-gr]");
