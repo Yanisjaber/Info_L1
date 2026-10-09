@@ -1,108 +1,109 @@
 // Calcul de la note finale d'une matière, à partir de la configuration saisie par l'utilisateur
-// (colonne `grading` de la table matieres, éditable dans Compte → matière → « Calcul de la note »).
+// (colonne `grading` de la table matieres, éditable depuis la page Notes & CC et dans Compte → matière).
 //
 // Format de la configuration :
 // {
-//   items:  [ { id, label, weight, max?, parts? } ],   // les épreuves du semestre
-//   second: { id, label, weight?, required? } | null,  // note de 2e chance, optionnelle
-//   formule?: "texte affiché au-dessus du calculateur" // sinon générée automatiquement
+//   items:  [ { id, label, weight, max?, parts? } ],                      // les épreuves
+//   second: { id, label, weight?, required?, max?, pos? } | null,         // la 2e chance (une seule)
 // }
 // - weight : poids de l'épreuve (en %, ou n'importe quelle unité : seul le rapport compte).
-// - max    : barème de la note saisie (20 par défaut) ; elle est ramenée sur 20.
+// - max    : barème de la note saisie (20 par défaut) ; elle est ramenée sur 20 et reste toujours entre 0 et `max`.
 // - parts  : [{ id, label }] — épreuve notée en plusieurs saisies dont on fait la moyenne
 //            (ex. deux interros comptant ensemble pour un seul CC).
-// - second : la note de 2e chance remplace, épreuve par épreuve, toute note plus faible
-//            (max(note, 2e chance)). Si `required`, elle compte aussi dans la moyenne avec son
-//            propre poids ; sinon elle est facultative et sert seulement de remplacement.
+// - second : la note de 2e chance remplace, épreuve par épreuve, toute note plus faible (max(note, 2e chance)).
+//            Si `required` (et `weight` > 0), elle compte aussi dans la moyenne avec son propre poids ; sinon elle est
+//            facultative et sert seulement de remplacement.
+// - pos    : nombre d'épreuves placées avant la 2e chance dans l'éditeur (à la fin si absent).
 import { M } from "../../core/services/app-data.js";
+import { fmt1 } from "../../core/utils/format.js";
 
-const num = (v) => (v === "" || v === null || v === undefined || isNaN(+v) ? null : +v);
+const round1 = (x) => Math.round(x * 10) / 10;
 
-// moyenne pondérée sur les champs renseignés
-function wavg(pairs) {
-  let s = 0, w = 0;
-  pairs.forEach(([v, p]) => { if (v !== null) { s += v * p; w += p; } });
-  return w ? { note: s / w, poids: w } : null;
-}
+// Note saisie → nombre, ou null si vide ou illisible.
+const num = (v) => {
+  if (v === null || v === undefined || String(v).trim() === "") return null;
+  const n = +v;
+  return Number.isFinite(n) ? n : null;
+};
 
-const shortLabel = (l) => String(l || "").replace(/\s*\([^)]*%\)\s*$/, "").trim();
-const pctText = (w, total) => `${Math.round((w / total) * 1000) / 10} %`.replace(".", ",");
+// Une note reste toujours entre 0 et le « Sur » de l'épreuve.
+export const clampScore = (n, max) => Math.min(max, Math.max(0, n));
 
 // Une seule règle d'affichage d'une épreuve, partout dans l'app : le nom tel qu'il est écrit, puis son coef
 // calculé depuis le poids (« 10 % », ou « facultative » sans coef). Rien n'est retiré du texte du nom.
-export const shareText = (share) => (share === null ? "facultative" : `${String(share).replace(".", ",")} %`);
+export const shareText = (share) => (share === null ? "facultative" : `${fmt1(share)} %`);
 
-// Phrase décrivant la formule, générée depuis la configuration.
-export function describeFormula(g) {
-  if (!g || !Array.isArray(g.items) || !g.items.length) return "";
-  const sec = g.second;
-  const items = g.items;
-  const secW = sec && sec.required ? +sec.weight || 0 : 0;
-  const total = items.reduce((s, it) => s + (+it.weight || 0), 0) + secW || 1;
-  const terms = items.map((it) => `${pctText(+it.weight || 0, total)} × ${sec ? `max(${shortLabel(it.label)}, ${shortLabel(sec.label)})` : shortLabel(it.label)}`);
-  if (sec && sec.required) terms.push(`${pctText(secW, total)} × ${shortLabel(sec.label)}`);
-  let s = `Note = ${terms.join(" + ")}`;
-  if (sec && !sec.required) s += `  (${shortLabel(sec.label)} facultative : elle remplace une note plus faible)`;
-  return s;
+// Place de la 2e chance parmi les lignes (0 = avant la première épreuve), bornée au nombre d'épreuves.
+export const secondAt = ({ items, second }) => (second && Number.isInteger(second.pos) ? Math.min(Math.max(second.pos, 0), items.length) : items.length);
+
+// Moyenne pondérée des couples [valeur, poids] dont la valeur est renseignée ; `poids` = somme des poids pris en compte.
+function wavg(pairs) {
+  const got = pairs.filter(([v]) => v !== null), w = got.reduce((s, [, p]) => s + p, 0);
+  if (!got.length) return null;
+  return { note: w ? got.reduce((s, [v, p]) => s + v * p, 0) / w : got.reduce((s, [v]) => s + v, 0) / got.length, poids: w };
 }
 
-// Transforme une configuration en calculateur { titre, formule, champs, calc } ; null si inutilisable.
-export function compileGrading(g, titre = "") {
-  if (!g || !Array.isArray(g.items) || !g.items.length) return null;
-  const items = g.items.map((it) => ({
-    id: it.id, label: it.label, w: +it.weight || 0, max: +it.max || 20,
-    parts: Array.isArray(it.parts) && it.parts.length > 1 ? it.parts : null,
-  }));
-  const sec = g.second ? { id: g.second.id, label: g.second.label, required: !!g.second.required, w: g.second.required ? +g.second.weight || 0 : 0, max: +g.second.max || 20 } : null;
+// Transforme une configuration en calculateur { champs, shares, calc } ; null si inutilisable.
+//   champs : [[id, nom, max?]] dans l'ordre des lignes de l'éditeur
+//   shares : { id → part en %, ou null pour une 2e chance facultative }
+//   calc(v) : { note, complet, poids? } pour les notes saisies `v` ({ id → valeur }), ou null s'il n'y en a aucune
+export function compileGrading(g) {
+  if (!g || !Array.isArray(g.items)) return null;
+  // Chaque identifiant n'est pris qu'une fois : un doublon ou un identifiant manquant est ignoré.
+  const seen = new Set(), take = (id) => !!id && !seen.has(id) && !!seen.add(id);
+  const items = [];
+  for (const it of g.items.filter(Boolean)) {
+    if (!take(it.id)) continue;
+    const parts = Array.isArray(it.parts) ? it.parts.filter((q) => q && take(q.id)) : [];
+    items.push({ id: it.id, label: String(it.label ?? ""), w: Math.max(0, +it.weight || 0), max: +it.max > 0 ? +it.max : 20, parts: parts.length > 1 ? parts : null });
+  }
+  if (!items.length) return null;
+  const s = g.second && take(g.second.id) ? g.second : null;
+  const sw = s ? Math.max(0, +s.weight || 0) : 0;
+  const sec = s && { id: s.id, label: String(s.label ?? ""), required: !!s.required && sw > 0, w: s.required ? sw : 0, max: +s.max > 0 ? +s.max : 20 };
 
-  // Les champs suivent l'ordre des lignes de l'éditeur, la 2e chance comprise (sa place est `second.pos`, à la fin par défaut).
+  const field = (f, max) => (max === 20 ? [f.id, f.label] : [f.id, f.label, max]);
+  const subs = (it) => it.parts || [it]; // les saisies d'une épreuve
+  const secAt = secondAt({ items, second: s });
   const champs = [];
-  const secAt = sec && Number.isInteger(g.second.pos) ? Math.min(Math.max(g.second.pos, 0), items.length) : items.length;
   items.forEach((it, i) => {
-    if (sec && i === secAt) champs.push(sec.max === 20 ? [sec.id, sec.label] : [sec.id, sec.label, sec.max]);
-    for (const f of it.parts || [{ id: it.id, label: it.label }]) champs.push(it.max === 20 ? [f.id, f.label] : [f.id, f.label, it.max]);
+    if (sec && i === secAt) champs.push(field(sec, sec.max));
+    subs(it).forEach((f) => champs.push(field(f, it.max)));
   });
-  if (sec && secAt >= items.length) champs.push(sec.max === 20 ? [sec.id, sec.label] : [sec.id, sec.label, sec.max]);
+  if (sec && secAt >= items.length) champs.push(field(sec, sec.max));
 
-  // Part de chaque champ dans la note (en %), pour l'afficher à côté de son nom ; null = 2e chance facultative.
-  const totalW = items.reduce((s, it) => s + it.w, 0) + (sec && sec.required ? sec.w : 0) || 1;
-  const pct = (w) => Math.round((w / totalW) * 1000) / 10;
+  const totalW = items.reduce((t, it) => t + it.w, 0) + (sec ? sec.w : 0) || 1;
+  const share = (w) => round1((w / totalW) * 100);
   const shares = {};
-  for (const it of items) for (const f of it.parts || [{ id: it.id }]) shares[f.id] = pct(it.w / (it.parts ? it.parts.length : 1));
-  if (sec) shares[sec.id] = sec.required ? pct(sec.w) : null;
+  items.forEach((it) => subs(it).forEach((f) => { shares[f.id] = share(it.w / subs(it).length); }));
+  if (sec) shares[sec.id] = sec.required ? share(sec.w) : null;
 
-  const scale = (x, max) => (x === null || max === 20 ? x : (x / max) * 20);
-
-  function calc(v) {
-    const val = (k) => num(v[k]);
+  function calc(v = {}) {
+    // Note lue dans `v`, bornée entre 0 et son « Sur », puis ramenée sur 20 ; null si vide.
+    const read = (id, max) => { const n = num(v[id]); return n === null ? null : max === 20 ? clampScore(n, max) : (clampScore(n, max) / max) * 20; };
     const xs = items.map((it) => {
-      if (it.parts) {
-        const p = it.parts.map((q) => scale(val(q.id), it.max));
-        return p.every((x) => x !== null) ? p.reduce((s, x) => s + x, 0) / p.length : null;
-      }
-      return scale(val(it.id), it.max);
+      if (!it.parts) return read(it.id, it.max);
+      const p = it.parts.map((q) => read(q.id, it.max));
+      return p.every((x) => x !== null) ? p.reduce((t, x) => t + x, 0) / p.length : null;
     });
-    const S = sec ? scale(val(sec.id), sec.max) : null;
-    const complete = xs.every((x) => x !== null) && (!sec || !sec.required || S !== null);
-    if (complete) {
-      const f = S === null ? -Infinity : S;
-      const terms = items.map((it, i) => ({ w: it.w, x: sec ? Math.max(xs[i], f) : xs[i] }));
-      if (sec && sec.required) terms.push({ w: sec.w, x: S });
-      const total = terms.reduce((s, t) => s + t.w, 0);
-      const equal = terms.every((t) => t.w === terms[0].w);
-      const note = equal ? terms.reduce((s, t) => s + t.x, 0) / terms.length : terms.reduce((s, t) => s + (t.w / total) * t.x, 0);
-      return { note, complet: true };
-    }
-    // Estimation partielle : moyenne pondérée de tout ce qui est saisi, 2e chance comprise (elle remplace une note plus
-    // faible et, si elle a un poids, compte avec ce poids). `poids` = part du total déjà saisie, en %.
+    const S = sec ? read(sec.id, sec.max) : null;
+    // La 2e chance remplace toute note plus faible.
     const up = (x) => (x === null || S === null ? x : Math.max(x, S));
-    const pairs = items.flatMap((it, i) => (it.parts ? it.parts.map((q) => [up(scale(val(q.id), it.max)), it.w / it.parts.length]) : [[up(xs[i]), it.w]]));
+
+    if (xs.every((x) => x !== null) && (!sec || !sec.required || S !== null)) {
+      const pairs = items.map((it, i) => [up(xs[i]), it.w]);
+      if (sec && sec.required) pairs.push([S, sec.w]);
+      return { note: wavg(pairs).note, complet: true };
+    }
+    // Estimation partielle : moyenne pondérée de tout ce qui est saisi, 2e chance comprise.
+    // `poids` = part du total déjà saisie, en %.
+    const pairs = items.flatMap((it, i) => (it.parts ? it.parts.map((q) => [up(read(q.id, it.max)), it.w / it.parts.length]) : [[up(xs[i]), it.w]]));
     if (sec && sec.required) pairs.push([S, sec.w]);
     const e = wavg(pairs);
-    return e ? { note: e.note, complet: false, poids: Math.round((e.poids / totalW) * 1000) / 10 } : null;
+    return e ? { note: e.note, complet: false, poids: round1((e.poids / totalW) * 100) } : null;
   }
 
-  return { titre, formule: g.formule || describeFormula(g), champs, shares, calc };
+  return { champs, shares, calc };
 }
 
 // Calculateur d'une matière (mémorisé tant que sa configuration ne change pas).
@@ -110,6 +111,6 @@ const cache = new WeakMap();
 export function calcFor(mid) {
   const m = M(mid);
   if (!m || !m.grading) return null;
-  if (!cache.has(m.grading)) cache.set(m.grading, compileGrading(m.grading, m.nom));
+  if (!cache.has(m.grading)) cache.set(m.grading, compileGrading(m.grading));
   return cache.get(m.grading);
 }
