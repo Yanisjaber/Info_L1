@@ -178,7 +178,7 @@ export function openCCDateModal({ matiere, epreuve }) {
   backdrop.innerHTML = `<div class="modal card" role="dialog" aria-modal="true" aria-label="Date de ${esc(ep.label)}">
     <div class="row" style="margin-bottom:12px"><h3 style="margin:0">Date de « ${esc(ep.label)} »</h3><div class="sp"></div><button type="button" class="btn sm ghost" data-a="cancelcc" aria-label="Fermer">✕</button></div>
     <form data-a="saveccdate">
-      ${slots.length ? `<div class="field"><label>Cours de l'emploi du temps</label><select name="slot"><option value="">— aucun, je choisis une date —</option>${slots.map((x) => `<option value="${esc(x.id)}" data-d="${esc(x.d)}">${esc(label(x))}</option>`).join("")}</select></div>` : ""}
+      ${slots.length ? `<div class="field"><label>Cours de l'emploi du temps</label><select name="slot"><option value="">Aucun, je choisis une date</option>${slots.map((x) => `<option value="${esc(x.id)}" data-d="${esc(x.d)}">${esc(label(x))}</option>`).join("")}</select></div>` : ""}
       <div class="field"><label>Date</label><input type="date" name="date" required></div>
       <div class="row" style="margin-top:12px">
         <button class="btn pri" type="submit">${icon("check")}Ajouter la date</button>
