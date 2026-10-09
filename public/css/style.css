@@ -411,3 +411,8 @@ span.flatpickr-weekday{color:var(--muted);font-weight:600;font-size:.74rem;text-
 .edt-now{position:absolute;left:-1px;right:0;height:0;border-top:2px solid var(--ko);z-index:2;pointer-events:none}
 .edt-now::before{content:"";position:absolute;left:-4px;top:-4px;width:8px;height:8px;border-radius:50%;background:var(--ko)}
 @media (max-width:640px){.edt-inner{grid-template-columns:38px repeat(var(--n,5),minmax(150px,1fr))}.edt-axis{width:38px}}
+/* Année du calendrier : plus de mini-flèches au survol ; on clique pour taper l'année, ou on passe par les flèches de mois */
+.flatpickr-current-month .numInputWrapper span{display:none}
+.flatpickr-current-month .numInputWrapper{width:6.2ch;border-radius:8px}
+.flatpickr-current-month input.cur-year{cursor:text;text-align:left}
+.flatpickr-current-month .numInputWrapper:hover,.flatpickr-current-month .flatpickr-monthDropdown-months:hover{background:var(--surface2)}
