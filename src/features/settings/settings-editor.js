@@ -22,7 +22,7 @@ export function settingsEditorHtml() {
   const ta = (name, rows, v) => `<textarea name="${name}" rows="${rows}" spellcheck="false" style="width:100%;font-family:var(--mono, monospace);font-size:.85rem">${esc(v)}</textarea>`;
   return `<form class="grid" style="gap:12px" data-a="savesettings">
     <div class="grid g3">
-      <div class="field"><label>Note de validation (/20)</label><input type="number" name="passMark" min="0" max="20" step="0.25" value="${c.passMark}"></div>
+      <div class="field"><label>Note de validation (/20)</label><input type="number" name="passMark" min="0" max="20" step="0.05" value="${c.passMark}"></div>
       <div class="field"><label>Libellé « validé »</label><input type="text" name="passLabel" value="${esc(c.passLabel)}" placeholder="ex. UE validée"></div>
       <div class="field"><label>Préfixe des fichiers exportés</label><input type="text" name="slug" value="${esc(c.slug)}" pattern="[a-z0-9\\-]{1,30}" placeholder="ex. l1s1"></div>
     </div>
