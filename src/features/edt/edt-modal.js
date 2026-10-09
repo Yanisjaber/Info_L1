@@ -3,23 +3,28 @@ import { toast } from "../../core/components/toast.js";
 import { C, D, M } from "../../core/services/app-data.js";
 import { loadData } from "../../core/services/data-loader.js";
 import { todayKey } from "../../core/services/store.js";
-import { $$, esc } from "../../core/utils/dom.js";
-import { matiereFromCCLabel } from "../calendar/cc-modal.js";
-import { saveCCEvent } from "../calendar/cc.service.js";
+import { $, $$, esc } from "../../core/utils/dom.js";
+import { ccFieldsHtml, ccFormValues, matiereFromCCLabel, wireCCFields } from "../calendar/cc-modal.js";
+import { saveCCEvent, saveCCWithEpreuve } from "../calendar/cc.service.js";
 import { saveEdtEvent } from "./edt.service.js";
 import { edtDefaultType, edtTypeIds } from "../settings/settings.js";
 import { saveSeance } from "../seances/seances.service.js";
 import { rerender } from "../../routing/navigation.js";
 import { routerState } from "../../routing/router.store.js";
 
+// L'échéance CC d'un créneau : celle reliée par `edtId`, sinon (adoption, seulement pour un créneau marqué CC) une échéance
+// de la même matière le même jour qui n'est reliée à aucun créneau. `slot` : { id, m, d, cc }.
+const ccOfSlot = (slot) => (slot.id && D.cal.evenements.find((x) => x.edtId === slot.id)) || (slot.cc && slot.m && D.cal.evenements.find((x) => x.matiere === slot.m && x.date === slot.d && !x.edtId)) || null;
+
 // Formulaire unique pour ajouter OU modifier un créneau à la main (bouton "+" du header, ou
 // crayon sur une carte de la grille) — remplace l'ancien sélecteur "changer le type" isolé.
 function edtEventForm(e) {
   const isNew = !e;
   const v = e || { id: "", d: todayKey(), s: "08:00", e: "10:00", t: edtDefaultType(), m: "", r: "", p: "", g: "", n: "", cc: false, allday: false };
-  const ccMatiere = !isNew && v.cc ? (M(v.m) || matiereFromCCLabel(v.n)) : null;
-  const ccLinked = !isNew && (D.cal.evenements.find((x) => x.edtId === v.id) || D.cal.evenements.find((x) => x.matiere === v.m && x.date === v.d));
-  return `${ccMatiere ? `<div class="row" style="margin-bottom:12px">${ccLinked ? `<a class="btn sm ghost" href="#/cal">${icon("cal")}Voir dans Notes &amp; CC</a>` : `<button class="btn sm pri" type="button" data-a="addccsugg" data-m="${esc(ccMatiere.id)}" data-date="${v.d}" data-titre="${esc(v.n || "CC")}" data-edt-id="${esc(v.id)}">${icon("check")}Ajouter à mes échéances (${esc(ccMatiere.court)})</button>`}</div>` : ""}
+  const linked = ccOfSlot(v);
+  // Le CC de ce créneau : ses champs (épreuve, titre, poids, « Sur », type) viennent de l'échéance reliée, sinon du créneau.
+  const ccVals = ccFormValues(linked, { matiere: v.m || matiereFromCCLabel(v.n)?.id || "", date: v.d, titre: v.n || "", edtId: v.id });
+  return `${linked ? `<div class="row" style="margin-bottom:12px"><a class="btn sm ghost" href="#/cal">${icon("cal")}Voir dans le calendrier</a></div>` : ""}
   <form data-a="saveedt">
     <input type="hidden" name="id" value="${esc(v.id)}">
     <div class="grid g2">
@@ -33,6 +38,7 @@ function edtEventForm(e) {
       <div class="field"><label>Groupe</label><input type="text" name="g" value="${esc(v.g || "")}" placeholder="ex. TD2"></div>
     </div>
     <label class="row small" style="gap:6px;margin-top:10px"><input type="checkbox" name="cc" ${v.cc ? "checked" : ""}> Contrôle continu pendant ce créneau</label>
+    <div id="edtCC" ${v.cc ? "" : "hidden"} style="margin-top:10px">${ccFieldsHtml(ccVals)}</div>
     <div class="field" style="margin-top:10px"><label>Note</label><input type="text" name="n" value="${esc(v.n || "")}" placeholder="intitulé affiché sous le créneau, ou détails du CC"></div>
     <div class="row" style="margin-top:12px">
       <button class="btn pri" type="submit">${icon("check")}${isNew ? "Ajouter" : "Enregistrer"}</button>
@@ -57,16 +63,39 @@ export function openEdtModal(e) {
   backdrop.addEventListener("mousedown", (ev) => { if (ev.target === backdrop) closeEdtModal(); });
   document.addEventListener("keydown", edtModalEsc);
   document.body.appendChild(backdrop);
-  $$('form[data-a="saveedt"]', backdrop).forEach((f) => f.addEventListener("submit", async (ev) => {
+  const f = $('form[data-a="saveedt"]', backdrop);
+  // Bloc « Contrôle continu » : visible et obligatoire seulement quand la case est cochée (les champs masqués sont
+  // désactivés, sinon le navigateur bloquerait l'envoi sur un champ invisible).
+  const ccBox = $("#edtCC", f), fields = wireCCFields(ccBox, { mid: () => f.elements.m.value, selfId: ccOfSlot(e || {})?.id });
+  const toggleCC = () => { const on = f.elements.cc.checked; ccBox.hidden = !on; $$("input,select", ccBox).forEach((x) => { x.disabled = !on; }); };
+  f.elements.cc.addEventListener("change", toggleCC);
+  f.elements.m.addEventListener("change", () => fields.refresh());
+  toggleCC();
+  f.addEventListener("submit", async (ev) => {
     ev.preventDefault();
-    const fd = new FormData(f);
+    const fd = new FormData(f), btn = $('button[type="submit"]', f);
+    if (btn.disabled) return; // un seul enregistrement à la fois (double clic)
+    btn.disabled = true;
     try {
-      const d = fd.get("d");
-      const id = await saveEdtEvent({ id: fd.get("id") || undefined, d, s: fd.get("s"), e: fd.get("e"), t: fd.get("t"), m: fd.get("m") || null, sid: e?.sid, r: fd.get("r"), p: fd.get("p"), g: fd.get("g"), n: fd.get("n"), cc: fd.get("cc") === "on", allday: fd.get("allday") === "on" });
-      // Un créneau déplacé/modifié répercute sa date sur l'échéance CC liée (edtId), pour que les
-      // deux restent coordonnés sans avoir à les modifier séparément à chaque changement d'horaire.
-      const linkedCC = D.cal.evenements.find((x) => x.edtId === id);
-      if (linkedCC && linkedCC.date !== d) await saveCCEvent({ ...linkedCC, date: d });
+      const d = fd.get("d"), m = fd.get("m") || null, wantCC = fd.get("cc") === "on";
+      const before = ccOfSlot({ id: fd.get("id"), m, d, cc: wantCC });
+      if (wantCC) {
+        if (!m) throw new Error("Choisis la matière du CC");
+        if (before?.epreuve && before.matiere !== m) throw new Error(`Ce créneau est relié au CC « ${before.titre} » d'une autre matière : change d'abord ce CC dans le calendrier.`);
+      }
+      const id = await saveEdtEvent({ id: fd.get("id") || undefined, d, s: fd.get("s"), e: fd.get("e"), t: fd.get("t"), m, sid: e?.sid, r: fd.get("r"), p: fd.get("p"), g: fd.get("g"), n: fd.get("n"), cc: wantCC, allday: fd.get("allday") === "on" });
+      f.elements.id.value = id; // si la suite échoue, un nouvel envoi met à jour ce créneau au lieu d'en créer un autre
+      if (wantCC) {
+        // Le CC est créé ou mis à jour avec son épreuve du calculateur, relié à ce créneau.
+        await saveCCWithEpreuve({
+          id: before?.id, epreuve: fd.get("epreuve") || undefined, matiere: m, date: d, label: fd.get("titre"), weight: fd.get("poids"), max: fd.get("max"), second: fd.get("type") === "2e",
+          edtId: id, statut: before?.statut || "", detail: before?.detail || "", seances: before?.seances || [],
+        });
+      } else {
+        // Un créneau déplacé répercute sa date sur l'échéance CC liée (edtId), pour que les deux restent coordonnés.
+        const linkedCC = D.cal.evenements.find((x) => x.edtId === id);
+        if (linkedCC && linkedCC.date !== d) await saveCCEvent({ ...linkedCC, date: d });
+      }
       // Même chose pour la séance de cours liée (lien explicite e.sid, plus besoin de deviner par
       // date+type+matière) : sans ça elle reste sur l'ancienne date, se détache du créneau dans
       // l'EDT (qui propose alors de "recréer" un cours) et continue de s'afficher à l'ancienne
@@ -76,8 +105,8 @@ export function openEdtModal(e) {
       toast("Créneau enregistré");
       closeEdtModal();
       await loadData(); rerender();
-    } catch (err) { toast("Erreur : " + err.message); }
-  }));
+    } catch (err) { btn.disabled = false; toast("Erreur : " + err.message); }
+  });
   routerState.cleanup = closeEdtModal;
 }
 

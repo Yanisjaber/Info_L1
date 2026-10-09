@@ -31,7 +31,7 @@ function ccSeancesPicker(mid, selected) {
 
 // Valeurs de départ du formulaire : une échéance existante (reliée ou non à une épreuve), un préremplissage
 // (suggestion de l'emploi du temps), ou rien. Une épreuve reliée donne le nom, le poids, le « Sur » et le type.
-function ccFormValues(e, preset) {
+export function ccFormValues(e, preset) {
   const v = { id: "", matiere: D.matieres[0]?.id || "", titre: "", date: "", type: "CC", statut: "", detail: "", edtId: "", seances: [], epreuve: "", poids: "", max: 20, ...(preset || {}), ...(e || {}) };
   const ep = v.epreuve ? epreuveOf(M(v.matiere)?.grading, v.epreuve) : null;
   if (ep) return { ...v, titre: ep.label, poids: ep.weight, max: ep.max, type: ep.second ? "2e" : "CC" };
@@ -45,6 +45,38 @@ function epreuveOptions(mid, current, selfId) {
   return `<option value="">+ Nouvelle épreuve</option>` + freeEpreuves(M(mid)?.grading, linked).map((p) => `<option value="${esc(p.id)}" data-label="${esc(p.label)}" data-weight="${p.weight}" data-max="${p.max}" data-second="${p.second ? 1 : 0}" ${p.id === current ? "selected" : ""}>${esc(p.label)}</option>`).join("");
 }
 
+// Les champs d'un CC qui sont aussi ceux de son épreuve du calculateur : tous obligatoires. Partagés par le formulaire
+// du calendrier et celui de l'emploi du temps (`v` : valeurs de ccFormValues).
+export function ccFieldsHtml(v) {
+  return `<div class="grid g2">
+      <div class="field"><label>Épreuve du calculateur</label><select name="epreuve">${epreuveOptions(v.matiere, v.epreuve, v.id)}</select></div>
+      <div class="field"><label>Titre</label><input type="text" name="titre" required maxlength="80" value="${esc(v.titre)}" placeholder="ex. CC1 — QCM"></div>
+      <div class="field"><label>Poids (% de la note)</label><input type="number" name="poids" required min="0.01" step="any" value="${esc(v.poids)}" placeholder="ex. 20"></div>
+      <div class="field"><label>Noté sur</label><input type="number" name="max" required min="1" step="any" value="${esc(v.max)}"></div>
+      <div class="field"><label>Type</label><select name="type"><option value="CC" ${v.type !== "2e" ? "selected" : ""}>Normal</option><option value="2e" ${v.type === "2e" ? "selected" : ""}>2e chance</option></select></div>
+    </div>
+    <p class="tiny muted" id="ccTotal" style="margin:8px 0 0"></p>`;
+}
+
+// Comportement de ces champs : choisir une épreuve existante remplit titre, poids, « Sur » et type, et le total des poids
+// de la matière se met à jour. `mid()` donne la matière choisie ; le retour `refresh()` est à appeler quand elle change.
+export function wireCCFields(root, { mid, selfId }) {
+  const q = (n) => root.querySelector(`[name="${n}"]`);
+  const total = () => {
+    const self = q("epreuve").value, w = parseFloat(q("poids").value) || 0;
+    const t = listEpreuves(M(mid())?.grading).filter((p) => p.id !== self).reduce((sum, p) => sum + p.weight, 0) + w;
+    $("#ccTotal", root).textContent = `Total des poids de cette matière avec ce CC : ${fmt1(t)} %${Math.abs(t - 100) < 0.01 ? "" : " (ramené à 100 %)"}`;
+  };
+  q("epreuve").addEventListener("change", () => {
+    const o = q("epreuve").selectedOptions[0];
+    if (o && o.value) { q("titre").value = o.dataset.label; q("poids").value = o.dataset.weight; q("max").value = o.dataset.max; q("type").value = o.dataset.second === "1" ? "2e" : "CC"; }
+    total();
+  });
+  q("poids").addEventListener("input", total);
+  total();
+  return { refresh() { q("epreuve").innerHTML = epreuveOptions(mid(), "", selfId); total(); } };
+}
+
 // Un CC et son épreuve du calculateur ne font qu'un : tous ces champs sont obligatoires, car l'épreuve en a besoin.
 function ccEntryForm(e, preset) {
   const isNew = !e;
@@ -55,16 +87,11 @@ function ccEntryForm(e, preset) {
     <input type="hidden" name="id" value="${esc(v.id)}">
     <input type="hidden" name="edtId" value="${esc(v.edtId || "")}">
     ${locked ? `<input type="hidden" name="matiere" value="${esc(v.matiere)}">` : ""}
-    <div class="grid g2">
+    <div class="grid g2" style="margin-bottom:14px">
       <div class="field"><label>Matière</label><select ${locked ? "disabled" : 'name="matiere"'} required>${D.matieres.map((m) => `<option value="${esc(m.id)}" ${v.matiere === m.id ? "selected" : ""}>${esc(m.nom)}</option>`).join("")}</select></div>
       <div class="field"><label>Date</label><input type="date" name="date" required value="${esc(v.date || "")}"></div>
-      <div class="field"><label>Épreuve du calculateur</label><select name="epreuve">${epreuveOptions(v.matiere, v.epreuve, v.id)}</select></div>
-      <div class="field"><label>Titre</label><input type="text" name="titre" required maxlength="80" value="${esc(v.titre)}" placeholder="ex. CC1 — QCM"></div>
-      <div class="field"><label>Poids (% de la note)</label><input type="number" name="poids" required min="0.01" step="any" value="${esc(v.poids)}" placeholder="ex. 20"></div>
-      <div class="field"><label>Noté sur</label><input type="number" name="max" required min="1" step="any" value="${esc(v.max)}"></div>
-      <div class="field"><label>Type</label><select name="type"><option value="CC" ${v.type !== "2e" ? "selected" : ""}>Normal</option><option value="2e" ${v.type === "2e" ? "selected" : ""}>2e chance</option></select></div>
     </div>
-    <p class="tiny muted" id="ccTotal" style="margin:8px 0 0"></p>
+    ${ccFieldsHtml(v)}
     <details style="margin-top:10px" ${v.seances?.length ? "open" : ""}><summary>Séances au programme <span class="tiny muted">(score de préparation)</span></summary>
       <div id="ccSeancesPick" style="margin-top:6px">${ccSeancesPicker(v.matiere, v.seances)}</div>
     </details>
@@ -129,30 +156,17 @@ export function openCCModal(e, preset) {
   routerState.cleanup = closeCCModal;
 }
 
-// Comportement du formulaire : changer de matière recharge les épreuves et les séances proposées, choisir une épreuve
-// existante remplit le titre, le poids, le « Sur » et le type, et le total des poids de la matière se met à jour.
+// Comportement du formulaire d'échéance : changer de matière recharge les séances et les épreuves proposées.
 function wireCCForm(f, e) {
   const field = (n) => f.elements[n];
   const mid = () => field("matiere").value;
-  const total = () => {
-    const self = field("epreuve").value, w = parseFloat(field("poids").value) || 0;
-    const t = listEpreuves(M(mid())?.grading).filter((p) => p.id !== self).reduce((s, p) => s + p.weight, 0) + w;
-    $("#ccTotal", f).textContent = `Total des poids de cette matière avec ce CC : ${fmt1(t)} %${Math.abs(t - 100) < 0.01 ? "" : " (ramené à 100 %)"}`;
-  };
+  const fields = wireCCFields(f, { mid, selfId: e?.id });
   const selectEl = $('select[name="matiere"]', f);
   if (selectEl) selectEl.addEventListener("change", () => {
     // Les séances cochées et l'épreuve choisie appartiennent à l'ancienne matière : on repart de zéro.
     $("#ccSeancesPick", f).innerHTML = ccSeancesPicker(mid(), []);
-    field("epreuve").innerHTML = epreuveOptions(mid(), "", e?.id);
-    total();
+    fields.refresh();
   });
-  field("epreuve").addEventListener("change", () => {
-    const o = field("epreuve").selectedOptions[0];
-    if (o && o.value) { field("titre").value = o.dataset.label; field("poids").value = o.dataset.weight; field("max").value = o.dataset.max; field("type").value = o.dataset.second === "1" ? "2e" : "CC"; }
-    total();
-  });
-  field("poids").addEventListener("input", total);
-  total();
   f.addEventListener("submit", async (ev) => {
     ev.preventDefault();
     const fd = new FormData(f), btn = $('button[type="submit"]', f);
