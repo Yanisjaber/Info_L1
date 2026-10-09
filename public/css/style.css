@@ -260,20 +260,24 @@ details[open]{padding-bottom:12px}
 .dpick-trig{display:inline-flex;align-items:center;gap:8px}
 .dpick-pop{position:absolute;top:calc(100% + 6px);left:0;z-index:30;width:272px}
 .dpick-pop[hidden]{display:none}
-/* Éditeur du calculateur de notes : 2e chance en boutons côte à côte, lignes du résumé. */
-.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--surface)}
-.seg label{position:relative;padding:9px 16px;cursor:pointer;font-size:.88rem;font-weight:600;color:var(--muted);border-right:1px solid var(--line);user-select:none}
-.seg label:last-child{border-right:0}
-.seg label:hover{background:var(--surface2)}
-.seg input{position:absolute;inset:0;margin:0;opacity:0;cursor:pointer}
-.seg label:has(input:checked){background:var(--acc);color:#fff}
-:root[data-theme="dark"] .seg label:has(input:checked){color:#0F151D}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .seg label:has(input:checked){color:#0F151D}}
-.seg label:has(input:focus-visible){outline:2px solid var(--acc);outline-offset:2px}
-.gr-second{display:flex;gap:10px;margin-top:10px}
+/* Éditeur du calculateur de notes : grille des épreuves, case « 2e chance », lignes du résumé. */
+.gr-grid{display:grid;grid-template-columns:minmax(0,1fr) 84px 72px 104px 36px;gap:8px;align-items:center}
+.gr-sec-toggle{position:relative;display:inline-flex;align-items:center;justify-content:center;padding:9px 10px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--muted);font-size:.8rem;font-weight:600;white-space:nowrap;cursor:pointer;user-select:none}
+.gr-sec-toggle:hover{background:var(--surface2)}
+.gr-sec-toggle input{position:absolute;inset:0;margin:0;opacity:0;cursor:pointer}
+.gr-sec-toggle:has(input:checked){background:var(--acc);border-color:var(--acc);color:#fff}
+:root[data-theme="dark"] .gr-sec-toggle:has(input:checked){color:#0F151D}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .gr-sec-toggle:has(input:checked){color:#0F151D}}
+.gr-sec-toggle:has(input:focus-visible){outline:2px solid var(--acc);outline-offset:2px}
 .gr-line{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:6px 0;border-bottom:1px solid var(--line)}
 .gr-line:last-child{border-bottom:0}
-.gr-second[hidden],.gr-g2w[hidden],.gr-adv[hidden]{display:none}
+.gr-adv[hidden]{display:none}
+@media (max-width:640px){
+  .gr-grid{grid-template-columns:1fr 1fr 1fr 36px}
+  .gr-grid>:first-child{grid-column:1/-1}
+  .gr-grid.gr-head{display:none}
+  .gr-sec-toggle{grid-column:span 1}
+}
 .cal.pick{gap:2px}
 .cal.pick .dh{padding:2px 0;font-size:.64rem}
 .cal.pick .d{min-height:0;display:flex;align-items:center;justify-content:center;padding:0;aspect-ratio:1;font:inherit;font-size:.82rem;font-weight:600;color:var(--text);cursor:pointer;appearance:none}
