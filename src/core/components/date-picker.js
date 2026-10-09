@@ -1,69 +1,46 @@
-import { icon } from "./icons.js";
-import { todayKey } from "../services/store.js";
-import { $, $$ } from "../utils/dom.js";
-import { fmtDate, parseDay } from "../utils/format.js";
+import { toast } from "./toast.js";
 
-// Sélecteur de date "maison" (remplace le widget natif du navigateur, trop éloigné du reste de
-// l'appli) : un bouton qui affiche la date choisie, un `<input type="hidden">` qui porte la vraie
-// valeur pour le formulaire, et une pastille calendrier (mêmes classes `.cal`/`.d`/`.dh` que les
-// autres calendriers de l'appli) qui s'ouvre en dessous. Générique : plusieurs instances peuvent
-// coexister sur une même page (`data-datepicker` + `wireDatePickers` les câble toutes).
-export function datePickerHtml(name, value) {
-  return `<div class="dpick" data-datepicker>
-    <button type="button" class="btn dpick-trig" data-a="dpicktoggle">${icon("cal")}<span class="dpick-label">${fmtDate(value)}</span></button>
-    <input type="hidden" name="${name}" value="${value}">
-    <div class="card dpick-pop" hidden>
-      <div class="row nowrap" style="margin-bottom:8px;gap:6px">
-        <button type="button" class="btn sm" data-a="dpickprev" aria-label="Mois précédent">${icon("back")}</button>
-        <b class="dpick-mlabel" style="flex:1;text-align:center;text-transform:capitalize"></b>
-        <button type="button" class="btn sm" data-a="dpicknext" aria-label="Mois suivant">${icon("arrow")}</button>
-      </div>
-      <div class="cal pick dpick-grid"></div>
-      <div class="row" style="margin-top:8px;justify-content:center"><button type="button" class="btn sm ghost" data-a="dpicktoday">Aujourd'hui</button></div>
-    </div>
-  </div>`;
+// Calendrier et heure de toute l'appli : la bibliothèque Flatpickr (vendor/flatpickr, chargée dans index.html),
+// habillée aux couleurs du thème (voir « Flatpickr » dans style.css). Rien à câbler à la main : `initDatePickers()`
+// surveille la page et transforme chaque `<input type="date">` et `<input type="time">` qui apparaît (pop-up, page
+// redessinée…). La valeur envoyée au formulaire reste « AAAA-MM-JJ » et « HH:MM », comme avec les champs natifs.
+const OPTS = {
+  date: { dateFormat: "Y-m-d", altInput: true, altFormat: "l j F Y", disableMobile: true },
+  time: { dateFormat: "H:i", enableTime: true, noCalendar: true, time_24hr: true, minuteIncrement: 5, allowInput: true, disableMobile: true },
+};
+
+function upgrade(input) {
+  if (input._flatpickr || !window.flatpickr) return;
+  const kind = input.type;
+  const fp = window.flatpickr(input, { ...OPTS[kind], locale: window.flatpickr.l10ns.fr, defaultDate: input.value || null, static: false });
+  // Le champ visible reprend le « required » du vrai champ (devenu caché) pour que le formulaire refuse un champ vide.
+  // (le champ visible est en lecture seule : le navigateur ne le contrôle plus, d'où la vérification à l'envoi plus bas)
+  if (fp.altInput && input.required) { fp.altInput.required = true; fp.altInput.dataset.req = "1"; input.required = false; }
+  if (fp.altInput) fp.altInput.classList.add("fp-input");
 }
 
-export function wireDatePickers(el) {
-  $$("[data-datepicker]", el).forEach((wrap) => {
-    const hidden = $('input[type="hidden"]', wrap), label = $(".dpick-label", wrap), pop = $(".dpick-pop", wrap);
-    const mlabel = $(".dpick-mlabel", wrap), grid = $(".dpick-grid", wrap);
-    const d0 = parseDay(hidden.value || todayKey());
-    let view = new Date(d0.getFullYear(), d0.getMonth(), 1);
-    const render = () => {
-      const y = view.getFullYear(), mo = view.getMonth();
-      const first = new Date(y, mo, 1), off = (first.getDay() + 6) % 7, dim = new Date(y, mo + 1, 0).getDate();
-      const today = todayKey(), sel = hidden.value;
-      let cells = "";
-      for (let i = 0; i < off; i++) cells += `<div class="d out"></div>`;
-      for (let d = 1; d <= dim; d++) {
-        const iso = `${y}-${String(mo + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
-        cells += `<button type="button" class="d ${iso === today ? "today" : ""} ${iso === sel ? "sel" : ""}" data-iso="${iso}">${d}</button>`;
-      }
-      mlabel.textContent = new Intl.DateTimeFormat("fr-FR", { month: "long", year: "numeric" }).format(view);
-      grid.innerHTML = `${["L", "M", "M", "J", "V", "S", "D"].map((d) => `<div class="dh">${d}</div>`).join("")}${cells}`;
-    };
-    render();
-    $('[data-a="dpicktoggle"]', wrap).addEventListener("click", (e) => {
-      e.stopPropagation();
-      const willOpen = pop.hidden;
-      $$(".dpick-pop", el).forEach((p) => { p.hidden = true; });
-      if (willOpen) { render(); pop.hidden = false; }
-    });
-    pop.addEventListener("click", (e) => {
-      e.stopPropagation();
-      const dayBtn = e.target.closest("[data-iso]");
-      if (dayBtn) {
-        hidden.value = dayBtn.dataset.iso; label.textContent = fmtDate(dayBtn.dataset.iso); pop.hidden = true;
-        hidden.dispatchEvent(new Event("change", { bubbles: true }));
-        return;
-      }
-      const a = e.target.closest("[data-a]")?.dataset.a;
-      if (a === "dpickprev") { view = new Date(view.getFullYear(), view.getMonth() - 1, 1); render(); }
-      else if (a === "dpicknext") { view = new Date(view.getFullYear(), view.getMonth() + 1, 1); render(); }
-      else if (a === "dpicktoday") { const t = new Date(); view = new Date(t.getFullYear(), t.getMonth(), 1); render(); }
-    });
-  });
-  // Un clic ailleurs sur la page ferme toute pastille restée ouverte.
-  el.addEventListener("click", () => $$(".dpick-pop", el).forEach((p) => { p.hidden = true; }));
+const scan = (root) => root.querySelectorAll?.('input[type="date"],input[type="time"]').forEach(upgrade);
+
+export function initDatePickers() {
+  scan(document);
+  // Un champ date/heure obligatoire resté vide bloque l'envoi du formulaire (avant tout autre gestionnaire).
+  document.addEventListener("submit", (e) => {
+    const vide = [...e.target.querySelectorAll("input.fp-input[data-req]")].find((i) => !i.value);
+    if (!vide) return;
+    e.preventDefault(); e.stopImmediatePropagation();
+    vide.focus(); toast("Choisis une date");
+  }, true);
+  new MutationObserver((muts) => muts.forEach((m) => m.addedNodes.forEach((n) => { if (n.nodeType === 1) { if (n.matches?.('input[type="date"],input[type="time"]')) upgrade(n); scan(n); } }))).observe(document.body, { childList: true, subtree: true });
+}
+
+// Champ date en ligne (largeur fixe, à côté d'un autre champ) : utilisé par la liste de tâches.
+export const datePickerHtml = (name, value) => `<input type="date" class="fp-inline" name="${name}" value="${value || ""}" required>`;
+
+// Change la date d'un champ déjà transformé (le texte affiché suit) ; `locked` : la date vient d'ailleurs, on ne peut plus l'ouvrir.
+export function setDateValue(input, iso, locked = false) {
+  const fp = input._flatpickr;
+  if (!fp) { input.value = iso || ""; return; }
+  if (iso) fp.setDate(iso, true); else fp.clear();
+  fp.set("clickOpens", !locked);
+  fp.altInput?.classList.toggle("fp-locked", locked);
 }

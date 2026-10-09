@@ -1,4 +1,4 @@
-import { datePickerHtml, wireDatePickers } from "../../core/components/date-picker.js";
+import { datePickerHtml } from "../../core/components/date-picker.js";
 import { icon } from "../../core/components/icons.js";
 import { toast } from "../../core/components/toast.js";
 import { D } from "../../core/services/app-data.js";
@@ -53,7 +53,6 @@ export function todosPage() {
     <h2>À venir</h2><div class="card list">${upcoming.map((t) => todoRowHtml(t)).join("") || `<div class="empty">Rien de prévu.</div>`}</div>
     ${done.length ? `<details style="margin-top:16px"><summary>Tâches terminées (${done.length})</summary><div class="card list" style="margin-top:10px">${done.map((t) => todoRowHtml(t)).join("")}</div></details>` : ""}`,
     after: (el) => {
-      wireDatePickers(el);
       $('form[data-a="addtodo"]', el)?.addEventListener("submit", async (e) => {
         e.preventDefault();
         const fd = new FormData(e.target), texte = fd.get("texte").trim();

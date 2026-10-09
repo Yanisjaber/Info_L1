@@ -5,6 +5,7 @@ import { loadData } from "../../core/services/data-loader.js";
 import { state } from "../../core/services/store.js";
 import { $, $$, esc } from "../../core/utils/dom.js";
 import { daysUntil, fmt1, fmtLong } from "../../core/utils/format.js";
+import { setDateValue } from "../../core/components/date-picker.js";
 import { saveCCDate, saveCCWithEpreuve } from "./cc.service.js";
 import { cd, fmtPoids } from "../dashboard/dashboard.utils.js";
 import { seanceFor } from "../edt/edt.utils.js";
@@ -193,8 +194,7 @@ export function openCCDateModal({ matiere, epreuve }) {
   const f = $('form[data-a="saveccdate"]', backdrop), sel = f.elements.slot, inp = f.elements.date;
   // Choisir un cours remplit la date et la verrouille (elle vient du cours) ; « aucun » la rend libre.
   if (sel) sel.addEventListener("change", () => {
-    const o = sel.selectedOptions[0];
-    inp.value = o?.dataset.d || ""; inp.readOnly = !!sel.value;
+    setDateValue(inp, sel.selectedOptions[0]?.dataset.d || "", !!sel.value);
   });
   f.addEventListener("submit", async (ev) => {
     ev.preventDefault();

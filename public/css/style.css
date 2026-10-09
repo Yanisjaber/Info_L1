@@ -257,11 +257,46 @@ details[open]{padding-bottom:12px}
 .cal .d.sel{background:var(--acc);border-color:var(--acc);color:#fff}
 .cal .d.sel b{color:#fff}
 
-/* Sélecteur de date maison (remplace le widget natif du navigateur) */
-.dpick{position:relative;display:inline-block}
-.dpick-trig{display:inline-flex;align-items:center;gap:8px}
-.dpick-pop{position:absolute;top:calc(100% + 6px);left:0;z-index:30;width:272px}
-.dpick-pop[hidden]{display:none}
+/* Flatpickr (calendrier et heure) : habillé avec les couleurs du thème, clair et sombre */
+.fp-input{cursor:pointer}
+.fp-input.fp-inline{width:210px;flex:none}
+.fp-input.fp-locked{cursor:default;opacity:.75}
+.flatpickr-calendar{background:var(--surface);color:var(--text);border:1px solid var(--line);border-radius:14px;box-shadow:0 12px 32px rgba(10,20,35,.28);font:inherit;width:300px;padding:6px 6px 8px}
+.flatpickr-calendar:before,.flatpickr-calendar:after{display:none}
+.flatpickr-months{padding:4px 2px 2px}
+.flatpickr-months .flatpickr-month{color:var(--text);fill:var(--text);height:38px}
+.flatpickr-current-month{font-size:1rem;font-weight:700;padding-top:6px;text-transform:capitalize}
+.flatpickr-current-month .flatpickr-monthDropdown-months,.flatpickr-current-month input.cur-year{color:var(--text);font-weight:700}
+.flatpickr-current-month .flatpickr-monthDropdown-months{background:var(--surface);appearance:none;-webkit-appearance:none;padding:0;background-image:none}
+.flatpickr-current-month .flatpickr-monthDropdown-months:hover,.flatpickr-current-month .numInputWrapper:hover{background:var(--surface2)}
+.flatpickr-monthDropdown-months .flatpickr-monthDropdown-month{background:var(--surface);color:var(--text)}
+.flatpickr-months .flatpickr-prev-month,.flatpickr-months .flatpickr-next-month{color:var(--muted);fill:var(--muted);padding:9px 12px;height:38px;border-radius:10px}
+.flatpickr-months .flatpickr-prev-month:hover,.flatpickr-months .flatpickr-next-month:hover{background:var(--surface2)}
+.flatpickr-months .flatpickr-prev-month:hover svg,.flatpickr-months .flatpickr-next-month:hover svg{fill:var(--acc)}
+.flatpickr-months .flatpickr-prev-month.flatpickr-disabled,.flatpickr-months .flatpickr-next-month.flatpickr-disabled{display:inline}
+span.flatpickr-weekday{color:var(--muted);font-weight:600;font-size:.74rem;text-transform:uppercase;letter-spacing:.04em}
+.flatpickr-days{width:100%}.dayContainer{width:100%;min-width:100%;max-width:100%}
+.flatpickr-day{color:var(--text);border-radius:10px;border:1px solid transparent;max-width:none;width:14.2857%;flex-basis:14.2857%;height:38px;line-height:36px;font-weight:500}
+.flatpickr-day:hover,.flatpickr-day:focus{background:var(--surface2);border-color:var(--line)}
+.flatpickr-day.prevMonthDay,.flatpickr-day.nextMonthDay{color:var(--muted);opacity:.55}
+.flatpickr-day.today{border-color:var(--acc);background:transparent;color:var(--text)}
+.flatpickr-day.today:hover,.flatpickr-day.today:focus{background:var(--surface2);border-color:var(--acc);color:var(--text)}
+.flatpickr-day.selected,.flatpickr-day.selected:hover,.flatpickr-day.selected:focus{background:var(--acc);border-color:var(--acc);color:var(--bg);font-weight:700}
+.flatpickr-day.flatpickr-disabled,.flatpickr-day.flatpickr-disabled:hover{color:var(--muted);opacity:.35;background:transparent;border-color:transparent}
+.flatpickr-calendar.hasTime .flatpickr-time{border-top:1px solid var(--line);height:46px;max-height:46px}
+.flatpickr-time input,.flatpickr-time .flatpickr-am-pm,.flatpickr-time .flatpickr-time-separator{color:var(--text);font-weight:600}
+.flatpickr-time input:hover,.flatpickr-time input:focus,.flatpickr-time .flatpickr-am-pm:hover{background:var(--surface2)}
+.flatpickr-time .numInputWrapper span.arrowUp:after{border-bottom-color:var(--muted)}
+.flatpickr-time .numInputWrapper span.arrowDown:after{border-top-color:var(--muted)}
+.flatpickr-calendar.noCalendar{width:150px}
+/* les champs numériques de l'heure ne doivent pas prendre le style des champs de formulaire de l'app */
+.flatpickr-calendar input{padding:0;border:0;border-radius:8px;background:transparent;width:auto;box-shadow:none}
+.flatpickr-calendar .flatpickr-time input{height:40px;line-height:40px;font-size:1.1rem}
+.flatpickr-calendar .flatpickr-time .numInputWrapper{height:40px}
+.flatpickr-calendar .flatpickr-time .numInputWrapper span.arrowUp,.flatpickr-calendar .flatpickr-time .numInputWrapper span.arrowDown{border:0}
+.flatpickr-calendar .flatpickr-time .numInputWrapper input{width:100%}
+.flatpickr-calendar .flatpickr-current-month .numInputWrapper input.cur-year{width:5ch;padding:0 0 0 .5ch}
+.numInputWrapper span{border-color:var(--line)}
 /* Éditeur du calculateur de notes : grille des épreuves, case « 2e chance », lignes du résumé. */
 .gr-grid{display:grid;grid-template-columns:minmax(0,1fr) 84px 72px 104px 36px;gap:8px;align-items:center}
 .gr-sec-toggle{position:relative;display:inline-flex;align-items:center;justify-content:center;padding:9px 10px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--muted);font-size:.8rem;font-weight:600;white-space:nowrap;cursor:pointer;user-select:none}

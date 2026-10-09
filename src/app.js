@@ -22,6 +22,7 @@ import { todosActions } from "./features/todos/todos.actions.js";
 import { documentsActions } from "./features/documents/documents.actions.js";
 import { notesActions } from "./features/notes/notes.actions.js";
 import { initActions } from "./core/services/actions.js";
+import { initDatePickers } from "./core/components/date-picker.js";
 
 let lastUid = null;
 
@@ -53,6 +54,7 @@ async function boot() {
   syncLabel();
 }
 
+initDatePickers();
 initActions([
   navigationActions,
   seancesActions,
