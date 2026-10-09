@@ -94,10 +94,6 @@ function ccEntryForm(e, preset) {
     <details style="margin-top:10px" ${v.seances?.length ? "open" : ""}><summary>Séances au programme <span class="tiny muted">(score de préparation)</span></summary>
       <div id="ccSeancesPick" style="margin-top:6px">${ccSeancesPicker(v.matiere, v.seances)}</div>
     </details>
-    <details style="margin-top:10px"><summary>Options avancées</summary>
-      <div class="field" style="margin-top:10px"><label>Statut</label><select name="statut"><option value="" ${!v.statut ? "selected" : ""}>Confirmé</option><option value="provisoire" ${v.statut === "provisoire" ? "selected" : ""}>Date provisoire</option></select></div>
-      <div class="field" style="margin-top:10px"><label>Détail</label><input type="text" name="detail" value="${esc(v.detail)}"></div>
-    </details>
     <div class="row" style="margin-top:12px">
       <button class="btn pri" type="submit">${icon("check")}${isNew ? "Ajouter" : "Enregistrer"}</button>
       ${isNew ? "" : `<button class="btn" type="button" data-a="delcc" data-id="${esc(v.id)}">Supprimer</button>`}
@@ -185,10 +181,11 @@ function wireCCForm(f, e) {
     if (btn.disabled) return; // un seul enregistrement à la fois (double clic)
     btn.disabled = true;
     try {
+      const before = D.cal.evenements.find((x) => x.id === fd.get("id")); // statut et détail existants conservés tels quels
       await saveCCWithEpreuve({
         id: fd.get("id") || undefined, epreuve: fd.get("epreuve") || undefined, matiere: fd.get("matiere"), date: fd.get("date"),
         label: fd.get("titre"), weight: fd.get("poids"), max: fd.get("max"), second: fd.get("type") === "2e",
-        statut: fd.get("statut"), detail: fd.get("detail"), edtId: fd.get("edtId") || null, seances: fd.getAll("seances"),
+        statut: before?.statut || "", detail: before?.detail || "", edtId: fd.get("edtId") || null, seances: fd.getAll("seances"),
       });
       toast("Échéance enregistrée");
       closeCCModal();
