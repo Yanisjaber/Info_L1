@@ -48,13 +48,14 @@ export function bindGradingEditor(form) {
     const ok = Math.abs(w - 100) < 0.01, pct = (x) => `${fmt((x / w) * 100)} %`;
     tot.className = `chip ${ok ? "ok" : "wa"} gr-total`;
     tot.textContent = ok ? "Total : 100 %" : `Total : ${fmt(w)} (ramené à 100 %)`;
-    // Une ligne par épreuve : son nom, ce qui la particularise, sa part dans la note.
+    // Une ligne par épreuve, dans l'ordre où tu les as écrites : son nom, ce qui la particularise, sa part dans la note.
     const line = (name, meta, share) => `<div class="gr-line"><span>${esc(short(name))}${meta.length ? ` <span class="tiny muted">${meta.join(" · ")}</span>` : ""}</span><b>${share}</b></div>`;
-    const rows = g.items.map((it) => line(it.label, [
-      ...(it.parts ? [`moyenne de ${it.parts.length} notes`] : []),
-      ...(it.max ? [`sur ${fmt(it.max)}`] : []),
-    ], pct(it.weight)));
-    if (sec && sec.required) rows.push(line(sec.label, ["2e chance", ...(sec.max ? [`sur ${fmt(sec.max)}`] : [])], pct(sec.weight)));
+    let next = 0;
+    const rows = $$(".gr-row", form).filter((r) => $(".gr-label", r).value.trim()).map((r) => {
+      if (sec && $(".gr-sec", r).checked) return line(sec.label, ["2e chance", ...(sec.max ? [`sur ${fmt(sec.max)}`] : [])], sec.required ? pct(sec.weight) : "facultative");
+      const it = g.items[next++];
+      return line(it.label, [...(it.parts ? [`moyenne de ${it.parts.length} notes`] : []), ...(it.max ? [`sur ${fmt(it.max)}`] : [])], pct(it.weight));
+    });
     if (sec) rows.push(`<div class="tiny muted" style="padding-top:8px">${sec.required ? `« ${esc(short(sec.label))} » compte aussi dans la note, et remplace chaque note plus faible si elle est meilleure.` : `2e chance facultative : « ${esc(short(sec.label))} » remplace une note plus faible, si elle est meilleure.`}</div>`);
     sum.innerHTML = rows.join("");
   };
