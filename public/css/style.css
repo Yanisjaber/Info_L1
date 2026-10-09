@@ -272,6 +272,13 @@ details[open]{padding-bottom:12px}
 .gr-line{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:6px 0;border-bottom:1px solid var(--line)}
 .gr-line:last-child{border-bottom:0}
 .gr-adv[hidden]{display:none}
+.gr-row{display:flex;gap:6px;align-items:flex-start}
+.gr-main{flex:1;min-width:0}
+.gr-head{margin-left:30px}
+.gr-grip{flex:none;width:24px;height:42px;padding:0;border:0;background:none;color:var(--muted);font-size:1.1rem;letter-spacing:-2px;cursor:grab;touch-action:none;user-select:none}
+.gr-grip:hover{color:var(--text)}
+.gr-row.gr-dragging{opacity:.7;outline:2px solid var(--acc);outline-offset:2px;border-radius:10px}
+.gr-row.gr-dragging .gr-grip{cursor:grabbing}
 .gr-ed.gr-bare{border:0;background:none;padding:0}
 @media (max-width:640px){
   .gr-grid{grid-template-columns:1fr 1fr 1fr 36px}

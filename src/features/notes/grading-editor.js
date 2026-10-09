@@ -11,6 +11,8 @@ const fmt = (x) => String(Math.round(x * 10) / 10).replace(".", ",");
 function rowHtml(it, second = false) {
   const n = !second && it.parts && it.parts.length > 1 ? it.parts.length : 1;
   return `<div class="gr-row" data-item="${esc(JSON.stringify(it))}" style="margin-bottom:8px">
+    <button type="button" class="gr-grip" aria-label="Déplacer l'épreuve : glisser, ou flèches haut et bas" title="Glisser pour déplacer">⋮⋮</button>
+    <div class="gr-main">
     <div class="gr-grid">
       <input type="text" class="gr-label" value="${esc(it.label || "")}" placeholder="ex. CC1 — QCM" aria-label="Nom de l'épreuve">
       <input type="number" class="gr-w" min="0" step="any" value="${it.weight ?? ""}" placeholder="%" aria-label="Poids de l'épreuve, en pourcentage">
@@ -19,6 +21,7 @@ function rowHtml(it, second = false) {
       <button type="button" class="btn sm ghost" data-gr="del" aria-label="Retirer cette épreuve">✕</button>
     </div>
     <div class="gr-adv tiny muted" ${n > 1 ? "" : "hidden"} style="margin:6px 0 0 2px">Cette épreuve est la moyenne de <input type="number" class="gr-n" min="1" max="8" step="1" value="${n}" style="width:64px;display:inline-block;padding:4px 8px" aria-label="Nombre de notes dont on fait la moyenne"> notes</div>
+    </div>
   </div>`;
 }
 
@@ -63,6 +66,41 @@ export function bindGradingEditor(form) {
     if (!b) return;
     if (b.dataset.gr === "add") { box.insertAdjacentHTML("beforeend", rowHtml({ label: "", weight: "", max: 20 })); $$(".gr-label", box).pop().focus(); }
     else if (b.dataset.gr === "del") b.closest(".gr-row").remove();
+    refresh();
+  });
+  // Déplacer une épreuve : on attrape la poignée (souris ou doigt) et on la fait glisser ; flèches haut/bas au clavier.
+  box.addEventListener("pointerdown", (e) => {
+    const grip = e.target.closest(".gr-grip");
+    if (!grip) return;
+    e.preventDefault();
+    const row = grip.closest(".gr-row");
+    row.classList.add("gr-dragging");
+    // Mouvement et relâchement écoutés sur toute la fenêtre : on ne reste jamais « coincé » en cours de déplacement.
+    const move = (ev) => {
+      const others = $$(".gr-row", box).filter((r) => r !== row);
+      const before = others.find((r) => { const b = r.getBoundingClientRect(); return ev.clientY < b.top + b.height / 2; });
+      if (before) { if (row.nextElementSibling !== before) box.insertBefore(row, before); }
+      else if (box.lastElementChild !== row) box.appendChild(row);
+    };
+    const end = () => {
+      row.classList.remove("gr-dragging");
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", end);
+      window.removeEventListener("pointercancel", end);
+      refresh();
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", end);
+    window.addEventListener("pointercancel", end);
+  });
+  box.addEventListener("keydown", (e) => {
+    const grip = e.target.closest(".gr-grip");
+    if (!grip || (e.key !== "ArrowUp" && e.key !== "ArrowDown")) return;
+    e.preventDefault();
+    const row = grip.closest(".gr-row");
+    if (e.key === "ArrowUp" && row.previousElementSibling) box.insertBefore(row, row.previousElementSibling);
+    else if (e.key === "ArrowDown" && row.nextElementSibling) box.insertBefore(row.nextElementSibling, row);
+    grip.focus();
     refresh();
   });
   const onEdit = (e) => {
