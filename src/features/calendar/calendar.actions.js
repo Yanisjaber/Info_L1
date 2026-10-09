@@ -1,11 +1,12 @@
 import { appConfirm } from "../../core/components/dialog.js";
 import { toast } from "../../core/components/toast.js";
-import { D } from "../../core/services/app-data.js";
+import { D, M } from "../../core/services/app-data.js";
 import { loadData } from "../../core/services/data-loader.js";
 import { icsExport } from "./calendar.page.js";
 import { calState } from "./calendar.store.js";
 import { closeCCModal, openCCInfoModal, openCCModal } from "./cc-modal.js";
-import { deleteCCEvent, saveCCEvent } from "./cc.service.js";
+import { deleteCCWithEpreuve } from "./cc.service.js";
+import { epreuveOf } from "../notes/grading.utils.js";
 import { rerender } from "../../routing/navigation.js";
 
 // Actions déclenchées par les attributs data-a (clic, change, input) pour cette fonctionnalité.
@@ -19,11 +20,16 @@ export const calendarActions = {
     editcc: async (t, e) => { const ev = D.cal.evenements.find((x) => x.id === t.dataset.id); if (ev) openCCModal(ev); },
     addcc: async (t, e) => { openCCModal(null); },
     cancelcc: async (t, e) => { closeCCModal(); },
-    delcc: async (t, e) => { if (await appConfirm("Supprimer cette échéance ?")) { try { await deleteCCEvent(t.dataset.id); toast("Échéance supprimée"); closeCCModal(); await loadData(); rerender(); } catch (err) { toast("Erreur : " + err.message); } } },
-    addccsugg: async (t, e) => {
-      try { await saveCCEvent({ matiere: t.dataset.m, date: t.dataset.date, titre: t.dataset.titre, poids: "", edtId: t.dataset.edtId || null }); toast("Échéance ajoutée"); await loadData(); rerender(); }
-      catch (err) { toast("Erreur : " + err.message); }
+    delcc: async (t, e) => {
+      const ev = D.cal.evenements.find((x) => x.id === t.dataset.id);
+      if (!ev || !(await appConfirm("Supprimer cette échéance ?"))) return;
+      // Reliée à une épreuve du calculateur : on demande si elle part aussi (sa note ne serait alors plus comptée).
+      const ep = ev.epreuve && epreuveOf(M(ev.matiere)?.grading, ev.epreuve);
+      const withEpreuve = ep ? await appConfirm(`Supprimer aussi l'épreuve « ${ep.label} » du calculateur ? La note saisie pour elle ne sera plus comptée.`) : false;
+      try { await deleteCCWithEpreuve(ev, withEpreuve); toast("Échéance supprimée"); closeCCModal(); await loadData(); rerender(); } catch (err) { toast("Erreur : " + err.message); }
     },
+    // Un CC a besoin de toutes ses informations (poids, « Sur »…) : on ouvre le formulaire prérempli plutôt que de créer à moitié.
+    addccsugg: async (t, e) => { openCCModal(null, { matiere: t.dataset.m, date: t.dataset.date, titre: t.dataset.titre || "", edtId: t.dataset.edtId || "" }); },
   },
   change: {
     calses: async (t, e) => { calState.calSeances = t.checked; rerender(); },

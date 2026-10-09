@@ -5,11 +5,12 @@ import { loadData } from "../../core/services/data-loader.js";
 import { state } from "../../core/services/store.js";
 import { $, $$, esc } from "../../core/utils/dom.js";
 import { daysUntil, fmt1, fmtLong } from "../../core/utils/format.js";
-import { saveCCEvent } from "./cc.service.js";
+import { saveCCWithEpreuve } from "./cc.service.js";
 import { cd, fmtPoids } from "../dashboard/dashboard.utils.js";
 import { seanceFor } from "../edt/edt.utils.js";
 import { ccReadiness, pctCls } from "../elo/elo.utils.js";
 import { calcFor } from "../notes/grades.js";
+import { epreuveOf, freeEpreuves, listEpreuves } from "../notes/grading.utils.js";
 import { norm } from "../search/search.page.js";
 import { rerender } from "../../routing/navigation.js";
 import { routerState } from "../../routing/router.store.js";
@@ -28,27 +29,47 @@ function ccSeancesPicker(mid, selected) {
     <div class="row" style="gap:10px;flex-wrap:wrap">${list.map((s) => `<label class="row small" style="gap:5px;min-width:0"><input type="checkbox" name="seances" value="${esc(s.id)}" ${sel.has(s.id) ? "checked" : ""}>${esc(s.type)} ${s.numero}</label>`).join("")}</div>`).join("");
 }
 
-function ccEntryForm(e) {
+// Valeurs de départ du formulaire : une échéance existante (reliée ou non à une épreuve), un préremplissage
+// (suggestion de l'emploi du temps), ou rien. Une épreuve reliée donne le nom, le poids, le « Sur » et le type.
+function ccFormValues(e, preset) {
+  const v = { id: "", matiere: D.matieres[0]?.id || "", titre: "", date: "", type: "CC", statut: "", detail: "", edtId: "", seances: [], epreuve: "", poids: "", max: 20, ...(preset || {}), ...(e || {}) };
+  const ep = v.epreuve ? epreuveOf(M(v.matiere)?.grading, v.epreuve) : null;
+  if (ep) return { ...v, titre: ep.label, poids: ep.weight, max: ep.max, type: ep.second ? "2e" : "CC" };
+  const m = String(v.poids).match(/(\d+(?:[.,]\d+)?)\s*%/); // ancien texte « 20 % » → nombre
+  return { ...v, epreuve: "", poids: m ? m[1].replace(",", ".") : "", max: 20 };
+}
+
+// Épreuves de la matière qui n'ont pas encore d'échéance (plus celle de l'échéance qu'on modifie), pour la relier.
+function epreuveOptions(mid, current, selfId) {
+  const linked = new Set(D.cal.evenements.filter((x) => x.matiere === mid && x.epreuve && x.id !== selfId).map((x) => x.epreuve));
+  return `<option value="">+ Nouvelle épreuve</option>` + freeEpreuves(M(mid)?.grading, linked).map((p) => `<option value="${esc(p.id)}" data-label="${esc(p.label)}" data-weight="${p.weight}" data-max="${p.max}" data-second="${p.second ? 1 : 0}" ${p.id === current ? "selected" : ""}>${esc(p.label)}</option>`).join("");
+}
+
+// Un CC et son épreuve du calculateur ne font qu'un : tous ces champs sont obligatoires, car l'épreuve en a besoin.
+function ccEntryForm(e, preset) {
   const isNew = !e;
-  const v = e || { id: "", matiere: D.matieres[0]?.id || "", titre: "", date: "", poids: "", type: "CC", statut: "", detail: "", edtId: "", seances: [] };
   if (!D.matieres.length) return `<p class="small muted">Crée d'abord une matière (Compte → Mes matières) avant d'ajouter une échéance.</p>`;
+  const v = ccFormValues(e, preset);
+  const locked = !isNew && !!v.epreuve; // l'épreuve appartient à une matière : on ne la change plus
   return `<form data-a="savecc">
     <input type="hidden" name="id" value="${esc(v.id)}">
     <input type="hidden" name="edtId" value="${esc(v.edtId || "")}">
+    ${locked ? `<input type="hidden" name="matiere" value="${esc(v.matiere)}">` : ""}
     <div class="grid g2">
-      <div class="field"><label>Matière</label><select name="matiere" required>${D.matieres.map((m) => `<option value="${esc(m.id)}" ${v.matiere === m.id ? "selected" : ""}>${esc(m.nom)}</option>`).join("")}</select></div>
+      <div class="field"><label>Matière</label><select ${locked ? "disabled" : 'name="matiere"'} required>${D.matieres.map((m) => `<option value="${esc(m.id)}" ${v.matiere === m.id ? "selected" : ""}>${esc(m.nom)}</option>`).join("")}</select></div>
       <div class="field"><label>Date</label><input type="date" name="date" required value="${esc(v.date || "")}"></div>
-      <div class="field"><label>Titre</label><input type="text" name="titre" required value="${esc(v.titre)}" placeholder="ex. CC1"></div>
-      <div class="field"><label>Poids</label><input type="text" name="poids" value="${esc(v.poids)}" placeholder="ex. 20 %"></div>
+      <div class="field"><label>Épreuve du calculateur</label><select name="epreuve">${epreuveOptions(v.matiere, v.epreuve, v.id)}</select></div>
+      <div class="field"><label>Titre</label><input type="text" name="titre" required maxlength="80" value="${esc(v.titre)}" placeholder="ex. CC1 — QCM"></div>
+      <div class="field"><label>Poids (% de la note)</label><input type="number" name="poids" required min="0.01" step="any" value="${esc(v.poids)}" placeholder="ex. 20"></div>
+      <div class="field"><label>Noté sur</label><input type="number" name="max" required min="1" step="any" value="${esc(v.max)}"></div>
+      <div class="field"><label>Type</label><select name="type"><option value="CC" ${v.type !== "2e" ? "selected" : ""}>Normal</option><option value="2e" ${v.type === "2e" ? "selected" : ""}>2e chance</option></select></div>
     </div>
+    <p class="tiny muted" id="ccTotal" style="margin:8px 0 0"></p>
     <details style="margin-top:10px" ${v.seances?.length ? "open" : ""}><summary>Séances au programme <span class="tiny muted">(score de préparation)</span></summary>
       <div id="ccSeancesPick" style="margin-top:6px">${ccSeancesPicker(v.matiere, v.seances)}</div>
     </details>
     <details style="margin-top:10px"><summary>Options avancées</summary>
-      <div class="grid g2" style="margin-top:10px">
-        <div class="field"><label>Type</label><select name="type"><option value="CC" ${v.type !== "2e" ? "selected" : ""}>Normal</option><option value="2e" ${v.type === "2e" ? "selected" : ""}>2e chance</option></select></div>
-        <div class="field"><label>Statut</label><select name="statut"><option value="" ${!v.statut ? "selected" : ""}>Confirmé</option><option value="provisoire" ${v.statut === "provisoire" ? "selected" : ""}>Date provisoire</option></select></div>
-      </div>
+      <div class="field" style="margin-top:10px"><label>Statut</label><select name="statut"><option value="" ${!v.statut ? "selected" : ""}>Confirmé</option><option value="provisoire" ${v.statut === "provisoire" ? "selected" : ""}>Date provisoire</option></select></div>
       <div class="field" style="margin-top:10px"><label>Détail</label><input type="text" name="detail" value="${esc(v.detail)}"></div>
     </details>
     <div class="row" style="margin-top:12px">
@@ -92,34 +113,62 @@ export function ccSeance(ev) {
 // Popup centrée pour ajouter OU modifier une échéance CC — même mécanisme que openEdtModal/
 // closeEdtModal (voir plus haut) : overlay ajouté directement au body, fermé par Annuler/Échap/
 // clic hors de la boîte, et enregistré dans `cleanup` pour disparaître au changement de route.
-export function openCCModal(e) {
+export function openCCModal(e, preset) {
   closeCCModal();
   const backdrop = document.createElement("div");
   backdrop.className = "modal-backdrop";
   backdrop.innerHTML = `<div class="modal card" role="dialog" aria-modal="true" aria-label="${e ? "Modifier l'échéance" : "Ajouter une échéance"}">
     <div class="row" style="margin-bottom:12px"><h3 style="margin:0">${e ? "Modifier l'échéance" : "Ajouter une échéance"}</h3><div class="sp"></div><button type="button" class="btn sm ghost" data-a="cancelcc" aria-label="Fermer">✕</button></div>
-    ${ccEntryForm(e)}
+    ${ccEntryForm(e, preset)}
   </div>`;
   backdrop.addEventListener("mousedown", (ev) => { if (ev.target === backdrop) closeCCModal(); });
   document.addEventListener("keydown", ccModalEsc);
   document.body.appendChild(backdrop);
-  // Les séances cochées appartiennent à l'ancienne matière : changer de matière réinitialise la
-  // sélection plutôt que de laisser des ids d'une autre matière traîner dans le formulaire.
-  $('select[name="matiere"]', backdrop)?.addEventListener("change", (ev) => {
-    const pick = $("#ccSeancesPick", backdrop);
-    if (pick) pick.innerHTML = ccSeancesPicker(ev.target.value, []);
+  const f = $('form[data-a="savecc"]', backdrop);
+  if (f) wireCCForm(f, e);
+  routerState.cleanup = closeCCModal;
+}
+
+// Comportement du formulaire : changer de matière recharge les épreuves et les séances proposées, choisir une épreuve
+// existante remplit le titre, le poids, le « Sur » et le type, et le total des poids de la matière se met à jour.
+function wireCCForm(f, e) {
+  const field = (n) => f.elements[n];
+  const mid = () => field("matiere").value;
+  const total = () => {
+    const self = field("epreuve").value, w = parseFloat(field("poids").value) || 0;
+    const t = listEpreuves(M(mid())?.grading).filter((p) => p.id !== self).reduce((s, p) => s + p.weight, 0) + w;
+    $("#ccTotal", f).textContent = `Total des poids de cette matière avec ce CC : ${fmt1(t)} %${Math.abs(t - 100) < 0.01 ? "" : " (ramené à 100 %)"}`;
+  };
+  const selectEl = $('select[name="matiere"]', f);
+  if (selectEl) selectEl.addEventListener("change", () => {
+    // Les séances cochées et l'épreuve choisie appartiennent à l'ancienne matière : on repart de zéro.
+    $("#ccSeancesPick", f).innerHTML = ccSeancesPicker(mid(), []);
+    field("epreuve").innerHTML = epreuveOptions(mid(), "", e?.id);
+    total();
   });
-  $$('form[data-a="savecc"]', backdrop).forEach((f) => f.addEventListener("submit", async (ev) => {
+  field("epreuve").addEventListener("change", () => {
+    const o = field("epreuve").selectedOptions[0];
+    if (o && o.value) { field("titre").value = o.dataset.label; field("poids").value = o.dataset.weight; field("max").value = o.dataset.max; field("type").value = o.dataset.second === "1" ? "2e" : "CC"; }
+    total();
+  });
+  field("poids").addEventListener("input", total);
+  total();
+  f.addEventListener("submit", async (ev) => {
     ev.preventDefault();
-    const fd = new FormData(f);
+    const fd = new FormData(f), btn = $('button[type="submit"]', f);
+    if (btn.disabled) return; // un seul enregistrement à la fois (double clic)
+    btn.disabled = true;
     try {
-      await saveCCEvent({ id: fd.get("id") || undefined, matiere: fd.get("matiere"), date: fd.get("date"), titre: fd.get("titre"), poids: fd.get("poids"), type: fd.get("type"), statut: fd.get("statut"), detail: fd.get("detail"), edtId: fd.get("edtId") || null, seances: fd.getAll("seances") });
+      await saveCCWithEpreuve({
+        id: fd.get("id") || undefined, epreuve: fd.get("epreuve") || undefined, matiere: fd.get("matiere"), date: fd.get("date"),
+        label: fd.get("titre"), weight: fd.get("poids"), max: fd.get("max"), second: fd.get("type") === "2e",
+        statut: fd.get("statut"), detail: fd.get("detail"), edtId: fd.get("edtId") || null, seances: fd.getAll("seances"),
+      });
       toast("Échéance enregistrée");
       closeCCModal();
       await loadData(); rerender();
-    } catch (err) { toast("Erreur : " + err.message); }
-  }));
-  routerState.cleanup = closeCCModal;
+    } catch (err) { btn.disabled = false; toast("Erreur : " + err.message); }
+  });
 }
 
 export function closeCCModal() {
@@ -159,12 +208,20 @@ export function openCCInfoModal(ev) {
   routerState.cleanup = closeCCModal;
 }
 
-// Note obtenue à une épreuve CC, retrouvée dans le calculateur (state.notes) : on rapproche le
+// Note obtenue à une épreuve CC, retrouvée dans le calculateur (state.notes). Si l'échéance est reliée à une épreuve,
+// c'est par son identifiant. Sinon (échéance ancienne, pas encore reliée) : on rapproche le
 // code du titre (« CC2 », « CCI1 », « Note 3 »…, avant le tiret) de celui des champs du
 // calculateur ; si plusieurs champs partagent le code (Algo CC1 — QCM 1 / QCM 2), on départage
 // avec le reste du titre. Renvoie { v, max } ou null si pas de champ ou pas de note saisie.
 export function ccNote(ev) {
   const K = calcFor(ev.matiere); if (!K) return null;
+  // Échéance reliée à une épreuve : on retrouve sa note par l'identifiant (moyenne des saisies si l'épreuve en a plusieurs).
+  const ids = ev.epreuve && K.groups?.[ev.epreuve];
+  if (ids) {
+    const vals = ids.map((k) => state.notes[ev.matiere]?.v?.[k]);
+    if (vals.some((x) => x === "" || x === null || x === undefined || isNaN(+x))) return null;
+    return { v: vals.reduce((t, x) => t + +x, 0) / vals.length, max: K.champs.find(([k]) => k === ids[0])?.[2] || 20 };
+  }
   const nm = (x) => norm(x || "").replace(/\s+/g, " ").trim();
   // Le code d'une échéance ("CC1", "CCI2", "Note 3"…) n'est pas toujours suivi d'un tiret dans le
   // titre saisi à la main ("CC1 Système" vs "CC1 — QCM 1") : on extrait lettres+chiffre en tête

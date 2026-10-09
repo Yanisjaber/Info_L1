@@ -3,11 +3,10 @@
 import { $, $$, esc } from "../../core/utils/dom.js";
 import { fmt1 } from "../../core/utils/format.js";
 import { secondAt, shareText } from "./grades.js";
+import { MAX_LABEL, newEpreuveId, sane } from "./grading.utils.js";
 
 const MAX_ROWS = 30;      // épreuves par matière
-const MAX_LABEL = 80;     // caractères d'un nom d'épreuve
 const MAX_PARTS = 8;      // saisies dont on fait la moyenne pour une épreuve
-const MAX_VALUE = 1e6;    // poids et « Sur » : au-delà, les calculs perdent leur sens
 
 // Une ligne par épreuve : nom · poids · note sur · case « 2e chance » · retirer.
 // La 2e chance est la ligne dont la case est cochée (une seule) : à 0 % elle est facultative,
@@ -171,18 +170,6 @@ export function bindGradingEditor(form) {
   refresh();
 }
 
-// Nombre fini strictement positif et pas démesuré.
-const sane = (x) => Number.isFinite(x) && x > 0 && x <= MAX_VALUE;
-
-// Identifiant neuf, jamais réutilisé : une épreuve retirée puis une autre ajoutée ne doivent pas se partager la même note.
-let seq = 0;
-const freshId = (base, used) => {
-  let id;
-  do id = base + Date.now().toString(36) + (seq++).toString(36); while (used.has(id));
-  used.add(id);
-  return id;
-};
-
 // Lit le formulaire → configuration (ou null si aucune épreuve). Lève une Error si la saisie est invalide.
 export function readGradingEditor(form) {
   if (!$(".gr-ed", form)) return undefined;
@@ -194,7 +181,7 @@ export function readGradingEditor(form) {
   const used = new Set();
   rows.forEach(({ orig }) => { if (orig.id) used.add(orig.id); (orig.parts || []).forEach((p) => used.add(p.id)); });
   const taken = new Set(); // identifiants déjà donnés à une ligne de ce formulaire
-  const idOf = (orig, base) => { const id = orig.id && !taken.has(orig.id) ? orig.id : freshId(base, used); taken.add(id); return id; };
+  const idOf = (orig, base) => { const id = orig.id && !taken.has(orig.id) ? orig.id : newEpreuveId(base, used); taken.add(id); return id; };
 
   const items = [];
   let second = null;

@@ -46,6 +46,7 @@ function wavg(pairs) {
 // Transforme une configuration en calculateur { champs, shares, calc } ; null si inutilisable.
 //   champs : [[id, nom, max?]] dans l'ordre des lignes de l'éditeur
 //   shares : { id → part en %, ou null pour une 2e chance facultative }
+//   groups : { id d'épreuve → ids des cases de saisie } (plusieurs cases pour une épreuve en moyenne de saisies)
 //   calc(v) : { note, complet, poids? } pour les notes saisies `v` ({ id → valeur }), ou null s'il n'y en a aucune
 export function compileGrading(g) {
   if (!g || !Array.isArray(g.items)) return null;
@@ -71,6 +72,10 @@ export function compileGrading(g) {
     subs(it).forEach((f) => champs.push(field(f, it.max)));
   });
   if (sec && secAt >= items.length) champs.push(field(sec, sec.max));
+
+  const groups = {};
+  items.forEach((it) => { groups[it.id] = subs(it).map((f) => f.id); });
+  if (sec) groups[sec.id] = [sec.id];
 
   const totalW = items.reduce((t, it) => t + it.w, 0) + (sec ? sec.w : 0) || 1;
   const share = (w) => round1((w / totalW) * 100);
@@ -103,7 +108,7 @@ export function compileGrading(g) {
     return e ? { note: e.note, complet: false, poids: round1((e.poids / totalW) * 100) } : null;
   }
 
-  return { champs, shares, calc };
+  return { champs, shares, groups, calc };
 }
 
 // Calculateur d'une matière (mémorisé tant que sa configuration ne change pas).
