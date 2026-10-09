@@ -179,9 +179,11 @@ export function openCCDateModal({ matiere, epreuve }) {
   backdrop.innerHTML = `<div class="modal card" role="dialog" aria-modal="true" aria-label="Date de ${esc(ep.label)}">
     <div class="row" style="margin-bottom:12px"><h3 style="margin:0">Date de « ${esc(ep.label)} »</h3><div class="sp"></div><button type="button" class="btn sm ghost" data-a="cancelcc" aria-label="Fermer">✕</button></div>
     <form data-a="saveccdate">
-      ${slots.length ? `<div class="field"><label>Cours de l'emploi du temps</label><select name="slot"><option value="">Aucun, je choisis une date</option>${slots.map((x) => `<option value="${esc(x.id)}" data-d="${esc(x.d)}">${esc(label(x))}</option>`).join("")}</select></div>` : ""}
-      <div class="field"><label>Date</label><input type="date" name="date" required></div>
-      <div class="row" style="margin-top:12px">
+      ${slots.length ? `<div class="field"><label>Cours de l'emploi du temps</label><select name="slot"><option value="">Aucun, je choisis une date</option>${slots.map((x) => `<option value="${esc(x.id)}" data-d="${esc(x.d)}">${esc(label(x))}</option>`).join("")}</select>
+        <p class="tiny muted" style="margin:6px 0 0">Si l'épreuve a lieu pendant un cours de ton emploi du temps, choisis-le : la date est reprise et le cours est marqué CC.</p></div>` : ""}
+      <div class="field" style="margin-top:18px"><label>Date de l'épreuve</label><input type="date" name="date" required>
+        <p class="tiny muted" id="ccDateHint" style="margin:6px 0 0">${slots.length ? "Sinon, choisis simplement la date de l'épreuve." : "Choisis la date de l'épreuve (aucun cours de cette matière dans ton emploi du temps)."}</p></div>
+      <div class="row" style="margin-top:18px">
         <button class="btn pri" type="submit">${icon("check")}Ajouter la date</button>
         <button class="btn ghost" type="button" data-a="cancelcc">Annuler</button>
       </div>
@@ -195,6 +197,7 @@ export function openCCDateModal({ matiere, epreuve }) {
   // Choisir un cours remplit la date et la verrouille (elle vient du cours) ; « aucun » la rend libre.
   if (sel) sel.addEventListener("change", () => {
     setDateValue(inp, sel.selectedOptions[0]?.dataset.d || "", !!sel.value);
+    $("#ccDateHint", f).textContent = sel.value ? "Date reprise du cours choisi (pour la changer, choisis « Aucun » plus haut)." : "Sinon, choisis simplement la date de l'épreuve.";
   });
   f.addEventListener("submit", async (ev) => {
     ev.preventDefault();

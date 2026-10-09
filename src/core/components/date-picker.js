@@ -52,6 +52,9 @@ function upgrade(input) {
   // (le champ visible est en lecture seule : le navigateur ne le contrôle plus, d'où la vérification à l'envoi plus bas)
   if (fp.altInput && input.required) { fp.altInput.required = true; fp.altInput.dataset.req = "1"; input.required = false; }
   if (fp.altInput) fp.altInput.classList.add("fp-input");
+  // Tant que le champ est vide, un texte dit quoi faire (le champ natif affichait « jj/mm/aaaa »).
+  const vide = kind === "date" ? "Clique pour choisir une date" : "Clique pour choisir l'heure";
+  (fp.altInput || input).placeholder = input.getAttribute("placeholder") || vide;
 }
 
 const scan = (root) => root.querySelectorAll?.('input[type="date"],input[type="time"]').forEach(upgrade);
