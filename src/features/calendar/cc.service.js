@@ -2,6 +2,7 @@ import { M } from "../../core/services/app-data.js";
 import { sync } from "../../core/services/store.js";
 import { client } from "../../core/services/supabase.client.js";
 import { fmt1 } from "../../core/utils/format.js";
+import { saveEdtEvent } from "../edt/edt.service.js";
 import { saveMatiere } from "../matieres/matieres.service.js";
 import { calcFor, shareText } from "../notes/grades.js";
 import { epreuveOf, removeEpreuve, upsertEpreuve } from "../notes/grading.utils.js";
@@ -60,4 +61,19 @@ export async function deleteCCWithEpreuve(ev, withEpreuve) {
   await deleteCCEvent(ev.id);
   const m = M(ev.matiere);
   if (withEpreuve && ev.epreuve && m) await saveMatiere({ ...m, grading: removeEpreuve(m.grading, ev.epreuve) });
+}
+
+// Donne une date à une épreuve du calculateur (bouton « + Date » de Notes & CC) : crée l'échéance reliée, sans rien
+// redemander (nom, poids, « Sur » et type viennent de l'épreuve). Si `slot` (créneau de l'EDT) est fourni, l'échéance
+// y est reliée (edtId) et le créneau est marqué CC ; sinon `date` suffit.
+export async function saveCCDate({ matiere, epreuve, date, slot }) {
+  const ep = epreuveOf(M(matiere)?.grading, epreuve);
+  if (!ep) throw new Error("Épreuve introuvable");
+  const d = slot ? slot.d : date;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(d || ""))) throw new Error("Choisis une date");
+  const id = await saveCCEvent({ matiere, date: d, titre: ep.label, poids: `${fmt1(ep.weight)} %`, type: ep.second ? "2e" : "CC", epreuve: ep.id, edtId: slot?.id || null });
+  if (slot) {
+    try { await saveEdtEvent({ ...slot, cc: true }); } catch (err) { await deleteCCEvent(id).catch(() => {}); throw err; }
+  }
+  return id;
 }

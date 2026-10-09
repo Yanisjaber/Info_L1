@@ -5,7 +5,7 @@ import { loadData } from "../../core/services/data-loader.js";
 import { state } from "../../core/services/store.js";
 import { $, $$, esc } from "../../core/utils/dom.js";
 import { daysUntil, fmt1, fmtLong } from "../../core/utils/format.js";
-import { saveCCWithEpreuve } from "./cc.service.js";
+import { saveCCDate, saveCCWithEpreuve } from "./cc.service.js";
 import { cd, fmtPoids } from "../dashboard/dashboard.utils.js";
 import { seanceFor } from "../edt/edt.utils.js";
 import { ccReadiness, pctCls } from "../elo/elo.utils.js";
@@ -162,6 +162,53 @@ export function openCCModal(e, preset) {
   const f = $('form[data-a="savecc"]', backdrop);
   if (f) wireCCForm(f, e);
   routerState.cleanup = closeCCModal;
+}
+
+// Mini pop-up de « + Date » (Notes & CC) : l'épreuve existe déjà avec son nom, son poids et son « Sur », on ne demande
+// que QUAND. Soit un créneau de l'emploi du temps de la matière (liste), soit une simple date.
+export function openCCDateModal({ matiere, epreuve }) {
+  const ep = epreuveOf(M(matiere)?.grading, epreuve);
+  if (!ep) return;
+  closeCCModal();
+  const taken = new Set(D.cal.evenements.map((x) => x.edtId).filter(Boolean));
+  const slots = (D.edt?.events || []).filter((x) => x.m === matiere && !x.allday && daysUntil(x.d) >= 0 && !taken.has(x.id)).slice(0, 60);
+  const label = (x) => `${fmtLong(x.d)} · ${x.s}–${x.e}${x.n ? " · " + x.n : ""}`;
+  const backdrop = document.createElement("div");
+  backdrop.className = "modal-backdrop";
+  backdrop.innerHTML = `<div class="modal card" role="dialog" aria-modal="true" aria-label="Date de ${esc(ep.label)}">
+    <div class="row" style="margin-bottom:12px"><h3 style="margin:0">Date de « ${esc(ep.label)} »</h3><div class="sp"></div><button type="button" class="btn sm ghost" data-a="cancelcc" aria-label="Fermer">✕</button></div>
+    <form data-a="saveccdate">
+      ${slots.length ? `<div class="field"><label>Cours de l'emploi du temps</label><select name="slot"><option value="">— aucun, je choisis une date —</option>${slots.map((x) => `<option value="${esc(x.id)}" data-d="${esc(x.d)}">${esc(label(x))}</option>`).join("")}</select></div>` : ""}
+      <div class="field"><label>Date</label><input type="date" name="date" required></div>
+      <div class="row" style="margin-top:12px">
+        <button class="btn pri" type="submit">${icon("check")}Ajouter la date</button>
+        <button class="btn ghost" type="button" data-a="cancelcc">Annuler</button>
+      </div>
+    </form>
+  </div>`;
+  backdrop.addEventListener("mousedown", (ev) => { if (ev.target === backdrop) closeCCModal(); });
+  document.addEventListener("keydown", ccModalEsc);
+  document.body.appendChild(backdrop);
+  routerState.cleanup = closeCCModal;
+  const f = $('form[data-a="saveccdate"]', backdrop), sel = f.elements.slot, inp = f.elements.date;
+  // Choisir un cours remplit la date et la verrouille (elle vient du cours) ; « aucun » la rend libre.
+  if (sel) sel.addEventListener("change", () => {
+    const o = sel.selectedOptions[0];
+    inp.value = o?.dataset.d || ""; inp.readOnly = !!sel.value;
+  });
+  f.addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    const btn = $('button[type="submit"]', f);
+    if (btn.disabled) return; // un seul enregistrement à la fois (double clic)
+    btn.disabled = true;
+    try {
+      const slot = sel?.value ? D.edt.events.find((x) => x.id === sel.value) : null;
+      await saveCCDate({ matiere, epreuve, date: inp.value, slot });
+      toast("Date ajoutée");
+      closeCCModal();
+      await loadData(); rerender();
+    } catch (err) { btn.disabled = false; toast("Erreur : " + err.message); }
+  });
 }
 
 // Comportement du formulaire d'échéance : changer de matière recharge les séances et les épreuves proposées.
