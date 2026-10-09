@@ -4,7 +4,7 @@ import { client } from "../../core/services/supabase.client.js";
 import { fmt1 } from "../../core/utils/format.js";
 import { saveMatiere } from "../matieres/matieres.service.js";
 import { calcFor, shareText } from "../notes/grades.js";
-import { removeEpreuve, upsertEpreuve } from "../notes/grading.utils.js";
+import { epreuveOf, removeEpreuve, upsertEpreuve } from "../notes/grading.utils.js";
 
 export async function loadCC() {
   if (!sync.client || !sync.user) return { evenements: [], remarques: [] };
@@ -13,11 +13,15 @@ export async function loadCC() {
   return { evenements: data.map((r) => ({ id: r.id, matiere: r.matiere, titre: r.titre, date: r.date, poids: r.poids, type: r.type, statut: r.statut, detail: r.detail, edtId: r.edt_id, epreuve: r.epreuve || null, seances: r.seances || [] })), remarques: [] };
 }
 
-// Une échéance reliée à une épreuve du calculateur affiche TOUJOURS le coef calculé : il remplace le texte `poids`
-// qui était saisi à la main, pour qu'il ne puisse plus contredire le calculateur. À appeler une fois les matières chargées.
-export function applyEpreuvePoids(evenements) {
+// Une échéance reliée à une épreuve du calculateur affiche TOUJOURS le nom et le coef de cette épreuve : ils remplacent le
+// titre et le poids saisis à la main, pour qu'ils ne puissent plus contredire le calculateur (un seul nom, un seul coef).
+// À appeler une fois les matières chargées.
+export function applyEpreuve(evenements) {
   for (const e of evenements) {
-    const share = e.epreuve ? calcFor(e.matiere)?.shares?.[e.epreuve] : undefined;
+    const ep = e.epreuve ? epreuveOf(M(e.matiere)?.grading, e.epreuve) : null;
+    if (!ep) continue;
+    e.titre = ep.label;
+    const share = calcFor(e.matiere)?.epShares?.[e.epreuve];
     if (share !== undefined) e.poids = shareText(share);
   }
 }

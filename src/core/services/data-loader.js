@@ -3,7 +3,7 @@ import { dataState } from "./app-data.store.js";
 import { loadItems } from "./items.service.js";
 import { loadResults } from "./results.service.js";
 import { state, sync } from "./store.js";
-import { applyEpreuvePoids, loadCC } from "../../features/calendar/cc.service.js";
+import { applyEpreuve, loadCC } from "../../features/calendar/cc.service.js";
 import { collectFileRefs } from "../../features/files/files.js";
 import { signRefs } from "../../features/files/files.service.js";
 import { loadSeanceDocSids } from "../../features/documents/documents.service.js";
@@ -47,7 +47,7 @@ export async function loadData() {
     D.files = await signRefs(collectFileRefs());
     dataState.IDS = activeMatieres().map((m) => m.id);
     D.cal = await loadCC();
-    applyEpreuvePoids(D.cal.evenements);
+    applyEpreuve(D.cal.evenements);
     D.todos = await loadTodos();
     D.docSids = await loadSeanceDocSids();
     state.qcm = results.qcm; state.cards = results.cards; state.exos = results.exos;

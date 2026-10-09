@@ -2,7 +2,7 @@ import { icon } from "../../core/components/icons.js";
 import { D, M, activeMatieres } from "../../core/services/app-data.js";
 import { commit, setEntry, state } from "../../core/services/store.js";
 import { $, $$, esc } from "../../core/utils/dom.js";
-import { fmt1 } from "../../core/utils/format.js";
+import { fmt1, fmtDate } from "../../core/utils/format.js";
 import { SET } from "../settings/settings.js";
 import { calcFor, clampScore, shareText } from "./grades.js";
 
@@ -10,9 +10,12 @@ import { calcFor, clampScore, shareText } from "./grades.js";
 const tone = (val, max) => (val === "" ? "" : (+val / max) * 20 >= SET().passMark ? "ok" : "ko");
 
 // Un segment par épreuve : sa largeur suit son coef, son nom est écrit tel quel, puis la note, puis le coef.
-function segHtml(mid, [k, label, mx], share, v) {
+function segHtml(mid, [k, label, mx], share, v, epreuve) {
   const max = mx || 20, val = v[k] ?? "";
-  return `<label class="nt-seg ${tone(val, max)}" style="flex:${Math.max(share || 6, 6)} 1 0"><small>${esc(label)}</small><input type="number" inputmode="decimal" min="0" max="${max}" step="0.25" data-k="${k}" value="${esc(val)}" placeholder="—" aria-label="${esc(label)}"><em>${share === undefined ? "" : shareText(share)}</em></label>`;
+  // Date de l'échéance reliée à cette épreuve ; sinon un bouton pour lui en donner une (le formulaire s'ouvre avec l'épreuve choisie).
+  const ev = D.cal.evenements.find((x) => x.matiere === mid && x.epreuve === epreuve);
+  const date = ev ? `<a class="nt-date" href="#/cal" title="Voir dans le calendrier">${esc(fmtDate(ev.date))}</a>` : `<button type="button" class="nt-date" data-a="addccdate" data-m="${esc(mid)}" data-e="${esc(epreuve)}">+ Date</button>`;
+  return `<label class="nt-seg ${tone(val, max)}" style="flex:${Math.max(share || 6, 6)} 1 0"><small>${esc(label)}</small><input type="number" inputmode="decimal" min="0" max="${max}" step="0.25" data-k="${k}" value="${esc(val)}" placeholder="—" aria-label="${esc(label)}"><em>${share === undefined ? "" : shareText(share)}</em>${date}</label>`;
 }
 
 // `inline` : la carte porte son propre état et sa moyenne (onglet « CC & notes » d'une matière) ; sinon la page
@@ -20,9 +23,11 @@ function segHtml(mid, [k, label, mx], share, v) {
 export function notesCard(mid, { inline = true } = {}) {
   const K = calcFor(mid), v = state.notes[mid]?.v || {};
   if (!K) return "";
+  const owner = {}; // case de saisie → épreuve à laquelle elle appartient
+  Object.entries(K.groups || {}).forEach(([ep, ids]) => ids.forEach((k) => { owner[k] = ep; }));
   return `<div class="nt-frise" data-m="${esc(mid)}">
     ${inline ? `<div class="nt-inline"><span class="nt-status" data-m="${esc(mid)}"></span><span class="nt-avg" data-m="${esc(mid)}"></span></div>` : ""}
-    <div class="nt-strip">${K.champs.map((c) => segHtml(mid, c, K.shares?.[c[0]], v)).join("")}</div></div>`;
+    <div class="nt-strip">${K.champs.map((c) => segHtml(mid, c, K.shares?.[c[0]], v, owner[c[0]])).join("")}</div></div>`;
 }
 
 // État et moyenne d'une matière pour les notes saisies `v`.

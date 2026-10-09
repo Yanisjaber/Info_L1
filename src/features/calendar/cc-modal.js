@@ -11,7 +11,7 @@ import { seanceFor } from "../edt/edt.utils.js";
 import { ccReadiness, pctCls } from "../elo/elo.utils.js";
 import { calcFor } from "../notes/grades.js";
 import { epreuveOf, freeEpreuves, listEpreuves } from "../notes/grading.utils.js";
-import { norm } from "../search/search.page.js";
+import { linkProposals, matchByTitle } from "./cc-link.utils.js";
 import { rerender } from "../../routing/navigation.js";
 import { routerState } from "../../routing/router.store.js";
 
@@ -128,6 +128,20 @@ export function ccSuggestionsHtml() {
     <div class="list">${sugg.map(({ e, mid }) => `<div class="item"><div class="sp"><b>${esc(M(mid)?.court || "")}</b> — ${esc((e.n || "Examen").replace(/^.*?[-–—]\s*/, ""))}<div class="tiny muted">${fmtLong(e.d)} · ${e.s}–${e.e}</div></div><button class="btn sm" data-a="addccsugg" data-m="${esc(mid)}" data-date="${e.d}" data-titre="${esc(e.n || "CC")}" data-edt-id="${esc(e.id)}">${icon("check")}Ajouter</button></div>`).join("")}</div></div>`;
 }
 
+// Échéances créées avant le lien par identifiant : on propose de les relier à l'épreuve qu'on reconnaît à coup sûr
+// (même code de titre : « CC2 » ↔ « CCI2 — Systèmes »), et on signale les autres comme « à compléter ».
+export function ccLinkHtml() {
+  const { proposals, orphans } = linkProposals(D.cal.evenements, D.matieres);
+  if (!proposals.length && !orphans.length) return "";
+  const nm = (ev) => `<b>${esc(M(ev.matiere)?.court || "")}</b> — ${esc(ev.titre)}`;
+  return `<div class="card" style="margin-bottom:14px"><div class="row nowrap"><h3 style="margin:0">Relier tes échéances à leurs épreuves</h3><div class="sp"></div>${proposals.length > 1 ? `<button class="btn pri sm" type="button" data-a="linkallcc">Tout relier (${proposals.length})</button>` : ""}</div>
+    <p class="small muted" style="margin:6px 0 10px">Chaque CC doit être relié à une épreuve du calculateur : le nom, le poids et la note viennent alors de l'épreuve.</p>
+    <div class="list">
+      ${proposals.map(({ ev, epreuve }) => `<div class="item"><div class="sp">${nm(ev)}<div class="tiny muted">${esc(fmtLong(ev.date))} · sera relié à « ${esc(epreuve.label)} »</div></div><button class="btn sm" type="button" data-a="linkcc" data-id="${esc(ev.id)}" data-e="${esc(epreuve.id)}">${icon("check")}Relier</button></div>`).join("")}
+      ${orphans.map((ev) => `<div class="item"><div class="sp">${nm(ev)}<div class="tiny muted">${esc(fmtLong(ev.date))} · à compléter (poids, noté sur…)</div></div><button class="btn sm" type="button" data-a="editcc" data-id="${esc(ev.id)}">Compléter</button></div>`).join("")}
+    </div></div>`;
+}
+
 // Relie une échéance CC (cc_events, saisie dans Notes & CC) au cours qui la contient, si on en
 // trouve un : d'abord le créneau EDT marqué cc=true pour cette matière/date (le lien le plus
 // précis, posé depuis le crayon de l'EDT), sinon à défaut une séance de la même matière ce jour-là.
@@ -236,19 +250,9 @@ export function ccNote(ev) {
     if (vals.some((x) => x === "" || x === null || x === undefined || isNaN(+x))) return null;
     return { v: vals.reduce((t, x) => t + +x, 0) / vals.length, max: K.champs.find(([k]) => k === ids[0])?.[2] || 20 };
   }
-  const nm = (x) => norm(x || "").replace(/\s+/g, " ").trim();
-  // Le code d'une échéance ("CC1", "CCI2", "Note 3"…) n'est pas toujours suivi d'un tiret dans le
-  // titre saisi à la main ("CC1 Système" vs "CC1 — QCM 1") : on extrait lettres+chiffre en tête
-  // de chaîne plutôt que de dépendre d'un séparateur, et on ramène "CCI" (libellés du
-  // calculateur) à "CC" (libellés des échéances) pour que les deux conventions se rejoignent.
-  const codeMatch = (s) => nm(s).match(/^([a-zéèêàù]+)\s?(\d+(?:\.\d+)?)?/);
-  const codeOf = (m) => (m ? m[1].replace(/^cci/, "cc") + (m[2] || "") : "");
-  const tm = codeMatch(ev.titre), titreCode = codeOf(tm);
-  const tail = tm ? nm(ev.titre).slice(tm[0].length).trim() : "";
-  let cands = K.champs.filter(([, l]) => codeOf(codeMatch(l.split(/\s[-–—]\s|\s\(/)[0])) === titreCode);
-  if (cands.length > 1) cands = cands.filter(([, l]) => tail && nm(l).includes(tail));
+  const cands = matchByTitle(ev.titre, K.champs.map(([k, label, mx]) => ({ k, label, mx })));
   if (cands.length !== 1) return null;
-  const [k, , mx] = cands[0], v = state.notes[ev.matiere]?.v?.[k];
+  const { k, mx } = cands[0], v = state.notes[ev.matiere]?.v?.[k];
   return v === "" || v === null || v === undefined || isNaN(+v) ? null : { v: +v, max: mx || 20 };
 }
 

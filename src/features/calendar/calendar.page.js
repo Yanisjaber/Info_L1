@@ -6,7 +6,7 @@ import { download, esc } from "../../core/utils/dom.js";
 import { daysUntil, fmtDate, fmtLong, parseDay } from "../../core/utils/format.js";
 import { SET } from "../settings/settings.js";
 import { calState } from "./calendar.store.js";
-import { ccNote, ccNoteChip, ccSeance, ccSuggestionsHtml } from "./cc-modal.js";
+import { ccLinkHtml, ccNote, ccNoteChip, ccSeance, ccSuggestionsHtml } from "./cc-modal.js";
 import { fmtPoids, nextEvents } from "../dashboard/dashboard.utils.js";
 import { ccReadiness, pctCls } from "../elo/elo.utils.js";
 
@@ -31,7 +31,7 @@ export function calendar(q) {
   const line = (e) => { const sc = ccSeance(e), nt = daysUntil(e.date) < 0 ? ccNote(e) : null, rd = !nt ? ccReadiness(e) : null; return `<div class="item cc-line" style="--c:${M(e.matiere).couleur}"><span class="badge" style="background:color-mix(in srgb,${M(e.matiere).couleur} 15%,var(--surface));color:${M(e.matiere).couleur};font-size:.66rem">${fmtDate(e.date).split(" ").slice(1).join(" ")}</span><div class="sp"><b>${esc(M(e.matiere).court)}</b> — ${esc(e.titre)} <span class="chip gr">${esc(fmtPoids(e.poids))}</span>${e.type === "2e" ? ' <span class="chip wa">2e chance</span>' : ""}${e.statut && e.poids !== "à confirmer" ? ` <span class="chip wa">${e.statut === "provisoire" ? "date provisoire" : "à confirmer"}</span>` : ""}${rd ? ` <span class="chip ${rd.filled ? pctCls(rd.pct) : rd.tier.cls}" title="Préparation sur les séances au programme">${rd.filled ? `${rd.pct}% connu` : `${rd.rating} Elo`}</span>` : ""}<div class="tiny muted">${fmtLong(e.date)} · ${esc(e.detail)}</div></div>${nt ? ccNoteChip(nt) : `<span class="count small muted">${daysUntil(e.date) >= 0 ? "J-" + daysUntil(e.date) : "passé"}</span>`}${sc ? `<a class="btn sm ghost" href="#/m/${e.matiere}" aria-label="Voir la matière">${icon("book")}</a>` : ""}<button type="button" class="btn sm ghost" data-a="editcc" data-id="${esc(e.id)}" aria-label="Modifier ${esc(e.titre)}">${icon("edit")}</button><button type="button" class="btn sm ghost" data-a="delcc" data-id="${esc(e.id)}" aria-label="Supprimer ${esc(e.titre)}">✕</button></div>`; };
   return {
     html: `<h1>Calendrier</h1>
-    ${ccSuggestionsHtml()}
+    ${ccLinkHtml()}${ccSuggestionsHtml()}
     <div class="row" style="margin:6px 0 14px"><button class="btn sm" data-a="calprev" aria-label="Mois précédent">${icon("back")}</button><b style="min-width:150px;text-align:center;text-transform:capitalize">${monthName}</b><button class="btn sm" data-a="calnext" aria-label="Mois suivant">${icon("arrow")}</button><button class="btn sm ghost" data-a="caltoday">Aujourd'hui</button><div class="sp"></div><label class="row small"><input type="checkbox" data-a="calses" ${calState.calSeances ? "checked" : ""}> Afficher les séances</label><button class="btn sm" data-a="ics">${icon("dl")}Export .ics</button></div>
     <div class="cal">${["lun", "mar", "mer", "jeu", "ven", "sam", "dim"].map((d) => `<div class="dh">${d}</div>`).join("")}${cells}</div>
     <div class="row" style="align-items:center;margin:0"><h2 style="margin:0">À venir</h2><div class="sp"></div><button type="button" class="btn sm pri" data-a="addcc" aria-label="Ajouter une échéance">+</button></div>
