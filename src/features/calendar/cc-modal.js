@@ -4,7 +4,7 @@ import { C, D, M } from "../../core/services/app-data.js";
 import { loadData } from "../../core/services/data-loader.js";
 import { state } from "../../core/services/store.js";
 import { $, $$, esc } from "../../core/utils/dom.js";
-import { daysUntil, fmt1, fmtLong } from "../../core/utils/format.js";
+import { daysUntil, fmt1, fmtLong, fmtNote } from "../../core/utils/format.js";
 import { setDateValue } from "../../core/components/date-picker.js";
 import { saveCCDate, saveCCWithEpreuve } from "./cc.service.js";
 import { cd, fmtPoids } from "../dashboard/dashboard.utils.js";
@@ -295,4 +295,4 @@ export function ccNote(ev) {
   return null;
 }
 
-export const ccNoteChip = (n) => `<span class="chip ${n.v >= n.max / 2 ? "ok" : "ko"}">${fmt1(n.v)}/${n.max}</span>`;
+export const ccNoteChip = (n) => `<span class="chip ${n.v >= n.max / 2 ? "ok" : "ko"}">${fmtNote(n.v)}/${n.max}</span>`;

@@ -2,7 +2,7 @@ import { icon } from "../../core/components/icons.js";
 import { D, M, activeMatieres } from "../../core/services/app-data.js";
 import { commit, setEntry, state } from "../../core/services/store.js";
 import { $, $$, esc } from "../../core/utils/dom.js";
-import { fmt1, fmtDate } from "../../core/utils/format.js";
+import { fmt1, fmtDate, fmtNote } from "../../core/utils/format.js";
 import { SET } from "../settings/settings.js";
 import { calcFor, clampScore, shareText } from "./grades.js";
 
@@ -34,7 +34,7 @@ export function notesCard(mid, { inline = true } = {}) {
 function result(mid, v) {
   const r = calcFor(mid).calc(v), pass = r && r.note >= SET().passMark;
   const [txt, cls] = !r ? ["À saisir", "gr"] : r.complet ? (pass ? [SET().passLabel, "ok"] : ["Sous la moyenne", "ko"]) : [`Estimation · ${fmt1(r.poids)} % saisi`, "wa"];
-  return { chip: `<span class="chip ${cls}">${esc(txt)}</span>`, avg: r ? `<span style="color:${pass ? "var(--ok)" : "var(--ko)"}">${fmt1(r.note)}</span><small> /20</small>` : `<span class="muted">—</span>` };
+  return { chip: `<span class="chip ${cls}">${esc(txt)}</span>`, avg: r ? `<span style="color:${pass ? "var(--ok)" : "var(--ko)"}">${fmtNote(r.note)}</span><small> /20</small>` : `<span class="muted">—</span>` };
 }
 
 // État et moyenne d'une matière, déjà remplis, pour les afficher ailleurs que sur la page Notes (liste des matières,
@@ -57,7 +57,7 @@ function heroHtml() {
   const rs = D.matieres.filter((m) => calcFor(m.id)).map((m) => calcFor(m.id).calc(state.notes[m.id]?.v || {}));
   const got = rs.filter(Boolean), mean = got.length ? got.reduce((s, r) => s + r.note, 0) / got.length : null;
   const ok = rs.filter((r) => r && r.complet && r.note >= SET().passMark).length;
-  return `<div><div class="nt-hero-k">Moyenne générale · matières notées</div><div class="nt-hero-big">${mean === null ? "—" : fmt1(mean)}<small> /20</small></div></div>
+  return `<div><div class="nt-hero-k">Moyenne générale · matières notées</div><div class="nt-hero-big">${mean === null ? "—" : fmtNote(mean)}<small> /20</small></div></div>
     <div class="nt-hero-ue"><b>${ok}</b> / ${rs.length}<span>${esc(SET().passLabel)}</span></div>`;
 }
 

@@ -20,4 +20,6 @@ export const plural = (n, s, p) => `${n} ${n > 1 ? p || s + "s" : s}`;
 
 export const fmtMMSS = (ms) => { const s = Math.max(0, Math.ceil(ms / 1000)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`; };
 
+// Note ou moyenne affichée à 0,05 près (10,77 → « 10,75 », 10,78 → « 10,8 ») ; l'affichage seul est arrondi, les calculs gardent la valeur exacte.
+export const fmtNote = (x) => (Math.round(x * 20) / 20).toString().replace(".", ",");
 export const fmt1 = (x) => (Math.round(x * 10) / 10).toString().replace(".", ",");
