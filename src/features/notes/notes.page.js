@@ -31,12 +31,26 @@ function pencilHtml(m) {
   return `<button type="button" class="btn sm ghost" data-a="editgrading" data-m="${esc(m.id)}" aria-label="Modifier le calculateur de ${esc(m.nom)}" title="Modifier le calculateur">${icon("edit")}</button>`;
 }
 
+// Une note reste toujours entre 0 et le « Sur » de l'épreuve (sur 30 : pas plus de 30, sur 20 : pas plus de 20).
+// Retourne true si la valeur a dû être ramenée dans ces limites.
+function clampNote(input) {
+  if (input.value === "") return false;
+  const max = +input.max || 20, n = +input.value, ok = Math.min(max, Math.max(0, n));
+  if (n === ok) return false;
+  input.value = ok;
+  return true;
+}
+
 export function bindNotes(el) {
   $$(".notes", el).forEach((card) => {
     const mid = card.dataset.m, out = $(".nres", card);
     const cur = () => Object.fromEntries($$("input", card).map((i) => [i.dataset.k, i.value]));
+    const save = () => { const v = cur(); out.innerHTML = calcRes(mid, v); setEntry("notes", mid, { v }); commit(); };
+    // Une note déjà enregistrée au-dessus de son « Sur » (ancienne saisie) est ramenée au maximum dès l'ouverture.
+    const fixed = $$("input", card).map(clampNote).some(Boolean);
     out.innerHTML = calcRes(mid, cur());
-    card.addEventListener("input", () => { const v = cur(); out.innerHTML = calcRes(mid, v); setEntry("notes", mid, { v }); commit(); });
+    if (fixed) save();
+    card.addEventListener("input", (e) => { clampNote(e.target); save(); });
   });
 }
 
