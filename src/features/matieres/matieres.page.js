@@ -5,7 +5,6 @@ import { stats } from "../../core/services/stats.js";
 import { state, sync } from "../../core/services/store.js";
 import { esc } from "../../core/utils/dom.js";
 import { fmt1, fmtDate, pct, plural } from "../../core/utils/format.js";
-import { fmtPoids } from "../dashboard/dashboard.utils.js";
 import { bindExos, exosHtml } from "../exercices/exercices.components.js";
 import { fileUrl } from "../files/files.js";
 import { calcFor } from "../notes/grades.js";
@@ -63,12 +62,10 @@ export function matiere(mid, tab) {
   } else if (tab === "exos") {
     body = exosHtml(mid, "");
   } else {
-    const evs = D.cal.evenements.filter((e) => e.matiere === mid);
     const rem = D.cal.remarques.filter((r) => r.matiere === mid);
-    body = `<div class="card"><p class="muted small" style="margin-top:0">${esc(m.cc)}</p>
-      <div class="list">${evs.map((e) => `<div class="item"><span class="badge" style="font-size:.66rem">${fmtDate(e.date).split(" ").slice(1).join(" ")}</span><div class="sp"><b>${esc(e.titre)}</b> <span class="chip gr">${esc(fmtPoids(e.poids))}</span>${e.type === "2e" ? ' <span class="chip wa">2e chance</span>' : ""}<div class="tiny muted">${esc(e.detail)}</div></div></div>`).join("") || '<div class="muted small">Pas de date fixée pour l\'instant.</div>'}</div>
-      ${rem.map((r) => `<div class="note" style="margin-top:10px"><b>À noter —</b> ${esc(r.texte)}</div>`).join("")}
-      ${m.pdfCC ? `<a class="btn sm" href="${esc(fileUrl(m.pdfCC))}" download>${icon("dl")}Fiche CC (PDF)</a>` : ""}</div>
+    // Les CC eux-mêmes (noms, poids, dates) sont dans le calculateur ci-dessous ; cette carte ne garde que le barème écrit, les remarques et la fiche PDF.
+    const info = [m.cc ? `<p class="muted small" style="margin:0">${esc(m.cc)}</p>` : "", ...rem.map((r) => `<div class="note"><b>À noter —</b> ${esc(r.texte)}</div>`), m.pdfCC ? `<a class="btn sm" href="${esc(fileUrl(m.pdfCC))}" download>${icon("dl")}Fiche CC (PDF)</a>` : ""].filter(Boolean);
+    body = `${info.length ? `<div class="card" style="display:grid;gap:10px;justify-items:start">${info.join("")}</div>` : ""}
       ${calcFor(mid) ? `<h3>Calculateur de note</h3>${notesCard(mid, { inline: false })}` : ""}`;
   }
   return {
