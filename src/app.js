@@ -23,6 +23,7 @@ import { documentsActions } from "./features/documents/documents.actions.js";
 import { notesActions } from "./features/notes/notes.actions.js";
 import { initActions } from "./core/services/actions.js";
 import { initDatePickers } from "./core/components/date-picker.js";
+import { initNumberInputs } from "./core/components/number-input.js";
 
 let lastUid = null;
 
@@ -55,6 +56,7 @@ async function boot() {
 }
 
 initDatePickers();
+initNumberInputs();
 initActions([
   navigationActions,
   seancesActions,
