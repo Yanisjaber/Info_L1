@@ -28,12 +28,12 @@ function wavg(pairs) {
 const shortLabel = (l) => String(l || "").replace(/\s*\([^)]*%\)\s*$/, "").trim();
 const pctText = (w, total) => `${Math.round((w / total) * 1000) / 10} %`.replace(".", ",");
 
-// Une seule règle d'affichage d'une épreuve, partout dans l'app : « Nom (coef %) », ou « Nom (facultative) » sans coef.
-// Le coef vient toujours du poids : un « (10 %) » ou « (facultative) » écrit à la fin du nom est retiré.
-export function shareLabel(label, share) {
-  const name = String(label).replace(/\s*\((?:[^)]*%|facultative)\)\s*$/i, "").trim();
-  return `${name} (${share === null ? "facultative" : `${String(share).replace(".", ",")} %`})`;
-}
+// Une seule règle d'affichage d'une épreuve, partout dans l'app : un nom et un coef (« 10 % », ou « facultative »
+// sans coef). Le coef vient toujours du poids : un « (10 %) » ou « (facultative) » écrit à la fin du nom est retiré.
+export const shareName = (label) => String(label).replace(/\s*\((?:[^)]*%|facultative)\)\s*$/i, "").trim();
+export const shareText = (share) => (share === null ? "facultative" : `${String(share).replace(".", ",")} %`);
+// Les deux sur une ligne : « Nom (coef %) ».
+export const shareLabel = (label, share) => `${shareName(label)} (${shareText(share)})`;
 
 // Phrase décrivant la formule, générée depuis la configuration.
 export function describeFormula(g) {
