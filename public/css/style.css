@@ -260,6 +260,7 @@ details[open]{padding-bottom:12px}
 .dpick-trig{display:inline-flex;align-items:center;gap:8px}
 .dpick-pop{position:absolute;top:calc(100% + 6px);left:0;z-index:30;width:272px}
 .dpick-pop[hidden]{display:none}
+.gr-second[hidden],.gr-g2w[hidden],.gr-adv[hidden]{display:none}
 .cal.pick{gap:2px}
 .cal.pick .dh{padding:2px 0;font-size:.64rem}
 .cal.pick .d{min-height:0;display:flex;align-items:center;justify-content:center;padding:0;aspect-ratio:1;font:inherit;font-size:.82rem;font-weight:600;color:var(--text);cursor:pointer;appearance:none}

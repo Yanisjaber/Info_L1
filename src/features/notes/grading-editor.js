@@ -1,34 +1,43 @@
-// Éditeur du calcul de la note d'une matière (section du formulaire « matière » dans Compte).
+// Éditeur du calcul de la note d'une matière (page Notes & CC, et formulaire « matière » dans Compte).
 // Produit la configuration lue par features/notes/grades.js (colonne `grading`).
 import { $, $$, esc } from "../../core/utils/dom.js";
+import { describeFormula } from "./grades.js";
 
-const ROW_STYLE = "display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;align-items:end;margin-bottom:8px";
+// Même grille pour l'en-tête et pour chaque ligne : nom de l'épreuve · poids · note sur · retirer.
+const COLS = "display:grid;grid-template-columns:minmax(0,1fr) 84px 72px 36px;gap:8px;align-items:center";
+const fmt = (x) => String(Math.round(x * 10) / 10).replace(".", ",");
 
 function rowHtml(it) {
   const n = it.parts && it.parts.length > 1 ? it.parts.length : 1;
-  return `<div class="gr-row" data-item="${esc(JSON.stringify(it))}" style="${ROW_STYLE}">
-    <div class="field" style="grid-column:span 2"><label>Épreuve</label><input type="text" class="gr-label" value="${esc(it.label || "")}" placeholder="ex. CC1 — QCM"></div>
-    <div class="field"><label>Poids</label><input type="number" class="gr-w" min="0" step="any" value="${it.weight ?? ""}" placeholder="ex. 20"></div>
-    <div class="field"><label>Note sur</label><input type="number" class="gr-max" min="1" step="any" value="${it.max || 20}"></div>
-    <div class="field"><label>Moyenne de</label><input type="number" class="gr-n" min="1" max="8" step="1" value="${n}" title="Nombre de notes saisies dont on fait la moyenne pour cette épreuve"></div>
-    <button type="button" class="btn sm ghost" data-gr="del" aria-label="Retirer cette épreuve">✕</button>
+  return `<div class="gr-row" data-item="${esc(JSON.stringify(it))}" style="margin-bottom:8px">
+    <div style="${COLS}">
+      <input type="text" class="gr-label" value="${esc(it.label || "")}" placeholder="ex. CC1 — QCM" aria-label="Nom de l'épreuve">
+      <input type="number" class="gr-w" min="0" step="any" value="${it.weight ?? ""}" placeholder="%" aria-label="Poids de l'épreuve, en pourcentage">
+      <input type="number" class="gr-max" min="1" step="any" value="${it.max || 20}" aria-label="Note sur">
+      <button type="button" class="btn sm ghost" data-gr="del" aria-label="Retirer cette épreuve">✕</button>
+    </div>
+    <div class="gr-adv tiny muted" ${n > 1 ? "" : "hidden"} style="margin:6px 0 0 2px">Cette épreuve est la moyenne de <input type="number" class="gr-n" min="1" max="8" step="1" value="${n}" style="width:64px;display:inline-block;padding:4px 8px" aria-label="Nombre de notes dont on fait la moyenne"> notes</div>
   </div>`;
 }
 
-export function gradingEditorHtml(m) {
+export function gradingEditorHtml(m, { open = false, title = "Calcul de la note (page Notes &amp; CC)" } = {}) {
   const g = m && m.grading, items = (g && g.items) || [], sec = (g && g.second) || null;
   const mode = !sec ? "none" : sec.required ? "req" : "opt";
-  return `<details class="gr-ed" style="margin-top:10px" data-current="${esc(JSON.stringify(g || null))}"><summary>Calcul de la note (page Notes &amp; CC)</summary>
-    <p class="small muted" style="margin:10px 0">Une ligne par épreuve, avec son poids (le rapport entre les poids compte, pas leur somme). Laisse vide pour ne pas avoir de calculateur pour cette matière.</p>
-    <div class="gr-items">${items.map(rowHtml).join("")}</div>
-    <div class="row" style="margin:4px 0 12px"><button type="button" class="btn sm" data-gr="add">+ Ajouter une épreuve</button></div>
-    <div class="grid g2">
-      <div class="field"><label>Note de 2e chance</label><select name="g2mode">
-        <option value="none" ${mode === "none" ? "selected" : ""}>Aucune</option>
-        <option value="opt" ${mode === "opt" ? "selected" : ""}>Facultative — remplace une note plus faible</option>
-        <option value="req" ${mode === "req" ? "selected" : ""}>Obligatoire — compte aussi dans la moyenne</option></select></div>
+  const radio = (v, t, d) => `<label style="display:flex;gap:8px;align-items:flex-start;margin:6px 0;cursor:pointer"><input type="radio" name="g2mode" value="${v}" ${mode === v ? "checked" : ""} style="margin-top:3px"><span><b>${t}</b>${d ? `<br><span class="tiny muted">${d}</span>` : ""}</span></label>`;
+  return `<details class="gr-ed" ${open ? "open" : ""} style="margin-top:10px" data-current="${esc(JSON.stringify(g || null))}"><summary>${title}</summary>
+    <p class="small muted" style="margin:10px 0">Une ligne par épreuve : son nom, son <b>poids</b> dans la note finale (en %) et sa note maximale. Laisse tout vide pour ne pas avoir de calculateur pour cette matière.</p>
+    <div class="tiny muted" style="${COLS};margin-bottom:6px"><span>Épreuve</span><span>% de la note</span><span>Sur</span><span></span></div>
+    <div class="gr-items">${(items.length ? items : [{ label: "", weight: "", max: 20 }]).map(rowHtml).join("")}</div>
+    <div class="row" style="margin:4px 0 8px"><button type="button" class="btn sm" data-gr="add">+ Ajouter une épreuve</button><button type="button" class="btn sm ghost" data-gr="adv">Moyenne de plusieurs notes…</button></div>
+    <div class="card" style="margin:12px 0;padding:12px 14px"><span class="chip gr-total"></span><p class="small gr-sum" style="margin:8px 0 0"></p></div>
+    <fieldset style="border:0;padding:0;margin:12px 0 0"><legend class="small" style="font-weight:600;padding:0">Y a-t-il une 2e chance (rattrapage) ?</legend>
+      ${radio("none", "Non", "")}
+      ${radio("opt", "Oui, facultative", "elle remplace une note plus faible, si elle est meilleure")}
+      ${radio("req", "Oui, obligatoire", "elle compte aussi dans la note, avec son propre poids")}
+    </fieldset>
+    <div class="grid g2 gr-second" style="margin-top:8px">
       <div class="field"><label>Nom de la 2e chance</label><input type="text" name="g2label" value="${esc(sec ? sec.label : "")}" placeholder="ex. CC4 — 2e chance"></div>
-      <div class="field"><label>Poids de la 2e chance (si obligatoire)</label><input type="number" name="g2w" min="0" step="any" value="${sec && sec.weight ? sec.weight : ""}"></div>
+      <div class="field gr-g2w"><label>Poids de la 2e chance (%)</label><input type="number" name="g2w" min="0" step="any" value="${sec && sec.weight ? sec.weight : ""}"></div>
     </div>
     <input type="hidden" name="g2id" value="${esc(sec ? sec.id : "")}">
   </details>`;
@@ -37,12 +46,33 @@ export function gradingEditorHtml(m) {
 export function bindGradingEditor(form) {
   const box = $(".gr-items", form);
   if (!box) return;
+  // Met à jour ce qui dépend de la saisie : champs de 2e chance, total des poids, formule en clair.
+  const refresh = () => {
+    const mode = (form.querySelector('input[name="g2mode"]:checked') || {}).value || "none";
+    $(".gr-second", form).hidden = mode === "none";
+    $(".gr-g2w", form).hidden = mode !== "req";
+    const tot = $(".gr-total", form), sum = $(".gr-sum", form);
+    let g;
+    try { g = readGradingEditor(form); } catch (err) { tot.className = "chip wa gr-total"; tot.textContent = "À compléter"; sum.textContent = err.message; return; }
+    if (!g) { tot.className = "chip gr-total"; tot.textContent = "Aucune épreuve"; sum.textContent = "Ajoute une épreuve pour voir ta formule de calcul."; return; }
+    const w = g.items.reduce((s, it) => s + it.weight, 0) + (g.second && g.second.required ? g.second.weight : 0);
+    const ok = Math.abs(w - 100) < 0.01;
+    tot.className = `chip ${ok ? "ok" : "wa"} gr-total`;
+    tot.textContent = ok ? "Total : 100 %" : `Total : ${fmt(w)} (ramené à 100 %)`;
+    sum.textContent = describeFormula(g);
+  };
   form.addEventListener("click", (e) => {
     const b = e.target.closest("[data-gr]");
     if (!b) return;
     if (b.dataset.gr === "add") { box.insertAdjacentHTML("beforeend", rowHtml({ label: "", weight: "", max: 20 })); $$(".gr-label", box).pop().focus(); }
     else if (b.dataset.gr === "del") b.closest(".gr-row").remove();
+    else if (b.dataset.gr === "adv") $$(".gr-adv", box).forEach((x) => { x.hidden = !x.hidden; });
+    refresh();
   });
+  const onEdit = (e) => { if (e.target.closest(".gr-ed")) refresh(); };
+  form.addEventListener("input", onEdit);
+  form.addEventListener("change", onEdit);
+  refresh();
 }
 
 const canon = (o) => JSON.stringify(o, (_, v) => (v && typeof v === "object" && !Array.isArray(v) ? Object.fromEntries(Object.keys(v).sort().map((k) => [k, v[k]])) : v));

@@ -1,8 +1,14 @@
-import { D, M } from "../../core/services/app-data.js";
+import { appConfirm } from "../../core/components/dialog.js";
+import { toast } from "../../core/components/toast.js";
+import { D, M, activeMatieres } from "../../core/services/app-data.js";
+import { loadData } from "../../core/services/data-loader.js";
 import { commit, setEntry, state } from "../../core/services/store.js";
 import { $, $$, esc } from "../../core/utils/dom.js";
 import { fmt1 } from "../../core/utils/format.js";
+import { rerenderKeep } from "../../routing/navigation.js";
+import { saveMatiere } from "../matieres/matieres.service.js";
 import { SET } from "../settings/settings.js";
+import { bindGradingEditor, gradingEditorHtml, readGradingEditor } from "./grading-editor.js";
 import { calcFor } from "./grades.js";
 
 export function notesCard(mid) {
@@ -20,6 +26,15 @@ function calcRes(mid, v) {
     <span class="chip ${r.complet ? (pass ? "ok" : "ko") : "wa"}">${r.complet ? (pass ? esc(SET().passLabel) : "sous la moyenne") : `estimation partielle (${r.poids} % du total saisi)`}</span></div>`;
 }
 
+// Créer ou modifier le calculateur d'une matière : les mêmes champs que dans Compte (épreuves, poids,
+// note sur, 2e chance), avec leur propre bouton Enregistrer. Ouvert d'office tant qu'il n'y a pas de calculateur.
+function gradingFormHtml(m) {
+  const has = !!calcFor(m.id);
+  const ed = gradingEditorHtml(m, { open: !has, title: has ? "Modifier les épreuves et les coefficients" : "Créer le calculateur de notes" });
+  const save = `<div class="row" style="margin-top:10px"><button class="btn pri" type="submit">Enregistrer le calculateur</button></div>`;
+  return `<form class="gr-form" data-m="${esc(m.id)}">${ed.replace(/<\/details>$/, `${save}</details>`)}</form>`;
+}
+
 export function bindNotes(el) {
   $$(".notes", el).forEach((card) => {
     const mid = card.dataset.m, out = $(".nres", card);
@@ -27,9 +42,25 @@ export function bindNotes(el) {
     out.innerHTML = calcRes(mid, cur());
     card.addEventListener("input", () => { const v = cur(); out.innerHTML = calcRes(mid, v); setEntry("notes", mid, { v }); commit(); });
   });
+  $$("form.gr-form", el).forEach((f) => {
+    bindGradingEditor(f);
+    f.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const m = M(f.dataset.m);
+      let grading;
+      try { grading = readGradingEditor(f); } catch (err) { return toast(err.message); }
+      if (!grading && !m.grading) return toast("Ajoute au moins une épreuve avec un nom et un poids");
+      if (!grading && !(await appConfirm("Aucune épreuve : le calculateur de cette matière sera supprimé. Continuer ?"))) return;
+      try { await saveMatiere({ ...m, grading }); toast("Calculateur enregistré"); await loadData(); rerenderKeep(); }
+      catch (err) { toast("Erreur : " + err.message); }
+    });
+  });
 }
 
 export function notes() {
-  return { html: `<h1>Notes &amp; CC</h1><p class="muted">Entre tes notes au fil du semestre : le calcul suit exactement la formule de chaque UE (les deuxièmes chances remplacent les notes plus faibles). Tout est sauvegardé.</p>
-    ${D.matieres.filter((m) => calcFor(m.id)).map((m) => `<h2 style="display:flex;gap:10px;align-items:center"><i class="dot" style="--c:${m.couleur}"></i>${esc(m.nom)}</h2>${notesCard(m.id)}`).join("") || '<div class="empty">Aucun calculateur configuré. Ajoute les épreuves et leurs poids dans <a href="#/compte">Compte</a> → ta matière → « Calcul de la note ».</div>'}`, after: bindNotes };
+  // Les matières qui ont un calculateur, plus les matières actives qui n'en ont pas encore (pour pouvoir le créer).
+  const actives = new Set(activeMatieres().map((m) => m.id));
+  const list = D.matieres.filter((m) => calcFor(m.id) || actives.has(m.id));
+  return { html: `<h1>Notes &amp; CC</h1><p class="muted">Entre tes notes au fil du semestre : le calcul suit exactement la formule de chaque UE (les deuxièmes chances remplacent les notes plus faibles). Tout est sauvegardé. Sous chaque matière, tu peux créer ou modifier le calculateur : épreuves, coefficients, 2e chance.</p>
+    ${list.map((m) => `<h2 style="display:flex;gap:10px;align-items:center"><i class="dot" style="--c:${m.couleur}"></i>${esc(m.nom)}</h2>${calcFor(m.id) ? notesCard(m.id) : ""}${gradingFormHtml(m)}`).join("") || '<div class="empty">Aucune matière pour l\'instant. Ajoute-en une dans <a href="#/compte">Compte</a>, puis crée son calculateur ici.</div>'}`, after: bindNotes };
 }
