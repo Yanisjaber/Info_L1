@@ -25,7 +25,9 @@ function rowHtml(it, second = false) {
 // `bare` : sans barre de titre cliquable (la page qui l'utilise l'ouvre et le ferme elle-même).
 export function gradingEditorHtml(m, { open = false, bare = false, title = "Calcul de la note (page Notes &amp; CC)" } = {}) {
   const g = m && m.grading, items = (g && g.items) || [], sec = (g && g.second) || null;
-  const rows = [...items.map((it) => rowHtml(it)), ...(sec ? [rowHtml({ ...sec, weight: sec.required ? sec.weight : "" }, true)] : [])];
+  // Les lignes suivent l'ordre enregistré, la 2e chance comprise (sa place est `second.pos`, à la fin par défaut).
+  const rows = items.map((it) => rowHtml(it));
+  if (sec) rows.splice(Number.isInteger(sec.pos) ? Math.min(Math.max(sec.pos, 0), items.length) : items.length, 0, rowHtml({ ...sec, weight: sec.required ? sec.weight : "" }, true));
   return `<details class="gr-ed${bare ? " gr-bare" : ""}" ${open || bare ? "open" : ""} style="margin-top:10px" data-current="${esc(JSON.stringify(g || null))}"><summary ${bare ? "hidden" : ""}>${title}</summary>
     <div class="row" style="margin:12px 0 10px"><button type="button" class="btn sm" data-gr="add">+ Ajouter une épreuve</button></div>
     <div class="gr-grid gr-head tiny muted" style="margin-bottom:6px"><span>Épreuve</span><span>% de la note</span><span>Sur</span><span></span><span></span></div>
@@ -100,7 +102,7 @@ export function readGradingEditor(form) {
     const max = parseFloat($(".gr-max", r).value) || 20;
     if ($(".gr-sec", r).checked) {
       // 2e chance : à 0 % (ou vide) elle est facultative, sinon elle compte pour son pourcentage.
-      second = { id: orig.id || fresh("sc"), label };
+      second = { id: orig.id || fresh("sc"), label, pos: items.length }; // pos : nombre d'épreuves placées avant elle
       if (weight > 0) { second.required = true; second.weight = weight; }
       if (max !== 20) second.max = max;
       continue;

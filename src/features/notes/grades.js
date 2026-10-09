@@ -58,9 +58,14 @@ export function compileGrading(g, titre = "") {
   }));
   const sec = g.second ? { id: g.second.id, label: g.second.label, required: !!g.second.required, w: g.second.required ? +g.second.weight || 0 : 0, max: +g.second.max || 20 } : null;
 
+  // Les champs suivent l'ordre des lignes de l'éditeur, la 2e chance comprise (sa place est `second.pos`, à la fin par défaut).
   const champs = [];
-  for (const it of items) for (const f of it.parts || [{ id: it.id, label: it.label }]) champs.push(it.max === 20 ? [f.id, f.label] : [f.id, f.label, it.max]);
-  if (sec) champs.push(sec.max === 20 ? [sec.id, sec.label] : [sec.id, sec.label, sec.max]);
+  const secAt = sec && Number.isInteger(g.second.pos) ? Math.min(Math.max(g.second.pos, 0), items.length) : items.length;
+  items.forEach((it, i) => {
+    if (sec && i === secAt) champs.push(sec.max === 20 ? [sec.id, sec.label] : [sec.id, sec.label, sec.max]);
+    for (const f of it.parts || [{ id: it.id, label: it.label }]) champs.push(it.max === 20 ? [f.id, f.label] : [f.id, f.label, it.max]);
+  });
+  if (sec && secAt >= items.length) champs.push(sec.max === 20 ? [sec.id, sec.label] : [sec.id, sec.label, sec.max]);
 
   // Part de chaque champ dans la note (en %), pour l'afficher à côté de son nom ; null = 2e chance facultative.
   const totalW = items.reduce((s, it) => s + it.w, 0) + (sec && sec.required ? sec.w : 0) || 1;
