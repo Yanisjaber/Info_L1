@@ -6,16 +6,19 @@ import { fmt1 } from "../../core/utils/format.js";
 import { SET } from "../settings/settings.js";
 import { calcFor } from "./grades.js";
 
-// Part de l'épreuve dans la note, affichée après son nom (sauf si le nom contient déjà un « % »).
-function shareHtml(label, share) {
-  if (/%/.test(label) || share === undefined || (share === null && /facultativ/i.test(label))) return "";
-  return ` <span style="font-weight:400">· ${share === null ? "facultative" : `${String(share).replace(".", ",")} %`}</span>`;
+// Nom d'une épreuve suivi de sa part dans la note, au même format pour toutes les matières (« CC1 — QCM 1 · 10 % »).
+// Un ancien « (10 %) » écrit dans le nom est retiré à l'affichage : la part vient du poids réel.
+function labelHtml(label, share) {
+  if (share === undefined) return esc(label);
+  const name = esc(String(label).replace(/\s*\([^)]*%\)\s*$/, "").trim());
+  if (share === null && /facultativ/i.test(label)) return name;
+  return `${name} <span style="font-weight:400">· ${share === null ? "facultative" : `${String(share).replace(".", ",")} %`}</span>`;
 }
 
 export function notesCard(mid) {
   const K = calcFor(mid), m = M(mid), v = state.notes[mid]?.v || {};
   return `<div class="card notes" data-m="${mid}" style="--acc:${m.couleur}">
-    <div class="row">${K.champs.map(([k, l, mx]) => `<div class="field"><label for="n-${mid}-${k}">${esc(l)}${shareHtml(l, K.shares?.[k])}</label><input id="n-${mid}-${k}" type="number" inputmode="decimal" min="0" max="${mx || 20}" step="0.25" data-k="${k}" value="${v[k] ?? ""}" placeholder="—"></div>`).join("")}</div>
+    <div class="row">${K.champs.map(([k, l, mx]) => `<div class="field"><label for="n-${mid}-${k}">${labelHtml(l, K.shares?.[k])}</label><input id="n-${mid}-${k}" type="number" inputmode="decimal" min="0" max="${mx || 20}" step="0.25" data-k="${k}" value="${v[k] ?? ""}" placeholder="—"></div>`).join("")}</div>
     <div class="nres" style="margin-top:12px"></div></div>`;
 }
 
