@@ -4,8 +4,41 @@ import { toast } from "./toast.js";
 // habillée aux couleurs du thème (voir « Flatpickr » dans style.css). Rien à câbler à la main : `initDatePickers()`
 // surveille la page et transforme chaque `<input type="date">` et `<input type="time">` qui apparaît (pop-up, page
 // redessinée…). La valeur envoyée au formulaire reste « AAAA-MM-JJ » et « HH:MM », comme avec les champs natifs.
+// Mois et année : deux menus déroulants faits maison (la liste native du navigateur ne peut pas prendre les couleurs du thème).
+function addHeader(fp) {
+  const cm = fp.calendarContainer.querySelector(".flatpickr-current-month");
+  cm.classList.add("fp-custom");
+  const wrap = document.createElement("div");
+  wrap.className = "fp-dd";
+  wrap.innerHTML = '<button type="button" class="fp-dd-btn" data-k="m"></button><button type="button" class="fp-dd-btn" data-k="y"></button><div class="fp-dd-list" role="listbox" hidden></div>';
+  cm.appendChild(wrap);
+  const list = wrap.querySelector(".fp-dd-list"), [bm, by] = wrap.querySelectorAll(".fp-dd-btn");
+  const monthName = (i) => { const n = fp.l10n.months.longhand[i]; return n[0].toUpperCase() + n.slice(1); };
+  const label = () => { bm.textContent = monthName(fp.currentMonth); by.textContent = fp.currentYear; };
+  const close = () => { list.hidden = true; };
+  const open = (btn) => {
+    const isM = btn.dataset.k === "m", base = new Date().getFullYear();
+    const from = Math.min(base, fp.currentYear) - 5, to = Math.max(base, fp.currentYear) + 10;
+    const items = isM ? fp.l10n.months.longhand.map((_, i) => [i, monthName(i)]) : Array.from({ length: to - from + 1 }, (_, i) => [from + i, from + i]);
+    const cur = isM ? fp.currentMonth : fp.currentYear;
+    list.innerHTML = items.map(([v, t]) => `<button type="button" class="fp-dd-item${v === cur ? " on" : ""}" data-v="${v}" role="option">${t}</button>`).join("");
+    list.dataset.k = btn.dataset.k;
+    list.style.left = btn.offsetLeft + "px";
+    list.hidden = false;
+    list.querySelector(".on")?.scrollIntoView({ block: "center" });
+  };
+  wrap.addEventListener("click", (e) => {
+    const b = e.target.closest(".fp-dd-btn"), it = e.target.closest(".fp-dd-item");
+    if (b) { (!list.hidden && list.dataset.k === b.dataset.k) ? close() : open(b); return; }
+    if (it) { const v = +it.dataset.v; if (list.dataset.k === "m") fp.changeMonth(v - fp.currentMonth); else fp.changeYear(v); close(); }
+  });
+  fp.calendarContainer.addEventListener("click", (e) => { if (!e.target.closest(".fp-dd")) close(); });
+  fp.config.onMonthChange.push(label); fp.config.onYearChange.push(label); fp.config.onOpen.push(() => { close(); label(); }); fp.config.onClose.push(close);
+  label();
+}
+
 const OPTS = {
-  date: { dateFormat: "Y-m-d", altInput: true, altFormat: "l j F Y", disableMobile: true, monthSelectorType: "static" },
+  date: { dateFormat: "Y-m-d", altInput: true, altFormat: "l j F Y", disableMobile: true, onReady: (_d, _s, fp) => addHeader(fp) },
   time: { dateFormat: "H:i", enableTime: true, noCalendar: true, time_24hr: true, minuteIncrement: 5, allowInput: true, disableMobile: true },
 };
 
