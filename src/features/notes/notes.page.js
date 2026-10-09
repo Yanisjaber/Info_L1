@@ -6,10 +6,16 @@ import { fmt1 } from "../../core/utils/format.js";
 import { SET } from "../settings/settings.js";
 import { calcFor } from "./grades.js";
 
+// Part de l'épreuve dans la note, affichée après son nom (sauf si le nom contient déjà un « % »).
+function shareHtml(label, share) {
+  if (/%/.test(label) || share === undefined || (share === null && /facultativ/i.test(label))) return "";
+  return ` <span style="font-weight:400">· ${share === null ? "facultative" : `${String(share).replace(".", ",")} %`}</span>`;
+}
+
 export function notesCard(mid) {
   const K = calcFor(mid), m = M(mid), v = state.notes[mid]?.v || {};
   return `<div class="card notes" data-m="${mid}" style="--acc:${m.couleur}">
-    <div class="row">${K.champs.map(([k, l, mx]) => `<div class="field"><label for="n-${mid}-${k}">${esc(l)}</label><input id="n-${mid}-${k}" type="number" inputmode="decimal" min="0" max="${mx || 20}" step="0.25" data-k="${k}" value="${v[k] ?? ""}" placeholder="—"></div>`).join("")}</div>
+    <div class="row">${K.champs.map(([k, l, mx]) => `<div class="field"><label for="n-${mid}-${k}">${esc(l)}${shareHtml(l, K.shares?.[k])}</label><input id="n-${mid}-${k}" type="number" inputmode="decimal" min="0" max="${mx || 20}" step="0.25" data-k="${k}" value="${v[k] ?? ""}" placeholder="—"></div>`).join("")}</div>
     <div class="nres" style="margin-top:12px"></div></div>`;
 }
 

@@ -55,6 +55,13 @@ export function compileGrading(g, titre = "") {
   for (const it of items) for (const f of it.parts || [{ id: it.id, label: it.label }]) champs.push(it.max === 20 ? [f.id, f.label] : [f.id, f.label, it.max]);
   if (sec) champs.push(sec.max === 20 ? [sec.id, sec.label] : [sec.id, sec.label, sec.max]);
 
+  // Part de chaque champ dans la note (en %), pour l'afficher à côté de son nom ; null = 2e chance facultative.
+  const totalW = items.reduce((s, it) => s + it.w, 0) + (sec && sec.required ? sec.w : 0) || 1;
+  const pct = (w) => Math.round((w / totalW) * 1000) / 10;
+  const shares = {};
+  for (const it of items) for (const f of it.parts || [{ id: it.id }]) shares[f.id] = pct(it.w / (it.parts ? it.parts.length : 1));
+  if (sec) shares[sec.id] = sec.required ? pct(sec.w) : null;
+
   const scale = (x, max) => (x === null || max === 20 ? x : (x / max) * 20);
 
   function calc(v) {
@@ -81,7 +88,7 @@ export function compileGrading(g, titre = "") {
     return e ? { note: e.note, complet: false, poids: e.poids } : null;
   }
 
-  return { titre, formule: g.formule || describeFormula(g), champs, calc };
+  return { titre, formule: g.formule || describeFormula(g), champs, shares, calc };
 }
 
 // Calculateur d'une matière (mémorisé tant que sa configuration ne change pas).
