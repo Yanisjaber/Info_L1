@@ -27,10 +27,9 @@ export function gradingEditorHtml(m, { open = false, title = "Calcul de la note 
   const g = m && m.grading, items = (g && g.items) || [], sec = (g && g.second) || null;
   const rows = [...items.map((it) => rowHtml(it)), ...(sec ? [rowHtml({ ...sec, weight: sec.required ? sec.weight : "" }, true)] : [])];
   return `<details class="gr-ed" ${open ? "open" : ""} style="margin-top:10px" data-current="${esc(JSON.stringify(g || null))}"><summary>${title}</summary>
-    <p class="small muted" style="margin:10px 0">Une ligne par épreuve : son nom, son <b>poids</b> dans la note finale (en %) et sa note maximale. Pour le rattrapage, coche <b>2e chance</b> sur sa ligne : à 0&nbsp;% elle est facultative et remplace une note plus faible si elle est meilleure ; avec un pourcentage, elle compte aussi dans la note. Laisse tout vide pour ne pas avoir de calculateur pour cette matière.</p>
+    <div class="row" style="margin:12px 0 10px"><button type="button" class="btn sm" data-gr="add">+ Ajouter une épreuve</button></div>
     <div class="gr-grid gr-head tiny muted" style="margin-bottom:6px"><span>Épreuve</span><span>% de la note</span><span>Sur</span><span></span><span></span></div>
     <div class="gr-items">${(rows.length ? rows : [rowHtml({ label: "", weight: "", max: 20 })]).join("")}</div>
-    <div class="row" style="margin:4px 0 8px"><button type="button" class="btn sm" data-gr="add">+ Ajouter une épreuve</button><button type="button" class="btn sm ghost" data-gr="adv">Moyenne de plusieurs notes…</button></div>
     <div class="card" style="margin:12px 0 0;padding:12px 14px"><span class="chip gr-total"></span><div class="gr-sum" style="margin-top:8px"></div></div>
   </details>`;
 }
@@ -64,7 +63,6 @@ export function bindGradingEditor(form) {
     if (!b) return;
     if (b.dataset.gr === "add") { box.insertAdjacentHTML("beforeend", rowHtml({ label: "", weight: "", max: 20 })); $$(".gr-label", box).pop().focus(); }
     else if (b.dataset.gr === "del") b.closest(".gr-row").remove();
-    else if (b.dataset.gr === "adv") $$(".gr-adv", box).forEach((x) => { x.hidden = !x.hidden; });
     refresh();
   });
   const onEdit = (e) => {
