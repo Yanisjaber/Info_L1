@@ -1,8 +1,6 @@
 // Champs numériques de toute l'appli : les petites flèches natives du navigateur (moches, hors thème) sont cachées en CSS
 // et remplacées par deux boutons « + / − » aux couleurs du thème. Rien à câbler à la main : `initNumberInputs()` surveille
-// la page et équipe chaque `<input type="number">` qui apparaît. Exceptions (juste les flèches natives cachées, on tape la
-// valeur) : les cases de note de la frise (.nt-seg) et les champs insérés dans une phrase (.gr-n).
-const SKIP = ".nt-seg, .gr-n";
+// la page et équipe chaque `<input type="number">` qui apparaît, sans exception.
 
 const decimals = (x) => (String(x).split(".")[1] || "").length;
 
@@ -20,7 +18,7 @@ function bump(input, dir) {
 }
 
 function upgrade(input) {
-  if (input.dataset.stepper || input.closest(SKIP)) return;
+  if (input.dataset.stepper) return;
   input.dataset.stepper = "1";
   const wrap = document.createElement("span");
   wrap.className = "num";

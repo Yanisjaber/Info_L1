@@ -449,3 +449,8 @@ input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-
 .num-steps button:hover:before{border-color:var(--acc)}
 .gr-grid .num>input{padding-left:8px;padding-right:26px}
 .gr-grid .num-steps{right:3px;width:18px}
+/* Case de note de la frise : le texte reste centré, les flèches sont à droite ; champ « n notes » dans sa phrase */
+.nt-seg .num>input{padding:6px 24px}
+.nt-seg .num-steps{right:4px;width:18px}
+.gr-adv .num{display:inline-block;vertical-align:middle}
+.gr-adv .num>input{padding:4px 26px 4px 8px}
