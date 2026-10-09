@@ -43,7 +43,6 @@ export function openGradingModal(mid) {
     } catch (err) { toast("Erreur : " + err.message); }
   });
   routerState.cleanup = closeGradingModal;
-  $$(".gr-label", f)[0]?.focus();
 }
 
 export function closeGradingModal() {
