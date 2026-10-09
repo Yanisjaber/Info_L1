@@ -4,7 +4,7 @@ import { commit, setEntry, state } from "../../core/services/store.js";
 import { $, $$, esc } from "../../core/utils/dom.js";
 import { fmt1 } from "../../core/utils/format.js";
 import { SET } from "../settings/settings.js";
-import { calcFor, shareText } from "./grades.js";
+import { calcFor, clampScore, shareText } from "./grades.js";
 
 // Couleur du segment d'une épreuve : vert si la note (ramenée sur 20) atteint la moyenne de validation, rouge sinon, rien si vide.
 const tone = (val, max) => (val === "" ? "" : (+val / max) * 20 >= SET().passMark ? "ok" : "ko");
@@ -19,6 +19,7 @@ function segHtml(mid, [k, label, mx], share, v) {
 // Notes les affiche dans l'en-tête de la matière.
 export function notesCard(mid, { inline = true } = {}) {
   const K = calcFor(mid), v = state.notes[mid]?.v || {};
+  if (!K) return "";
   return `<div class="nt-frise" data-m="${esc(mid)}">
     ${inline ? `<div class="nt-inline"><span class="nt-status" data-m="${esc(mid)}"></span><span class="nt-avg" data-m="${esc(mid)}"></span></div>` : ""}
     <div class="nt-strip">${K.champs.map((c) => segHtml(mid, c, K.shares?.[c[0]], v)).join("")}</div></div>`;
@@ -27,7 +28,7 @@ export function notesCard(mid, { inline = true } = {}) {
 // État et moyenne d'une matière pour les notes saisies `v`.
 function result(mid, v) {
   const r = calcFor(mid).calc(v), pass = r && r.note >= SET().passMark;
-  const [txt, cls] = !r ? ["À saisir", "gr"] : r.complet ? (pass ? [SET().passLabel, "ok"] : ["Sous la moyenne", "ko"]) : [`Estimation · ${String(r.poids).replace(".", ",")} % saisi`, "wa"];
+  const [txt, cls] = !r ? ["À saisir", "gr"] : r.complet ? (pass ? [SET().passLabel, "ok"] : ["Sous la moyenne", "ko"]) : [`Estimation · ${fmt1(r.poids)} % saisi`, "wa"];
   return { chip: `<span class="chip ${cls}">${esc(txt)}</span>`, avg: r ? `<span style="color:${pass ? "var(--ok)" : "var(--ko)"}">${fmt1(r.note)}</span><small> /20</small>` : `<span class="muted">—</span>` };
 }
 
@@ -55,7 +56,7 @@ function pencilHtml(m) {
 // Retourne true si la valeur a dû être ramenée dans ces limites.
 function clampNote(input) {
   if (input.value === "") return false;
-  const max = +input.max || 20, n = +input.value, ok = Math.min(max, Math.max(0, n));
+  const max = +input.max || 20, n = +input.value, ok = clampScore(n, max);
   if (n === ok) return false;
   input.value = ok;
   return true;
@@ -81,7 +82,7 @@ export function notes() {
   // Les matières qui ont un calculateur, plus les matières actives qui n'en ont pas encore (pour pouvoir le créer).
   const actives = new Set(activeMatieres().map((m) => m.id));
   const list = D.matieres.filter((m) => calcFor(m.id) || actives.has(m.id));
-  const head = (m, has) => `<div class="nt-head"><h2><i class="dot" style="--c:${m.couleur}"></i>${esc(m.nom)}</h2>${has ? `<span class="nt-status" data-m="${esc(m.id)}"></span>` : ""}${pencilHtml(m)}${has ? `<span class="nt-avg" data-m="${esc(m.id)}"></span>` : ""}</div>`;
+  const head = (m, has) => `<div class="nt-head"><h2><i class="dot" style="--c:${esc(m.couleur)}"></i>${esc(m.nom)}</h2>${has ? `<span class="nt-status" data-m="${esc(m.id)}"></span>` : ""}${pencilHtml(m)}${has ? `<span class="nt-avg" data-m="${esc(m.id)}"></span>` : ""}</div>`;
   const noCalc = (m) => `<div class="card"><p class="small muted" style="margin:0 0 10px">Pas encore de calculateur pour cette matière.</p><button type="button" class="btn pri sm" data-a="editgrading" data-m="${esc(m.id)}">Créer le calculateur</button></div>`;
   return { html: `<h1>Notes &amp; CC</h1>
     ${list.some((m) => calcFor(m.id)) ? `<div class="nt-hero" id="nt-hero">${heroHtml()}</div>` : ""}

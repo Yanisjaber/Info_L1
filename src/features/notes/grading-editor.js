@@ -1,9 +1,13 @@
-// Éditeur du calcul de la note d'une matière (page Notes & CC, et formulaire « matière » dans Compte).
+// Éditeur du calcul de la note d'une matière (pop-up de la page Notes & CC, et formulaire « matière » dans Compte).
 // Produit la configuration lue par features/notes/grades.js (colonne `grading`).
 import { $, $$, esc } from "../../core/utils/dom.js";
-import { shareText } from "./grades.js";
+import { fmt1 } from "../../core/utils/format.js";
+import { secondAt, shareText } from "./grades.js";
 
-const fmt = (x) => String(Math.round(x * 10) / 10).replace(".", ",");
+const MAX_ROWS = 30;      // épreuves par matière
+const MAX_LABEL = 80;     // caractères d'un nom d'épreuve
+const MAX_PARTS = 8;      // saisies dont on fait la moyenne pour une épreuve
+const MAX_VALUE = 1e6;    // poids et « Sur » : au-delà, les calculs perdent leur sens
 
 // Une ligne par épreuve : nom · poids · note sur · case « 2e chance » · retirer.
 // La 2e chance est la ligne dont la case est cochée (une seule) : à 0 % elle est facultative,
@@ -14,27 +18,29 @@ function rowHtml(it, second = false) {
     <button type="button" class="gr-grip" aria-label="Déplacer l'épreuve : glisser, ou flèches haut et bas" title="Glisser pour déplacer">⋮⋮</button>
     <div class="gr-main">
     <div class="gr-grid">
-      <input type="text" class="gr-label" value="${esc(it.label || "")}" placeholder="ex. CC1 — QCM" aria-label="Nom de l'épreuve">
+      <input type="text" class="gr-label" maxlength="${MAX_LABEL}" value="${esc(it.label || "")}" placeholder="ex. CC1 — QCM" aria-label="Nom de l'épreuve">
       <input type="number" class="gr-w" min="0" step="any" value="${it.weight ?? ""}" placeholder="%" aria-label="Poids de l'épreuve, en pourcentage">
       <input type="number" class="gr-max" min="1" step="any" value="${it.max || 20}" aria-label="Note sur">
       <label class="gr-sec-toggle" title="Épreuve de rattrapage : elle remplace une note plus faible si elle est meilleure"><input type="checkbox" class="gr-sec" ${second ? "checked" : ""}>2e chance</label>
       <button type="button" class="btn sm ghost" data-gr="del" aria-label="Retirer cette épreuve">✕</button>
     </div>
-    <div class="gr-adv tiny muted" ${n > 1 ? "" : "hidden"} style="margin:6px 0 0 2px">Cette épreuve est la moyenne de <input type="number" class="gr-n" min="1" max="8" step="1" value="${n}" style="width:64px;display:inline-block;padding:4px 8px" aria-label="Nombre de notes dont on fait la moyenne"> notes</div>
+    <div class="gr-adv tiny muted" ${n > 1 ? "" : "hidden"} style="margin:6px 0 0 2px">Cette épreuve est la moyenne de <input type="number" class="gr-n" min="1" max="${MAX_PARTS}" step="1" value="${n}" style="width:64px;display:inline-block;padding:4px 8px" aria-label="Nombre de notes dont on fait la moyenne"> notes</div>
     </div>
   </div>`;
 }
 
+const BLANK = { label: "", weight: "", max: 20 };
+
 // `bare` : sans barre de titre cliquable (la page qui l'utilise l'ouvre et le ferme elle-même).
-export function gradingEditorHtml(m, { open = false, bare = false, title = "Calcul de la note (page Notes &amp; CC)" } = {}) {
+export function gradingEditorHtml(m, { bare = false, title = "Calcul de la note (page Notes &amp; CC)" } = {}) {
   const g = m && m.grading, items = (g && g.items) || [], sec = (g && g.second) || null;
-  // Les lignes suivent l'ordre enregistré, la 2e chance comprise (sa place est `second.pos`, à la fin par défaut).
+  // Les lignes suivent l'ordre enregistré, la 2e chance comprise.
   const rows = items.map((it) => rowHtml(it));
-  if (sec) rows.splice(Number.isInteger(sec.pos) ? Math.min(Math.max(sec.pos, 0), items.length) : items.length, 0, rowHtml({ ...sec, weight: sec.required ? sec.weight : "" }, true));
-  return `<details class="gr-ed${bare ? " gr-bare" : ""}" ${open || bare ? "open" : ""} style="margin-top:10px" data-current="${esc(JSON.stringify(g || null))}"><summary ${bare ? "hidden" : ""}>${title}</summary>
+  if (sec) rows.splice(secondAt({ items, second: sec }), 0, rowHtml({ ...sec, weight: sec.required ? sec.weight : "" }, true));
+  return `<details class="gr-ed${bare ? " gr-bare" : ""}" ${bare ? "open" : ""} style="margin-top:10px"><summary ${bare ? "hidden" : ""}>${title}</summary>
     <div class="row" style="margin:12px 0 10px"><button type="button" class="btn sm" data-gr="add">+ Ajouter une épreuve</button></div>
     <div class="gr-grid gr-head tiny muted" style="margin-bottom:6px"><span>Épreuve</span><span>% de la note</span><span>Sur</span><span></span><span></span></div>
-    <div class="gr-items">${(rows.length ? rows : [rowHtml({ label: "", weight: "", max: 20 })]).join("")}</div>
+    <div class="gr-items">${(rows.length ? rows : [rowHtml(BLANK)]).join("")}</div>
     <div class="card" style="margin:12px 0 0;padding:12px 14px"><span class="chip gr-total"></span><div class="gr-sum" style="margin-top:8px"></div></div>
   </details>`;
 }
@@ -42,40 +48,50 @@ export function gradingEditorHtml(m, { open = false, bare = false, title = "Calc
 export function bindGradingEditor(form) {
   const box = $(".gr-items", form);
   if (!box) return;
-  // Met à jour ce qui dépend de la saisie : total des poids et formule en clair.
+
+  // Met à jour ce qui dépend de la saisie : total des poids, résumé, bouton « Ajouter ».
   const refresh = () => {
+    $('[data-gr="add"]', form).disabled = $$(".gr-row", box).length >= MAX_ROWS;
     const tot = $(".gr-total", form), sum = $(".gr-sum", form);
     let g;
     try { g = readGradingEditor(form); } catch (err) { tot.className = "chip wa gr-total"; tot.textContent = "À compléter"; sum.textContent = err.message; return; }
     if (!g) { tot.className = "chip gr-total"; tot.textContent = "Aucune épreuve"; sum.textContent = "Ajoute une épreuve pour voir comment ta note sera calculée."; return; }
     const sec = g.second, w = g.items.reduce((s, it) => s + it.weight, 0) + (sec && sec.required ? sec.weight : 0);
-    const ok = Math.abs(w - 100) < 0.01, part = (x) => Math.round((x / w) * 1000) / 10;
+    const ok = Math.abs(w - 100) < 0.01;
     tot.className = `chip ${ok ? "ok" : "wa"} gr-total`;
-    tot.textContent = ok ? "Total : 100 %" : `Total : ${fmt(w)} (ramené à 100 %)`;
-    // Une ligne par épreuve, dans l'ordre de tes lignes, avec la même règle d'affichage que la page Notes.
-    let next = 0;
+    tot.textContent = ok ? "Total : 100 %" : `Total : ${fmt1(w)} (ramené à 100 %)`;
+    // Une ligne par épreuve, dans l'ordre des lignes, avec la même règle d'affichage que la page Notes.
+    let next = 0, secUsed = false;
     const rows = $$(".gr-row", form).filter((r) => $(".gr-label", r).value.trim()).map((r) => {
-      const it = sec && $(".gr-sec", r).checked ? sec : g.items[next++];
-      return `<div class="gr-line"><span>${esc(it.label)}</span><b>${shareText(it === sec && !sec.required ? null : part(it.weight))}</b></div>`;
+      const isSec = !!sec && !secUsed && $(".gr-sec", r).checked;
+      secUsed ||= isSec;
+      const it = isSec ? sec : g.items[next++];
+      return `<div class="gr-line"><span>${esc(it.label)}</span><b>${shareText(isSec && !sec.required ? null : Math.round((it.weight / w) * 1000) / 10)}</b></div>`;
     });
     if (sec) rows.push(`<div class="tiny muted" style="padding-top:8px">La 2e chance remplace une note plus faible, si elle est meilleure.</div>`);
     sum.innerHTML = rows.join("");
   };
+
   form.addEventListener("click", (e) => {
     const b = e.target.closest("[data-gr]");
-    if (!b) return;
-    if (b.dataset.gr === "add") { box.insertAdjacentHTML("beforeend", rowHtml({ label: "", weight: "", max: 20 })); $$(".gr-label", box).pop().focus(); }
-    else if (b.dataset.gr === "del") b.closest(".gr-row").remove();
+    if (!b || b.disabled) return;
+    if (b.dataset.gr === "add") {
+      if ($$(".gr-row", box).length >= MAX_ROWS) return;
+      box.insertAdjacentHTML("beforeend", rowHtml(BLANK));
+      $$(".gr-label", box).pop().focus();
+    } else if (b.dataset.gr === "del") b.closest(".gr-row").remove();
     refresh();
   });
-  // Déplacer une épreuve : on attrape la poignée (souris ou doigt) et on la fait glisser ; flèches haut/bas au clavier.
+
   // Déplacer une épreuve à la souris ou au doigt. Pour rester fluide, les positions sont mesurées une seule fois,
   // à la prise : pendant le glissement seules des translations bougent (la ligne attrapée et ses voisines),
   // une fois par image d'écran. L'ordre réel des lignes ne change qu'au relâchement.
+  let dragging = false;
   box.addEventListener("pointerdown", (e) => {
     const grip = e.target.closest(".gr-grip");
-    if (!grip) return;
+    if (!grip || dragging || e.button) return; // un seul glissement à la fois, bouton principal uniquement
     e.preventDefault();
+    dragging = true;
     const rows = $$(".gr-row", box), row = grip.closest(".gr-row"), from = rows.indexOf(row);
     // Réglage « moins d'animations » du système : on garde le déplacement, sans les glissements.
     const slide = matchMedia("(prefers-reduced-motion: reduce)").matches ? "none" : "transform .16s ease";
@@ -91,8 +107,7 @@ export function bindGradingEditor(form) {
     // La ligne attrapée suit le pointeur ; chaque voisine qu'elle a dépassée se décale d'une place.
     const place = () => {
       frame = 0;
-      const dy = Math.min(maxDy, Math.max(minDy, lastY - startY));
-      row.style.transform = `translateY(${dy}px)`;
+      row.style.transform = `translateY(${Math.min(maxDy, Math.max(minDy, lastY - startY))}px)`;
       to = from;
       rows.forEach((x, j) => {
         if (j === from) return;
@@ -122,6 +137,7 @@ export function bindGradingEditor(form) {
         void box.offsetHeight; // applique le tout avant de réactiver les transitions
         rows.forEach((x) => { x.style.transition = ""; });
         box.classList.remove("gr-moving");
+        dragging = false;
         refresh();
       };
       if (slide === "none") done(); else setTimeout(done, 170);
@@ -131,6 +147,8 @@ export function bindGradingEditor(form) {
     window.addEventListener("pointerup", end);
     window.addEventListener("pointercancel", end);
   });
+
+  // Au clavier : flèches haut et bas sur la poignée.
   box.addEventListener("keydown", (e) => {
     const grip = e.target.closest(".gr-grip");
     if (!grip || (e.key !== "ArrowUp" && e.key !== "ArrowDown")) return;
@@ -141,6 +159,7 @@ export function bindGradingEditor(form) {
     grip.focus();
     refresh();
   });
+
   const onEdit = (e) => {
     if (!e.target.closest(".gr-ed")) return;
     // Une seule 2e chance : en cocher une décoche les autres.
@@ -152,42 +171,51 @@ export function bindGradingEditor(form) {
   refresh();
 }
 
-const canon = (o) => JSON.stringify(o, (_, v) => (v && typeof v === "object" && !Array.isArray(v) ? Object.fromEntries(Object.keys(v).sort().map((k) => [k, v[k]])) : v));
+// Nombre fini strictement positif et pas démesuré.
+const sane = (x) => Number.isFinite(x) && x > 0 && x <= MAX_VALUE;
+
+// Identifiant neuf, jamais réutilisé : une épreuve retirée puis une autre ajoutée ne doivent pas se partager la même note.
+let seq = 0;
+const freshId = (base, used) => {
+  let id;
+  do id = base + Date.now().toString(36) + (seq++).toString(36); while (used.has(id));
+  used.add(id);
+  return id;
+};
 
 // Lit le formulaire → configuration (ou null si aucune épreuve). Lève une Error si la saisie est invalide.
 export function readGradingEditor(form) {
-  const ed = $(".gr-ed", form);
-  if (!ed) return undefined;
-  let current = null;
-  try { current = JSON.parse(ed.dataset.current || "null"); } catch (e) { /* configuration illisible : on repart de zéro */ }
+  if (!$(".gr-ed", form)) return undefined;
   const rows = $$(".gr-row", form).map((r) => {
     let orig = {};
-    try { orig = JSON.parse(r.dataset.item || "{}"); } catch (e) { /* ligne ajoutée à la main */ }
+    try { orig = JSON.parse(r.dataset.item || "{}") || {}; } catch (e) { /* ligne ajoutée à la main */ }
     return { r, orig };
   });
   const used = new Set();
   rows.forEach(({ orig }) => { if (orig.id) used.add(orig.id); (orig.parts || []).forEach((p) => used.add(p.id)); });
-  const fresh = (base) => { let i = 1; while (used.has(base + i)) i++; used.add(base + i); return base + i; };
+  const taken = new Set(); // identifiants déjà donnés à une ligne de ce formulaire
+  const idOf = (orig, base) => { const id = orig.id && !taken.has(orig.id) ? orig.id : freshId(base, used); taken.add(id); return id; };
 
   const items = [];
   let second = null;
   for (const { r, orig } of rows) {
-    const label = $(".gr-label", r).value.trim();
+    const label = $(".gr-label", r).value.trim().slice(0, MAX_LABEL);
     if (!label) continue;
     const weight = parseFloat($(".gr-w", r).value);
-    const max = parseFloat($(".gr-max", r).value) || 20;
-    if ($(".gr-sec", r).checked) {
+    const rawMax = parseFloat($(".gr-max", r).value), max = Number.isNaN(rawMax) ? 20 : rawMax;
+    if (!sane(max)) throw new Error(`Note maximale invalide pour « ${label} »`);
+    if ($(".gr-sec", r).checked && !second) {
       // 2e chance : à 0 % (ou vide) elle est facultative, sinon elle compte pour son pourcentage.
-      second = { id: orig.id || fresh("sc"), label, pos: items.length }; // pos : nombre d'épreuves placées avant elle
-      if (weight > 0) { second.required = true; second.weight = weight; }
+      second = { id: idOf(orig, "sc"), label, pos: items.length }; // pos : nombre d'épreuves placées avant elle
+      if (sane(weight)) { second.required = true; second.weight = weight; }
       if (max !== 20) second.max = max;
       continue;
     }
-    if (!(weight > 0)) throw new Error(`Poids manquant ou invalide pour « ${label} »`);
-    const n = Math.min(8, Math.max(1, parseInt($(".gr-n", r).value, 10) || 1));
-    const id = orig.id || fresh("e");
+    if (!sane(weight)) throw new Error(`Poids manquant ou invalide pour « ${label} »`);
+    const id = idOf(orig, "e");
     const it = { id, label, weight };
     if (max !== 20) it.max = max;
+    const n = Math.min(MAX_PARTS, Math.max(1, parseInt($(".gr-n", r).value, 10) || 1));
     if (n > 1) {
       const old = orig.parts || [];
       it.parts = Array.from({ length: n }, (_, i) => (old.length === n ? old[i] : { id: (old[i] && old[i].id) || `${id}_${i + 1}`, label: `${label} — ${i + 1}/${n}` }));
@@ -195,10 +223,5 @@ export function readGradingEditor(form) {
     items.push(it);
   }
   if (!items.length) return null;
-
-  const g = { items };
-  if (second) g.second = second;
-  // Configuration inchangée : on garde le texte de formule d'origine s'il y en avait un.
-  if (current && current.formule) { const { formule, ...rest } = current; if (canon(rest) === canon(g)) g.formule = formule; }
-  return g;
+  return second ? { items, second } : { items };
 }

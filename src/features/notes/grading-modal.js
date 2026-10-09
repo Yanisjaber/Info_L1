@@ -29,18 +29,23 @@ export function openGradingModal(mid) {
 
   const f = $("form.gr-form", backdrop);
   bindGradingEditor(f);
+  const submit = $('button[type="submit"]', f);
   f.addEventListener("submit", async (e) => {
     e.preventDefault();
+    if (submit.disabled) return; // un seul enregistrement à la fois (double clic)
+    const cur = M(mid);
+    if (!cur) return closeGradingModal();
     let grading;
     try { grading = readGradingEditor(f); } catch (err) { return toast(err.message); }
-    if (!grading && !m.grading) return toast("Ajoute au moins une épreuve avec un nom et un poids");
+    if (!grading && !cur.grading) return toast("Ajoute au moins une épreuve avec un nom et un poids");
     if (!grading && !(await appConfirm("Aucune épreuve : le calculateur de cette matière sera supprimé. Continuer ?"))) return;
+    submit.disabled = true;
     try {
-      await saveMatiere({ ...M(mid), grading });
+      await saveMatiere({ ...cur, grading });
       toast("Calculateur enregistré");
       closeGradingModal();
       await loadData(); rerenderKeep();
-    } catch (err) { toast("Erreur : " + err.message); }
+    } catch (err) { submit.disabled = false; toast("Erreur : " + err.message); }
   });
   routerState.cleanup = closeGradingModal;
 }
