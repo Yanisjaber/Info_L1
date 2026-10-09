@@ -23,7 +23,7 @@ function calcRes(mid, v) {
   if (!r) return `<span class="muted small">Saisis tes notes (/20) pour voir ta moyenne.</span>`;
   const pass = r.note >= SET().passMark;
   return `<div class="row"><div class="score" style="font-size:2rem;color:${pass ? "var(--ok)" : "var(--ko)"}">${fmt1(r.note)}<span class="muted" style="font-size:1rem"> / 20</span></div>
-    <span class="chip ${r.complet ? (pass ? "ok" : "ko") : "wa"}">${r.complet ? (pass ? esc(SET().passLabel) : "sous la moyenne") : `estimation partielle (${r.poids} % du total saisi)`}</span></div>`;
+    <span class="chip ${r.complet ? (pass ? "ok" : "ko") : "wa"}">${r.complet ? (pass ? esc(SET().passLabel) : "sous la moyenne") : `estimation partielle (${String(r.poids).replace(".", ",")} % du total saisi)`}</span></div>`;
 }
 
 // Crayon à droite du nom d'une matière : ouvre la pop-up de son calculateur (action « editgrading »).

@@ -94,8 +94,13 @@ export function compileGrading(g, titre = "") {
       const note = equal ? terms.reduce((s, t) => s + t.x, 0) / terms.length : terms.reduce((s, t) => s + (t.w / total) * t.x, 0);
       return { note, complet: true };
     }
-    const e = wavg(items.flatMap((it, i) => (it.parts ? it.parts.map((q) => [scale(val(q.id), it.max), it.w / it.parts.length]) : [[xs[i], it.w]])));
-    return e ? { note: e.note, complet: false, poids: e.poids } : null;
+    // Estimation partielle : moyenne pondérée de tout ce qui est saisi, 2e chance comprise (elle remplace une note plus
+    // faible et, si elle a un poids, compte avec ce poids). `poids` = part du total déjà saisie, en %.
+    const up = (x) => (x === null || S === null ? x : Math.max(x, S));
+    const pairs = items.flatMap((it, i) => (it.parts ? it.parts.map((q) => [up(scale(val(q.id), it.max)), it.w / it.parts.length]) : [[up(xs[i]), it.w]]));
+    if (sec && sec.required) pairs.push([S, sec.w]);
+    const e = wavg(pairs);
+    return e ? { note: e.note, complet: false, poids: Math.round((e.poids / totalW) * 1000) / 10 } : null;
   }
 
   return { titre, formule: g.formule || describeFormula(g), champs, shares, calc };
