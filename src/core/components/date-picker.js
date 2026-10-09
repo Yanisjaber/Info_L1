@@ -5,7 +5,7 @@ import { toast } from "./toast.js";
 // surveille la page et transforme chaque `<input type="date">` et `<input type="time">` qui apparaît (pop-up, page
 // redessinée…). La valeur envoyée au formulaire reste « AAAA-MM-JJ » et « HH:MM », comme avec les champs natifs.
 const OPTS = {
-  date: { dateFormat: "Y-m-d", altInput: true, altFormat: "l j F Y", disableMobile: true },
+  date: { dateFormat: "Y-m-d", altInput: true, altFormat: "l j F Y", disableMobile: true, monthSelectorType: "static" },
   time: { dateFormat: "H:i", enableTime: true, noCalendar: true, time_24hr: true, minuteIncrement: 5, allowInput: true, disableMobile: true },
 };
 

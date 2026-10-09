@@ -416,3 +416,6 @@ span.flatpickr-weekday{color:var(--muted);font-weight:600;font-size:.74rem;text-
 .flatpickr-current-month .numInputWrapper{width:6.2ch;border-radius:8px}
 .flatpickr-current-month input.cur-year{cursor:text;text-align:left}
 .flatpickr-current-month .numInputWrapper:hover,.flatpickr-current-month .flatpickr-monthDropdown-months:hover{background:var(--surface2)}
+/* Mois en texte simple (la liste native du navigateur ne peut pas prendre les couleurs du thème) */
+.flatpickr-current-month span.cur-month{color:var(--text);font-weight:700;margin-left:0}
+.flatpickr-current-month span.cur-month:hover{background:transparent}
