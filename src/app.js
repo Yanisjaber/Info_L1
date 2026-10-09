@@ -20,7 +20,6 @@ import { authActions } from "./features/auth/auth.actions.js";
 import { matieresActions } from "./features/matieres/matieres.actions.js";
 import { todosActions } from "./features/todos/todos.actions.js";
 import { documentsActions } from "./features/documents/documents.actions.js";
-import { filesActions } from "./features/files/files.actions.js";
 import { initActions } from "./core/services/actions.js";
 
 let lastUid = null;
@@ -66,7 +65,6 @@ initActions([
   matieresActions,
   todosActions,
   documentsActions,
-  filesActions,
 ]);
 boot();
 

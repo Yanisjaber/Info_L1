@@ -1,7 +1,6 @@
 import { toast } from "../../core/components/toast.js";
 import { $, esc } from "../../core/utils/dom.js";
 import { fileLabel } from "./files.js";
-import { legacyPaths } from "./files-migration.js";
 import { uploadFile } from "./files.service.js";
 
 // Champ « fichier » d'un formulaire : valeur actuelle (cachée), choix d'un nouveau fichier, case pour le retirer.
@@ -34,9 +33,7 @@ export function bindImageInsert(form, folder) {
   });
 }
 
-// Section « Fichiers » de la page Compte : état de la migration des anciens fichiers du dépôt.
+// Section « Fichiers » de la page Compte : simple rappel de où vivent les fichiers.
 export function filesSectionHtml() {
-  const n = legacyPaths().length;
-  return `<p class="small muted">Tes PDF et les images de tes cours sont stockés dans ton espace privé Supabase (pas dans le dépôt du site). Ajoute-les depuis les formulaires de séance et de matière.</p>
-    ${n ? `<p class="small">${n} fichier${n > 1 ? "s" : ""} (<code>pdf/</code>, <code>assets/</code>) encore lu${n > 1 ? "s" : ""} depuis le dépôt du site.</p><div class="row"><button class="btn pri" data-a="migratefiles">Migrer vers mon stockage</button></div>` : `<p class="small"><span class="chip ok">À jour</span> Tous tes fichiers sont dans ton stockage.</p>`}`;
+  return `<p class="small muted">Tes PDF et les images de tes cours sont stockés dans ton espace privé Supabase (pas dans le dépôt du site). Ajoute-les depuis les formulaires de séance et de matière.</p>`;
 }

@@ -23,12 +23,6 @@ export async function uploadFile(file, folder) {
   return ref;
 }
 
-// Pour la migration : chemin imposé (idempotent, on peut la relancer), écrase l'existant.
-export async function uploadAt(ref, blob) {
-  const { error } = await client().storage.from(BUCKET).upload(pathOf(ref), blob, { upsert: true, contentType: blob.type || undefined });
-  if (error) throw error;
-}
-
 export async function removeFile(ref) {
   if (!isRef(ref)) return;
   const { error } = await client().storage.from(BUCKET).remove([pathOf(ref)]);
