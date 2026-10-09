@@ -1,4 +1,5 @@
 import { appConfirm } from "../../core/components/dialog.js";
+import { icon } from "../../core/components/icons.js";
 import { toast } from "../../core/components/toast.js";
 import { D, M, activeMatieres } from "../../core/services/app-data.js";
 import { loadData } from "../../core/services/data-loader.js";
@@ -27,12 +28,17 @@ function calcRes(mid, v) {
 }
 
 // Créer ou modifier le calculateur d'une matière : les mêmes champs que dans Compte (épreuves, poids,
-// note sur, 2e chance), avec leur propre bouton Enregistrer. Ouvert d'office tant qu'il n'y a pas de calculateur.
+// note sur, 2e chance), avec leur propre bouton Enregistrer. Caché derrière le crayon (action « togglegrading »),
+// sauf tant qu'il n'y a pas de calculateur : il est alors ouvert d'office.
 function gradingFormHtml(m) {
   const has = !!calcFor(m.id);
-  const ed = gradingEditorHtml(m, { open: !has, title: has ? "Modifier les épreuves et les coefficients" : "Créer le calculateur de notes" });
+  const ed = gradingEditorHtml(m, { bare: true });
   const save = `<div class="row" style="margin-top:10px"><button class="btn pri" type="submit">Enregistrer le calculateur</button></div>`;
-  return `<form class="gr-form" data-m="${esc(m.id)}">${ed.replace(/<\/details>$/, `${save}</details>`)}</form>`;
+  return `<form class="gr-form" data-m="${esc(m.id)}" ${has ? "hidden" : ""}>${has ? "" : `<p class="small muted" style="margin:10px 0 0">Pas encore de calculateur pour cette matière : ajoute tes épreuves ci-dessous.</p>`}${ed.replace(/<\/details>$/, `${save}</details>`)}</form>`;
+}
+
+function pencilHtml(m) {
+  return `<button type="button" class="btn sm ghost" data-a="togglegrading" data-m="${esc(m.id)}" aria-expanded="${calcFor(m.id) ? "false" : "true"}" aria-label="Modifier le calculateur de ${esc(m.nom)}" title="Modifier le calculateur">${icon("edit")}</button>`;
 }
 
 export function bindNotes(el) {
@@ -62,5 +68,5 @@ export function notes() {
   const actives = new Set(activeMatieres().map((m) => m.id));
   const list = D.matieres.filter((m) => calcFor(m.id) || actives.has(m.id));
   return { html: `<h1>Notes &amp; CC</h1><p class="muted">Entre tes notes au fil du semestre : le calcul suit exactement la formule de chaque UE (les deuxièmes chances remplacent les notes plus faibles). Tout est sauvegardé. Sous chaque matière, tu peux créer ou modifier le calculateur : épreuves, coefficients, 2e chance.</p>
-    ${list.map((m) => `<h2 style="display:flex;gap:10px;align-items:center"><i class="dot" style="--c:${m.couleur}"></i>${esc(m.nom)}</h2>${calcFor(m.id) ? notesCard(m.id) : ""}${gradingFormHtml(m)}`).join("") || '<div class="empty">Aucune matière pour l\'instant. Ajoute-en une dans <a href="#/compte">Compte</a>, puis crée son calculateur ici.</div>'}`, after: bindNotes };
+    ${list.map((m) => `<h2 style="display:flex;gap:10px;align-items:center">${pencilHtml(m)}<i class="dot" style="--c:${m.couleur}"></i>${esc(m.nom)}</h2>${calcFor(m.id) ? notesCard(m.id) : ""}${gradingFormHtml(m)}`).join("") || '<div class="empty">Aucune matière pour l\'instant. Ajoute-en une dans <a href="#/compte">Compte</a>, puis crée son calculateur ici.</div>'}`, after: bindNotes };
 }

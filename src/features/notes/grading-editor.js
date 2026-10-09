@@ -23,10 +23,11 @@ function rowHtml(it, second = false) {
   </div>`;
 }
 
-export function gradingEditorHtml(m, { open = false, title = "Calcul de la note (page Notes &amp; CC)" } = {}) {
+// `bare` : sans barre de titre cliquable (la page qui l'utilise l'ouvre et le ferme elle-même).
+export function gradingEditorHtml(m, { open = false, bare = false, title = "Calcul de la note (page Notes &amp; CC)" } = {}) {
   const g = m && m.grading, items = (g && g.items) || [], sec = (g && g.second) || null;
   const rows = [...items.map((it) => rowHtml(it)), ...(sec ? [rowHtml({ ...sec, weight: sec.required ? sec.weight : "" }, true)] : [])];
-  return `<details class="gr-ed" ${open ? "open" : ""} style="margin-top:10px" data-current="${esc(JSON.stringify(g || null))}"><summary>${title}</summary>
+  return `<details class="gr-ed" ${open || bare ? "open" : ""} style="margin-top:10px" data-current="${esc(JSON.stringify(g || null))}"><summary ${bare ? "hidden" : ""}>${title}</summary>
     <div class="row" style="margin:12px 0 10px"><button type="button" class="btn sm" data-gr="add">+ Ajouter une épreuve</button></div>
     <div class="gr-grid gr-head tiny muted" style="margin-bottom:6px"><span>Épreuve</span><span>% de la note</span><span>Sur</span><span></span><span></span></div>
     <div class="gr-items">${(rows.length ? rows : [rowHtml({ label: "", weight: "", max: 20 })]).join("")}</div>
