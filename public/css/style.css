@@ -296,6 +296,8 @@ details[open]{padding-bottom:12px}
 .nt-avg{margin-left:auto;font-weight:700;font-size:1.9rem;line-height:1;font-variant-numeric:tabular-nums}
 .nt-avg small{font:400 .85rem system-ui;color:var(--muted)}
 .nt-inline{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.nt-meta{display:flex;align-items:center;gap:10px;margin-top:8px}
+.nt-meta .nt-avg{margin-left:0;font-size:1.4rem}
 .nt-strip{display:flex;flex-wrap:wrap;gap:6px}
 .nt-seg{position:relative;min-width:96px;display:flex;flex-direction:column;gap:6px;padding:12px 10px 10px;border-radius:10px;background:var(--surface);border:1px solid var(--line);overflow:hidden}
 .nt-seg::before{content:"";position:absolute;inset:0 0 auto 0;height:5px;background:repeating-linear-gradient(135deg,var(--line) 0 6px,transparent 6px 12px)}

@@ -10,11 +10,11 @@ import { bindExos, exosHtml } from "../exercices/exercices.components.js";
 import { fileUrl } from "../files/files.js";
 import { calcFor } from "../notes/grades.js";
 import { typeColumns, typeLabel } from "../settings/settings.js";
-import { bindNotes, notesCard } from "../notes/notes.page.js";
+import { bindNotes, gradeBadge, notesCard } from "../notes/notes.page.js";
 
 function subjectCard(m) {
   const s = stats(m.id);
-  return `<a class="card subj" href="#/m/${m.id}" style="--c:${m.couleur};--acc:${m.couleur}"><div class="row nowrap"><div><h3>${esc(m.nom)}</h3><div class="muted small">${esc(m.desc)}</div></div><div class="sp"></div>${ring(s.prog, m.couleur)}</div><div class="tiny muted">${plural(s.seances, "séance")} · ${plural(s.nq, "QCM", "QCM")} · ${plural(s.nf, "carte")} · ${plural(s.ne, "exercice")}</div></a>`;
+  return `<a class="card subj" href="#/m/${m.id}" style="--c:${m.couleur};--acc:${m.couleur}"><div class="row nowrap"><div><h3>${esc(m.nom)}</h3><div class="muted small">${esc(m.desc)}</div></div><div class="sp"></div>${ring(s.prog, m.couleur)}</div>${gradeBadge(m.id)}<div class="tiny muted">${plural(s.seances, "séance")} · ${plural(s.nq, "QCM", "QCM")} · ${plural(s.nf, "carte")} · ${plural(s.ne, "exercice")}</div></a>`;
 }
 
 export function subjects() {
@@ -69,11 +69,11 @@ export function matiere(mid, tab) {
       <div class="list">${evs.map((e) => `<div class="item"><span class="badge" style="font-size:.66rem">${fmtDate(e.date).split(" ").slice(1).join(" ")}</span><div class="sp"><b>${esc(e.titre)}</b> <span class="chip gr">${esc(fmtPoids(e.poids))}</span>${e.type === "2e" ? ' <span class="chip wa">2e chance</span>' : ""}<div class="tiny muted">${esc(e.detail)}</div></div></div>`).join("") || '<div class="muted small">Pas de date fixée pour l\'instant.</div>'}</div>
       ${rem.map((r) => `<div class="note" style="margin-top:10px"><b>À noter —</b> ${esc(r.texte)}</div>`).join("")}
       ${m.pdfCC ? `<a class="btn sm" href="${esc(fileUrl(m.pdfCC))}" download>${icon("dl")}Fiche CC (PDF)</a>` : ""}</div>
-      ${calcFor(mid) ? `<h3>Calculateur de note</h3>${notesCard(mid)}` : ""}`;
+      ${calcFor(mid) ? `<h3>Calculateur de note</h3>${notesCard(mid, { inline: false })}` : ""}`;
   }
   return {
     html: `<div class="crumbs"><a href="#/m">Matières</a> › ${esc(m.court)}</div>
-    <div class="row nowrap" style="margin-bottom:6px"><div><h1 style="margin:0">${esc(m.nom)}</h1><div class="muted">${esc(m.desc)}</div></div><div class="sp"></div>${ring(s.prog, m.couleur)}</div>
+    <div class="row nowrap" style="margin-bottom:6px"><div><h1 style="margin:0">${esc(m.nom)}</h1><div class="muted">${esc(m.desc)}</div>${gradeBadge(mid)}</div><div class="sp"></div>${ring(s.prog, m.couleur)}</div>
     <div class="tabs" role="tablist">${tabs.map(([k, l]) => `<a role="tab" href="#/m/${mid}/${k}" class="${tab === k ? "on" : ""}">${l}</a>`).join("")}</div>${body}`,
     after: (el) => { bindNotes(el); bindExos(el); },
   };

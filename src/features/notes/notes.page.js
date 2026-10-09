@@ -32,6 +32,15 @@ function result(mid, v) {
   return { chip: `<span class="chip ${cls}">${esc(txt)}</span>`, avg: r ? `<span style="color:${pass ? "var(--ok)" : "var(--ko)"}">${fmt1(r.note)}</span><small> /20</small>` : `<span class="muted">—</span>` };
 }
 
+// État et moyenne d'une matière, déjà remplis, pour les afficher ailleurs que sur la page Notes (liste des matières,
+// en-tête d'une matière). Ils portent les mêmes classes que sur la page Notes : s'ils sont dans la page où l'on saisit
+// les notes, ils se mettent à jour en direct. Vide si la matière n'a pas de calculateur.
+export function gradeBadge(mid) {
+  if (!calcFor(mid)) return "";
+  const { chip, avg } = result(mid, state.notes[mid]?.v || {});
+  return `<div class="nt-meta"><span class="nt-status" data-m="${esc(mid)}">${chip}</span><span class="nt-avg" data-m="${esc(mid)}">${avg}</span></div>`;
+}
+
 function paint(el, mid, v) {
   const { chip, avg } = result(mid, v), sel = `[data-m="${CSS.escape(mid)}"]`;
   $$(`.nt-status${sel}`, el).forEach((x) => { x.innerHTML = chip; });
