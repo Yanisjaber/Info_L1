@@ -434,23 +434,6 @@ span.flatpickr-weekday{color:var(--muted);font-weight:600;font-size:.74rem;text-
 .flatpickr-months .flatpickr-month,.flatpickr-months{overflow:visible}
 .flatpickr-months{position:relative;z-index:3}
 
-/* Champs numériques : flèches natives cachées, remplacées par les boutons + / − du thème (voir number-input.js) */
+/* Champs numériques : aucune flèche (ni native ni maison), on tape la valeur ; les touches haut/bas du clavier marchent toujours */
 input[type=number]{-moz-appearance:textfield;appearance:textfield}
 input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
-.num{position:relative;display:block;min-width:0}
-.num>input{padding-right:24px}
-.num-steps{position:absolute;top:7px;right:5px;bottom:7px;width:14px;display:flex;flex-direction:column;gap:2px}
-.num-steps button{position:relative;flex:1;min-height:0;padding:0;border:0;border-radius:6px;background:transparent;cursor:pointer}
-.num-steps button:hover{background:var(--surface2)}
-.num-steps button:active{background:var(--accbg)}
-.num-steps button:before{content:"";position:absolute;left:50%;top:50%;width:4px;height:4px;border:solid var(--muted);border-width:1.5px 0 0 1.5px}
-.num-steps .up:before{transform:translate(-50%,-30%) rotate(45deg)}
-.num-steps .down:before{border-width:0 1.5px 1.5px 0;transform:translate(-50%,-70%) rotate(45deg)}
-.num-steps button:hover:before{border-color:var(--acc)}
-.gr-grid .num>input{padding-left:8px;padding-right:20px}
-.gr-grid .num-steps{right:3px;width:13px}
-/* Case de note de la frise : le texte reste centré, les flèches sont à droite ; champ « n notes » dans sa phrase */
-.nt-seg .num>input{padding:6px 19px}
-.nt-seg .num-steps{right:4px;width:13px}
-.gr-adv .num{display:inline-block;vertical-align:middle}
-.gr-adv .num>input{padding:4px 20px 4px 8px}
